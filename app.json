@@ -1,7 +1,8 @@
 {
   "expo": {
     "name": "TestProj",
-    "slug": "TestProj",
+    "slug": "test-proj",
+    "owner": "deniz_guler",
     "platforms": [
       "ios",
       "android",
