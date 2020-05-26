@@ -5,8 +5,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Header, Icon } from 'react-native-elements';
 import { TouchableHighlight, TextInput } from 'react-native-gesture-handler';
+import { setAutoFocusEnabled } from 'expo/build/AR';
 
-export default SettingsScreen;
+export default SettingsStack;
 
 const Stack = createStackNavigator();
 
@@ -18,10 +19,127 @@ const Setting = (props) => {
       underlayColor="#e0efff"
       activeOpacity={1}
     >
-      <Text style={styles.settingText}>{props.text}</Text>
+      <View style={{ flex: 1, justifyContent: 'center' }}>
+        <Text style={styles.settingText}>{props.text}</Text>
+        <Text style={styles.setttingSubText}>{props.subText ? props.subText : ''}</Text>
+      </View>
     </TouchableHighlight>
   )
 };
+
+function IPModal({ navigation, route }) {
+  const [IP, setIP] = useState('');
+  const [devKey, setDevKey] = useState('');
+  // const { currIP } = route.params
+
+  const getDevKey = async () => {
+    try {
+      const devKey = await AsyncStorage.getItem('devKey')
+      if (devKey !== null)
+        setDevKey(devKey)
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  useEffect(() => {getDevKey()}, [])
+
+  const setOGDevKey = async (key) => {
+    try {
+      await AsyncStorage.setItem('devKey', key);
+      setDevKey(key);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  const updateParams = () => {
+    setOGDevKey(devKey)
+      .then(navigation.navigate('Settings', { OGIP: IP }))
+      .catch((err) => console.log(err))
+  }
+
+  return (
+    <View>
+      <Header
+        containerStyle={styles.topNav}
+        backgroundColor="#d8d8d8"
+        leftComponent={<Icon name='chevron-left' onPress={() => navigation.goBack()} />}
+        centerComponent={{ text: 'Set Device IP', style: { fontSize: 20 } }}
+        rightComponent={<Icon name='check' onPress={() => updateParams()} />}
+      />
+      <Text style={styles.optionTitle}>IP:</Text>
+      <TextInput
+        style={styles.optionInput}
+        onChangeText={(text) => setIP(text)}
+        value={IP}
+        placeholder={route.params.currIP}
+      // defaultValue={route.params.currIP ? route.name : ''}
+      />
+      <Text style={styles.optionTitle}>Device Key:</Text>
+      <TextInput
+        style={styles.optionInput}
+        onChangeText={(text) => setDevKey(text)}
+        value={devKey}
+        secureTextEntry
+      />
+    </View>
+  );
+}
+
+function BasicSettings({ navigation, route }) {
+
+  const [devName, setDevName] = useState('')
+
+  const getDevKey = async () => {
+    try {
+      const devKey = await AsyncStorage.getItem('devKey')
+      if (devKey !== null)
+        return devKey
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  const updateBasicSettings = () => {
+    getDevKey()
+      .then((devKey) => 'http://' + route.params.OGIP + '/co?dkey=' + devKey)
+      .then((req) => {
+        if (devName !== '')
+          return req + '&name=' + encodeURIComponent(devName);
+        return req
+      })
+      .then((req) => fetch(req))
+      .then((response) => response.json())
+      .then((json) => {
+        if (json.result == 1) {
+          navigation.navigate('Settings')
+        } else {
+          console.log(json.result)
+        }
+      })
+      .catch((err) => console.log(err));
+  }
+
+  return (
+    <View>
+      <Header
+        containerStyle={styles.topNav}
+        backgroundColor="#d8d8d8"
+        leftComponent={<Icon name='chevron-left' onPress={() => navigation.goBack()} />}
+        centerComponent={{ text: 'Set Device IP', style: { fontSize: 20 } }}
+        rightComponent={<Icon name='check' onPress={() => updateBasicSettings()} />}
+      />
+      <Text style={styles.optionTitle}>Device Name:</Text>
+      <TextInput
+        style={styles.optionInput}
+        onChangeText={(text) => setDevName(text)}
+        value={devName}
+      />
+
+    </View>
+  )
+}
 
 const TextPrompt = (props) => {
   if (!props.hidden) {
@@ -38,7 +156,7 @@ const TextPrompt = (props) => {
             props.submitter(props.value);
           }}
         />
-        <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-evenly'}}>
+        <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-evenly' }}>
           <Button
             style={styles.button}
             onPress={() => {
@@ -60,7 +178,7 @@ const TextPrompt = (props) => {
   return null;
 }
 
-function SettingsScreen({ navigation }) {
+function SettingsScreen({ navigation, route, test }) {
   const [hideIPPrompt, setHideIPPrompt] = useState(true);
   const [IP, setIP] = useState('');
 
@@ -86,7 +204,11 @@ function SettingsScreen({ navigation }) {
     }
   }
 
-  useEffect(() => { getOGIP() }, []);
+  if (route.params?.OGIP) { setOGIP(route.params?.OGIP) }
+
+  useEffect(() => {
+    getOGIP()
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -94,7 +216,7 @@ function SettingsScreen({ navigation }) {
         containerStyle={styles.topNav}
         backgroundColor="#d8d8d8"
         leftComponent={<Icon name='menu' onPress={() => navigation.toggleDrawer()} />}
-        centerComponent={{ text: 'Settings' }}
+        centerComponent={{ text: 'Settings', style: { fontSize: 20 } }}
         rightComponent={<Icon name='home' onPress={() => navigation.navigate('Home')} />}
       />
       <TextPrompt
@@ -106,9 +228,22 @@ function SettingsScreen({ navigation }) {
         getter={getOGIP}
       />
       <ScrollView contentContainerStyle={styles.list}>
-        <Setting text="Set IP of Open Garage Device" onPress={() => setHideIPPrompt(!hideIPPrompt)} />
+        <Setting
+          text="Open Garage Device IP & Key"
+          subText={IP}
+          onPress={() =>
+            //setHideIPPrompt(!hideIPPrompt)
+            navigation.navigate('IPModal', { currIP: IP })
+          }
+        />
+        <Setting
+          text="Basic Device Settings"
+          subText={'Configure basic settings'}
+          onPress={() => navigation.navigate('BasicSettings', { OGIP: IP })}
+        />
         <Setting
           text="Documentation"
+          subText={"Links you out of this app"}
           onPress={() => {
             Linking.canOpenURL(docs).then(supported => {
               if (supported) {
@@ -122,6 +257,20 @@ function SettingsScreen({ navigation }) {
         <Text style={{ alignSelf: 'center' }}>App Version 0</Text>
       </ScrollView>
     </View>
+  );
+}
+
+function SettingsStack({ navigation }) {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <Stack.Screen name="Settings" component={SettingsScreen} />
+      <Stack.Screen name="IPModal" component={IPModal} />
+      <Stack.Screen name="BasicSettings" component={BasicSettings} />
+    </Stack.Navigator>
   );
 }
 
@@ -165,8 +314,9 @@ const styles = StyleSheet.create({
   },
 
   settingButton: {
-    justifyContent: 'center',
-    height: 50,
+    // flex: 1,
+    // justifyContent: 'center',
+    height: 60,
     // margin: 2,
     alignSelf: 'stretch',
     paddingHorizontal: 10,
@@ -175,6 +325,12 @@ const styles = StyleSheet.create({
 
   settingText: {
     fontSize: 20,
+  },
+
+  setttingSubText: {
+    alignSelf: 'flex-end',
+    fontSize: 16,
+    color: '#aaa',
   },
 
   modal: {
@@ -204,5 +360,28 @@ const styles = StyleSheet.create({
     flexBasis: 1,
     flexGrow: 1,
     margin: 5,
+  },
+
+  optionTitle: {
+    fontSize: 26,
+    width: '100%',
+    borderBottomWidth: 1,
+    borderColor: '#aaa',
+    padding: 8,
+  },
+
+  optionInput: {
+    width: '100%',
+    // height: 60,
+    fontSize: 20,
+    borderBottomWidth: 1,
+    borderColor: '#aaa',
+    // shadowColor: '#000',
+    // shadowOffset: {
+    //   width: 10,
+    //   height: 10,
+    // },
+    // shadowOpacity: 1.0,
+    padding: 10,
   },
 });
