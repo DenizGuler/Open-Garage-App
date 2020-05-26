@@ -3,7 +3,7 @@ import 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createStackNavigator } from '@react-navigation/stack';
-import { HomeScreen, LogScreen, SettingsScreen } from './components/screens/';
+import { HomeScreen, LogScreen, SettingsStack } from './components/screens/';
 // import EventEmitter from 'events';
 
 const Drawer = createDrawerNavigator();
@@ -23,7 +23,7 @@ export default function App() {
       >
         <Drawer.Screen name='Home' component={HomeScreen} />
         <Drawer.Screen name='Log' component={LogScreen} />
-        <Drawer.Screen name='Settings' component={SettingsScreen} />
+        <Drawer.Screen name='Settings' component={SettingsStack} />
       </Drawer.Navigator>
     </NavigationContainer>
   );
