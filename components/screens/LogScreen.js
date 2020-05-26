@@ -73,7 +73,8 @@ function LogScreen({ navigation }) {
 
   // fetch the logs from https://OGIP/jl
   const grabLogs = async () => {
-    let OGIP = await getOGIP()
+    setLoading(true);
+    let OGIP = await getOGIP();
     if (OGIP === '') {
       setLogs([]);
       return;
@@ -83,12 +84,12 @@ function LogScreen({ navigation }) {
       .then((response) => response.json())
       .then((json) => setLogs(json.logs))
       .catch((error) => {
-        setLogs([])
-        console.log(error)
+        setLogs([]);
+        console.log(error);
       })
       .finally(() => {
-        setLoading(false)
-        setRefreshing(false)
+        setLoading(false);
+        setRefreshing(false);
       });
   };
 
@@ -109,7 +110,7 @@ function LogScreen({ navigation }) {
         }}
         backgroundColor="#d8d8d8"
         leftComponent={<Icon name='menu' onPress={() => navigation.toggleDrawer()} />}
-        centerComponent={{ text: 'Log' }}
+        centerComponent={{ text: 'Log', style: { fontSize: 20 } }}
         rightComponent={<Icon name='home' onPress={() => navigation.navigate('Home')} />}
       />
       <LogTable

@@ -53,7 +53,7 @@ function HomeScreen({ navigation }) {
         }}
         backgroundColor="#d8d8d8"
         leftComponent={<Icon name='menu' onPress={() => navigation.toggleDrawer()} />}
-        centerComponent={{ text: 'Home' }}
+        centerComponent={{ text: 'Home', style: { fontSize: 20 }}}
       />
       <View style={styles.center}>
         <TouchableOpacity
