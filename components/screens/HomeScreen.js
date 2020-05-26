@@ -5,6 +5,7 @@ import { Header, Icon } from 'react-native-elements';
 import { Notifications } from 'expo';
 import * as Permissions from 'expo-permissions';
 import Constants from 'expo-constants';
+import { getDevKey, getOGIP } from './utils';
 
 function HomeScreen({ navigation }) {
   const [doorStatus, setDoorStatus] = useState(true);
@@ -34,14 +35,53 @@ function HomeScreen({ navigation }) {
     }
   }
 
-  // call registerForPushNotifAsync as soon as loaded
-  if (Platform.OS !== 'web') {
-    useEffect(() => { registerForPushNotifAsync(); }, []);
+  // call registerForPushNotifAsync as soon as loaded (unless on web)
+  useEffect(() => {
+    if (Platform.OS !== 'web') {
+      registerForPushNotifAsync();
+    }
+    setInterval(() => {grabInfo()}, 1000)
+  }, []);
+
+  // states for grabInfo
+
+  const [name, setName] = useState('')
+
+  const grabInfo = function() {
+    getOGIP()
+      .then((OGIP) => fetch('http://' + OGIP + '/jc'))
+      .then((response) => response.json())
+      .then((json) => {
+        if (json) {
+          setName(json.name)
+          setDoorStatus(json.door == 1 ? true : false)
+        }
+      })
+      .catch((err) => console.log(err))
   }
-  
-  const openDoor = function () {
-    setDoorStatus(!doorStatus)
-    // Alert.alert('opened door')
+
+  const toggleDoor = function () {
+    let req = ''
+    getOGIP()
+      .then((OGIP) => {
+        req += 'http://' + OGIP
+        let devKey = getDevKey();
+        return devKey
+      })
+      .then((devKey) => {
+        req += '/cc?dkey=' + devKey
+        req += doorStatus ? '&close=1' : '&open=1'
+      })
+      .then(() => fetch(req))
+      .then((response) => response.json())
+      .then((json) => {
+        if (json.result == 1) {
+          // setDoorStatus(!doorStatus)
+        } else {
+          console.log(json.result)
+        }
+      })
+      .catch((err) => console.log(err))
   }
 
   return (
@@ -53,15 +93,15 @@ function HomeScreen({ navigation }) {
         }}
         backgroundColor="#d8d8d8"
         leftComponent={<Icon name='menu' onPress={() => navigation.toggleDrawer()} />}
-        centerComponent={{ text: 'Home', style: { fontSize: 20 }}}
+        centerComponent={{ text: name, style: { fontSize: 20 } }}
       />
       <View style={styles.center}>
         <TouchableOpacity
           style={styles.bigButtonContainer}
-          onPress={openDoor}
+          onPress={toggleDoor}
           activeOpacity={0.5}
         >
-          <Text style={styles.buttonText}>Open</Text>
+          <Text style={styles.buttonText}>{doorStatus ? 'Open' : 'Close'}</Text>
         </TouchableOpacity>
         <Text style={styles.largeText}>Status: {doorStatus ? 'Opened' : 'Closed'} </Text>
       </View>
