@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Linking, ScrollView, AsyncStorage, Button } from 'react-native';
 import 'react-native-gesture-handler';
-import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Header, Icon } from 'react-native-elements';
 import { TouchableHighlight, TextInput } from 'react-native-gesture-handler';
-import { setAutoFocusEnabled } from 'expo/build/AR';
+import { getDevKey } from './utils'
 
 export default SettingsStack;
 
@@ -32,17 +31,7 @@ function IPModal({ navigation, route }) {
   const [devKey, setDevKey] = useState('');
   // const { currIP } = route.params
 
-  const getDevKey = async () => {
-    try {
-      const devKey = await AsyncStorage.getItem('devKey')
-      if (devKey !== null)
-        setDevKey(devKey)
-    } catch (err) {
-      console.log(err)
-    }
-  }
-
-  useEffect(() => {getDevKey()}, [])
+  useEffect(() => {getDevKey().then((key) => setDevKey(key))}, [])
 
   const setOGDevKey = async (key) => {
     try {
@@ -74,7 +63,6 @@ function IPModal({ navigation, route }) {
         onChangeText={(text) => setIP(text)}
         value={IP}
         placeholder={route.params.currIP}
-      // defaultValue={route.params.currIP ? route.name : ''}
       />
       <Text style={styles.optionTitle}>Device Key:</Text>
       <TextInput
@@ -90,16 +78,6 @@ function IPModal({ navigation, route }) {
 function BasicSettings({ navigation, route }) {
 
   const [devName, setDevName] = useState('')
-
-  const getDevKey = async () => {
-    try {
-      const devKey = await AsyncStorage.getItem('devKey')
-      if (devKey !== null)
-        return devKey
-    } catch (err) {
-      console.log(err)
-    }
-  }
 
   const updateBasicSettings = () => {
     getDevKey()

@@ -2,19 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, FlatList, AsyncStorage } from 'react-native';
 import 'react-native-gesture-handler';
 import { Header, Icon } from 'react-native-elements';
+import { getOGIP } from './utils';
 
 export default LogScreen;
 
-const getOGIP = async () => {
-  try {
-    const OGIP = await AsyncStorage.getItem('OGIP');
-    if (OGIP !== null) {
-      return OGIP
-    }
-  } catch (error) {
-    console.log(error)
-  }
-}
+
 
 const LogTable = (props) => {
   if (props.loading) {
@@ -79,7 +71,6 @@ function LogScreen({ navigation }) {
       setLogs([]);
       return;
     }
-    // 192.168.1.205
     fetch('http://' + OGIP + '/jl')
       .then((response) => response.json())
       .then((json) => setLogs(json.logs))
