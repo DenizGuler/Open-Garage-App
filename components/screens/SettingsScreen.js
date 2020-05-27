@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Linking, ScrollView, AsyncStorage, Button } from 'react-native';
+import { StyleSheet, Text, View, Linking, ScrollView, AsyncStorage, Button, Keyboard, Platform } from 'react-native';
 import 'react-native-gesture-handler';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Header, Icon } from 'react-native-elements';
-import { TouchableHighlight, TextInput } from 'react-native-gesture-handler';
-import { getDevKey } from './utils'
+import { TouchableHighlight, TextInput, TouchableWithoutFeedback } from 'react-native-gesture-handler';
+import { getDevKey, getOGIP } from './utils'
 
 export default SettingsStack;
 
@@ -31,7 +31,16 @@ function IPModal({ navigation, route }) {
   const [devKey, setDevKey] = useState('');
   // const { currIP } = route.params
 
-  useEffect(() => {getDevKey().then((key) => setDevKey(key))}, [])
+  useEffect(() => { getDevKey().then((key) => setDevKey(key)) }, [])
+
+  const setOGIP = async (IP) => {
+    try {
+      await AsyncStorage.setItem('OGIP', IP);
+      setIP(IP);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const setOGDevKey = async (key) => {
     try {
@@ -44,34 +53,45 @@ function IPModal({ navigation, route }) {
 
   const updateParams = () => {
     setOGDevKey(devKey)
-      .then(navigation.navigate('Settings', { OGIP: IP }))
+      .then(setOGIP(IP))
       .catch((err) => console.log(err))
   }
 
   return (
-    <View>
+    <ScrollView
+      contentContainerStyle={{ flexGrow: 1 }}
+      keyboardShouldPersistTaps={"handled"}
+    >
       <Header
         containerStyle={styles.topNav}
         backgroundColor="#d8d8d8"
         leftComponent={<Icon name='chevron-left' onPress={() => navigation.goBack()} />}
         centerComponent={{ text: 'Set Device IP', style: { fontSize: 20 } }}
-        rightComponent={<Icon name='check' onPress={() => updateParams()} />}
+        rightComponent={<Icon name='check' onPress={() => {
+          updateParams();
+          navigation.navigate('Settings');
+        }} />}
       />
-      <Text style={styles.optionTitle}>IP:</Text>
-      <TextInput
-        style={styles.optionInput}
-        onChangeText={(text) => setIP(text)}
-        value={IP}
-        placeholder={route.params.currIP}
-      />
-      <Text style={styles.optionTitle}>Device Key:</Text>
-      <TextInput
-        style={styles.optionInput}
-        onChangeText={(text) => setDevKey(text)}
-        value={devKey}
-        secureTextEntry
-      />
-    </View>
+      <View style={styles.fsModal}>
+        <Text style={styles.optionTitle}>IP:</Text>
+        <TextInput
+          style={styles.optionInput}
+          onChangeText={(text) => setIP(text)}
+          value={IP}
+          placeholder={route.params.currIP}
+          onSubmitEditing={() => setOGIP(IP)}
+          autoCapitalize={"none"}
+        />
+        <Text style={styles.optionTitle}>Device Key:</Text>
+        <TextInput
+          style={styles.optionInput}
+          onChangeText={(text) => setDevKey(text)}
+          value={devKey}
+          onSubmitEditing={() => setOGDevKey(devKey)}
+          secureTextEntry
+        />
+      </View>
+    </ScrollView>
   );
 }
 
@@ -93,29 +113,34 @@ function BasicSettings({ navigation, route }) {
         if (json.result == 1) {
           navigation.navigate('Settings')
         } else {
-          console.log(json.result)
+          console.log('ERROR CODE: ' + json.result)
         }
       })
       .catch((err) => console.log(err));
   }
 
   return (
-    <View>
+    <ScrollView
+      contentContainerStyle={{ flexGrow: 1 }}
+      keyboardShouldPersistTaps={"handled"}
+    >
       <Header
         containerStyle={styles.topNav}
         backgroundColor="#d8d8d8"
         leftComponent={<Icon name='chevron-left' onPress={() => navigation.goBack()} />}
-        centerComponent={{ text: 'Set Device IP', style: { fontSize: 20 } }}
+        centerComponent={{ text: 'Basic Settings', style: { fontSize: 20 } }}
         rightComponent={<Icon name='check' onPress={() => updateBasicSettings()} />}
       />
-      <Text style={styles.optionTitle}>Device Name:</Text>
-      <TextInput
-        style={styles.optionInput}
-        onChangeText={(text) => setDevName(text)}
-        value={devName}
-      />
+      <View style={styles.fsModal}>
+        <Text style={styles.optionTitle}>Device Name:</Text>
+        <TextInput
+          style={styles.optionInput}
+          onChangeText={(text) => setDevName(text)}
+          value={devName}
+        />
+      </View>
 
-    </View>
+    </ScrollView>
   )
 }
 
@@ -134,7 +159,7 @@ const TextPrompt = (props) => {
             props.submitter(props.value);
           }}
         />
-        <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-evenly' }}>
+        <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-evenly' }} accessible={false}>
           <Button
             style={styles.button}
             onPress={() => {
@@ -156,36 +181,17 @@ const TextPrompt = (props) => {
   return null;
 }
 
-function SettingsScreen({ navigation, route, test }) {
+function SettingsScreen({ navigation }) {
   const [hideIPPrompt, setHideIPPrompt] = useState(true);
   const [IP, setIP] = useState('');
 
   const docs = 'https://nbviewer.jupyter.org/github/OpenGarage/OpenGarage-Firmware/blob/master/docs/OGManual.pdf';
 
-  const setOGIP = async (IP) => {
-    try {
-      await AsyncStorage.setItem('OGIP', IP);
-      setIP(IP);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const getOGIP = async () => {
-    try {
-      const OGIP = await AsyncStorage.getItem('OGIP');
-      if (OGIP !== null) {
-        setIP(OGIP);
-      }
-    } catch (error) {
-      console.log(error)
-    }
-  }
-
-  if (route.params?.OGIP) { setOGIP(route.params?.OGIP) }
-
   useEffect(() => {
-    getOGIP()
+    const unsubscribe = navigation.addListener('focus', () => {
+      getOGIP().then((OGIP) => setIP(OGIP));
+    })
+    return unsubscribe;
   }, []);
 
   return (
@@ -202,7 +208,7 @@ function SettingsScreen({ navigation, route, test }) {
         hider={setHideIPPrompt}
         value={IP}
         setter={setIP}
-        submitter={setOGIP}
+        // submitter={setOGIP}
         getter={getOGIP}
       />
       <ScrollView contentContainerStyle={styles.list}>
@@ -343,8 +349,8 @@ const styles = StyleSheet.create({
   optionTitle: {
     fontSize: 26,
     width: '100%',
-    borderBottomWidth: 1,
-    borderColor: '#aaa',
+    // borderBottomWidth: 1,
+    // borderColor: '#aaa',
     padding: 8,
   },
 
@@ -352,8 +358,9 @@ const styles = StyleSheet.create({
     width: '100%',
     // height: 60,
     fontSize: 20,
-    borderBottomWidth: 1,
-    borderColor: '#aaa',
+    // borderBottomWidth: 1,
+    backgroundColor: '#fff',
+    // borderColor: '#aaa',
     // shadowColor: '#000',
     // shadowOffset: {
     //   width: 10,
@@ -361,5 +368,11 @@ const styles = StyleSheet.create({
     // },
     // shadowOpacity: 1.0,
     padding: 10,
+  },
+
+  fsModal: {
+    width: '100%',
+    maxWidth: 600,
+    alignSelf: 'center',
   },
 });
