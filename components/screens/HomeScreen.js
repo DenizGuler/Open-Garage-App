@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Alert, TouchableOpacity, AsyncStorage, Platform } from 'react-native';
+import { StyleSheet, Text, View, Alert, TouchableOpacity, Platform } from 'react-native';
 import 'react-native-gesture-handler';
 import { Header, Icon } from 'react-native-elements';
 import { Notifications } from 'expo';
@@ -8,7 +8,6 @@ import Constants from 'expo-constants';
 import { getDevKey, getOGIP } from './utils';
 
 function HomeScreen({ navigation }) {
-  const [doorStatus, setDoorStatus] = useState(true);
 
   const [expoPushToken, setExpoPushToken] = useState('');
   const [notification, setNotification] = useState({});
@@ -40,12 +39,13 @@ function HomeScreen({ navigation }) {
     if (Platform.OS !== 'web') {
       registerForPushNotifAsync();
     }
-    setInterval(() => {grabInfo()}, 1000)
+    const unsubscribe = navigation.addListener('focus', grabInfo);
+    return unsubscribe;
   }, []);
 
-  // states for grabInfo
-
+  // states for grabInfo (can add more just name for now)
   const [name, setName] = useState('')
+  const [doorStatus, setDoorStatus] = useState(true);
 
   const grabInfo = function() {
     getOGIP()
@@ -57,7 +57,7 @@ function HomeScreen({ navigation }) {
           setDoorStatus(json.door == 1 ? true : false)
         }
       })
-      .catch((err) => console.log(err))
+      .catch((err) => console.error(err))
   }
 
   const toggleDoor = function () {
@@ -101,7 +101,7 @@ function HomeScreen({ navigation }) {
           onPress={toggleDoor}
           activeOpacity={0.5}
         >
-          <Text style={styles.buttonText}>{doorStatus ? 'Open' : 'Close'}</Text>
+          <Text style={styles.buttonText}>{doorStatus ? 'Close' : 'Open'}</Text>
         </TouchableOpacity>
         <Text style={styles.largeText}>Status: {doorStatus ? 'Opened' : 'Closed'} </Text>
       </View>

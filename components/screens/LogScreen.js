@@ -85,7 +85,10 @@ function LogScreen({ navigation }) {
   };
 
   // grab the logs as soon as possible
-  useEffect(() => { grabLogs() }, []);
+  useEffect(() => { 
+    const unsubscribe = navigation.addListener('focus', () => grabLogs());
+    return unsubscribe;
+  }, []);
 
   const refreshLogs = async () => {
     setRefreshing(true);
