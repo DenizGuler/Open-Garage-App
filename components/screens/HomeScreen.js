@@ -5,7 +5,7 @@ import { Header, Icon } from 'react-native-elements';
 import { Notifications } from 'expo';
 import * as Permissions from 'expo-permissions';
 import Constants from 'expo-constants';
-import { getDevKey, getOGIP } from './utils';
+import { getDevKey, getOGIP, ScreenHeader } from './utils';
 
 function HomeScreen({ navigation }) {
 
@@ -47,17 +47,22 @@ function HomeScreen({ navigation }) {
   const [name, setName] = useState('')
   const [doorStatus, setDoorStatus] = useState(true);
 
-  const grabInfo = function() {
+  const grabInfo = function () {
     getOGIP()
       .then((OGIP) => fetch('http://' + OGIP + '/jc'))
       .then((response) => response.json())
       .then((json) => {
         if (json) {
           setName(json.name)
-          setDoorStatus(json.door == 1 ? true : false)
+          setDoorStatus(json.door === 1 ? true : false)
         }
       })
-      .catch((err) => console.error(err))
+      .catch((err) => {
+        Alert.alert('No Device Found', 'No device was found at the entered address',
+          [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('Settings', { screen: 'IPModal' }) }])
+        setName('No Device Connected')
+        console.log(err);
+      })
   }
 
   const toggleDoor = function () {
@@ -75,8 +80,12 @@ function HomeScreen({ navigation }) {
       .then(() => fetch(req))
       .then((response) => response.json())
       .then((json) => {
-        if (json.result == 1) {
-          // setDoorStatus(!doorStatus)
+        if (json.result === 1) {
+          // we can have the device send a notification and force an update instead of manually setting the door's status
+          setDoorStatus(!doorStatus)
+        } else if (json.result === 2) {
+          Alert.alert('Invalid Device Key', 'The entered device key was rejected',
+            [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('Settings', { screen: 'IPModal' }) }])
         } else {
           console.log(json.result)
         }
@@ -86,14 +95,9 @@ function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Header
-        // containerStyle={styles.topNav}
-        statusBarProps={{
-          translucent: true
-        }}
-        backgroundColor="#d8d8d8"
-        leftComponent={<Icon name='menu' onPress={() => navigation.toggleDrawer()} />}
-        centerComponent={{ text: name, style: { fontSize: 20 } }}
+      <ScreenHeader
+        text={name}
+        left={'hamburger'}
       />
       <View style={styles.center}>
         <TouchableOpacity
@@ -110,10 +114,6 @@ function HomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  topNav: {
-    width: '100%',
-  },
-
   container: {
     height: '100%',
     width: '100%',

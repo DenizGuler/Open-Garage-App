@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, FlatList, AsyncStorage } from 'react-native';
 import 'react-native-gesture-handler';
 import { Header, Icon } from 'react-native-elements';
-import { getOGIP } from './utils';
+import { getOGIP, ScreenHeader } from './utils';
 
 export default LogScreen;
 
@@ -97,15 +97,10 @@ function LogScreen({ navigation }) {
 
   return (
     <View style={[styles.container, { alignItems: 'center' }]}>
-      <Header
-        containerStyle={styles.topNav}
-        statusBarProps={{
-          translucent: true
-        }}
-        backgroundColor="#d8d8d8"
-        leftComponent={<Icon name='menu' onPress={() => navigation.toggleDrawer()} />}
-        centerComponent={{ text: 'Log', style: { fontSize: 20 } }}
-        rightComponent={<Icon name='home' onPress={() => navigation.navigate('Home')} />}
+      <ScreenHeader
+        text={'Log'}
+        left={'hamburger'}
+        right={'home'}
       />
       <LogTable
         loading={loading}
@@ -128,15 +123,6 @@ function LogScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  topNav: {
-    width: '100%',
-    shadowOffset: {
-      width: 0,
-      height: 0,
-    },
-    shadowRadius: 2,
-  },
-
   container: {
     height: '100%',
     width: '100%',
