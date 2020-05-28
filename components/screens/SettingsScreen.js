@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Linking, ScrollView, AsyncStorage, Button, Keyboard, Platform } from 'react-native';
-import 'react-native-gesture-handler';
+import { StyleSheet, Text, View, Linking, ScrollView, AsyncStorage, Button, Alert } from 'react-native';
+// import 'react-native-gesture-handler';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Header, Icon } from 'react-native-elements';
-import { TouchableHighlight, TextInput, TouchableWithoutFeedback } from 'react-native-gesture-handler';
-import { getDevKey, getOGIP } from './utils'
+import { TouchableHighlight, TextInput } from 'react-native-gesture-handler';
+import { getDevKey, getOGIP, ScreenHeader } from './utils'
 
 export default SettingsStack;
 
@@ -26,7 +26,8 @@ const Setting = (props) => {
   )
 };
 
-function IPModal({ navigation, route }) {
+function IPModal({ navigation }) {
+  const [currIP, setCurrIP] = useState('');
   const [IP, setIP] = useState('');
   const [devKey, setDevKey] = useState('');
   // const { currIP } = route.params
@@ -57,20 +58,26 @@ function IPModal({ navigation, route }) {
       .catch((err) => console.log(err))
   }
 
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      getOGIP().then((OGIP) => setCurrIP(OGIP));
+    })
+    return unsubscribe;
+  }, []);
+
   return (
     <ScrollView
       contentContainerStyle={{ flexGrow: 1 }}
       keyboardShouldPersistTaps={"handled"}
     >
-      <Header
-        containerStyle={styles.topNav}
-        backgroundColor="#d8d8d8"
-        leftComponent={<Icon name='chevron-left' onPress={() => navigation.goBack()} />}
-        centerComponent={{ text: 'Set Device IP', style: { fontSize: 20 } }}
-        rightComponent={<Icon name='check' onPress={() => {
+      <ScreenHeader
+        text={'Set Device IP'}
+        left={'back'}
+        right={'check'}
+        onCheck={() => {
           updateParams();
-          navigation.navigate('Settings');
-        }} />}
+          navigation.goBack();
+        }}
       />
       <View style={styles.fsModal}>
         <Text style={styles.optionTitle}>IP:</Text>
@@ -78,7 +85,7 @@ function IPModal({ navigation, route }) {
           style={styles.optionInput}
           onChangeText={(text) => setIP(text)}
           value={IP}
-          placeholder={route.params.currIP}
+          placeholder={currIP}
           onSubmitEditing={() => setOGIP(IP)}
           autoCapitalize={"none"}
         />
@@ -110,13 +117,19 @@ function BasicSettings({ navigation, route }) {
       .then((req) => fetch(req))
       .then((response) => response.json())
       .then((json) => {
-        if (json.result == 1) {
-          navigation.navigate('Settings')
+        if (json.result === 1) {
+          navigation.goBack();
+        } else if (json.result === 2) {
+          Alert.alert('Invalid Device Key', 'The entered device key was rejected',
+            [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPModal') }])
         } else {
           console.log('ERROR CODE: ' + json.result)
         }
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        console.log(err)
+        Alert.alert('Invalid Device IP', 'Was not able to establish a connection with the entered device IP. Are you sure the IP is correct and the device is on?', [{ text: 'OK' }])
+      });
   }
 
   return (
@@ -124,12 +137,11 @@ function BasicSettings({ navigation, route }) {
       contentContainerStyle={{ flexGrow: 1 }}
       keyboardShouldPersistTaps={"handled"}
     >
-      <Header
-        containerStyle={styles.topNav}
-        backgroundColor="#d8d8d8"
-        leftComponent={<Icon name='chevron-left' onPress={() => navigation.goBack()} />}
-        centerComponent={{ text: 'Basic Settings', style: { fontSize: 20 } }}
-        rightComponent={<Icon name='check' onPress={() => updateBasicSettings()} />}
+      <ScreenHeader
+        text={'Basic Settings'}
+        left={'back'}
+        right={'check'}
+        onCheck={updateBasicSettings}
       />
       <View style={styles.fsModal}>
         <Text style={styles.optionTitle}>Device Name:</Text>
@@ -196,12 +208,10 @@ function SettingsScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Header
-        containerStyle={styles.topNav}
-        backgroundColor="#d8d8d8"
-        leftComponent={<Icon name='menu' onPress={() => navigation.toggleDrawer()} />}
-        centerComponent={{ text: 'Settings', style: { fontSize: 20 } }}
-        rightComponent={<Icon name='home' onPress={() => navigation.navigate('Home')} />}
+      <ScreenHeader
+        text={'Settings'}
+        left={'hamburger'}
+        right={'home'}
       />
       <TextPrompt
         hidden={hideIPPrompt}
@@ -247,9 +257,7 @@ function SettingsScreen({ navigation }) {
 function SettingsStack({ navigation }) {
   return (
     <Stack.Navigator
-      screenOptions={{
-        headerShown: false,
-      }}
+      screenOptions={{ headerShown: false }}
     >
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="IPModal" component={IPModal} />
@@ -259,10 +267,6 @@ function SettingsStack({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  topNav: {
-    width: '100%',
-  },
-
   container: {
     height: '100%',
     width: '100%',
