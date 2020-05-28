@@ -12,7 +12,7 @@ function HomeScreen({ navigation }) {
   const [notification, setNotification] = useState({});
 
   const registerForPushNotifAsync = async () => {
-    if (Constants.deviceId) {
+    if (Constants.isDevice) {
       // check if notifications permissions already granted
       const { status: existingStatus } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
       let finalStatus = existingStatus;
