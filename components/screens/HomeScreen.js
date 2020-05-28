@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Alert, TouchableOpacity, Platform } from 'react-native';
 import 'react-native-gesture-handler';
-import { Header, Icon } from 'react-native-elements';
 import { Notifications } from 'expo';
 import * as Permissions from 'expo-permissions';
 import Constants from 'expo-constants';

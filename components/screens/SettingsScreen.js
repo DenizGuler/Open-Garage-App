@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Linking, ScrollView, AsyncStorage, Button, Alert } from 'react-native';
-// import 'react-native-gesture-handler';
+import 'react-native-gesture-handler';
 import { createStackNavigator } from '@react-navigation/stack';
-import { Header, Icon } from 'react-native-elements';
 import { TouchableHighlight, TextInput } from 'react-native-gesture-handler';
 import { getDevKey, getOGIP, ScreenHeader } from './utils'
 

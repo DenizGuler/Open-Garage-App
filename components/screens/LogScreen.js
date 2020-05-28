@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, FlatList, AsyncStorage } from 'react-native';
+import { StyleSheet, Text, View, FlatList } from 'react-native';
 import 'react-native-gesture-handler';
-import { Header, Icon } from 'react-native-elements';
+import { Icon } from 'react-native-elements';
 import { getOGIP, ScreenHeader } from './utils';
 
 export default LogScreen;
