@@ -35,11 +35,19 @@ function HomeScreen({ navigation }) {
 
   // call registerForPushNotifAsync as soon as loaded (unless on web)
   useEffect(() => {
+    let pollInterval;
     if (Platform.OS !== 'web') {
       registerForPushNotifAsync();
     }
-    const unsubscribe = navigation.addListener('focus', grabInfo);
-    return unsubscribe;
+    const unsubFocus = navigation.addListener('focus', () => {
+      grabInfo();
+      pollInterval = setInterval(grabInfo, 5000);
+
+    });
+    const unsubBlur = navigation.addListener('blur', () => {
+      clearInterval(pollInterval);
+    })
+    return unsubFocus, unsubBlur;
   }, []);
 
   // states for grabInfo (can add more just name for now)
@@ -100,15 +108,15 @@ function HomeScreen({ navigation }) {
       />
       <View style={styles.center}>
         <TouchableOpacity
-          style={styles.bigButtonContainer}
+          style={[styles.bigButtonContainer, !doorStatus ? styles.red : styles.green]}
           onPress={toggleDoor}
           activeOpacity={0.5}
         >
           <Text style={styles.buttonText}>{doorStatus ? 'Close' : 'Open'}</Text>
         </TouchableOpacity>
-        <Text style={styles.largeText}>Status: {doorStatus ? 'Opened' : 'Closed'} </Text>
+        <Text style={styles.largeText}>Status: <Text style={doorStatus ? styles.redText : styles.greenText}>{doorStatus ? 'Opened' : 'Closed'}</Text></Text>
       </View>
-    </View>
+    </View >
   );
 }
 
@@ -128,11 +136,27 @@ const styles = StyleSheet.create({
   bigButtonContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
+    // borderWidth: 1,
     width: 200,
     height: 200,
     borderRadius: 100,
     backgroundColor: '#121212',
+  },
+
+  green: {
+    backgroundColor: '#12dd12'
+  },
+
+  red: {
+    backgroundColor: '#ff1212'
+  },
+
+  greenText: {
+    color: '#12dd12'
+  },
+
+  redText: {
+    color: '#ff1212'
   },
 
   buttonText: {
