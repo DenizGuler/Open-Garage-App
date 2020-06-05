@@ -7,7 +7,7 @@ import Constants from 'expo-constants';
 import { getDevKey, getOGIP, ScreenHeader } from './utils';
 
 function HomeScreen({ navigation }) {
-
+  let pollInterval;
   const [expoPushToken, setExpoPushToken] = useState('');
   const [notification, setNotification] = useState({});
 
@@ -35,7 +35,6 @@ function HomeScreen({ navigation }) {
 
   // call registerForPushNotifAsync as soon as loaded (unless on web)
   useEffect(() => {
-    let pollInterval;
     if (Platform.OS !== 'web') {
       registerForPushNotifAsync();
     }
@@ -65,6 +64,7 @@ function HomeScreen({ navigation }) {
         }
       })
       .catch((err) => {
+        clearInterval(pollInterval);
         Alert.alert('No Device Found', 'No device was found at the entered address',
           [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('Settings', { screen: 'IPModal' }) }])
         setName('No Device Connected')
