@@ -42,12 +42,12 @@ function IPModal({ navigation }) {
         const [currDev, devices] = await getDevices();
         // copy the array to change it
         if (devices === null) {
-          newDev = [{ id: 0 , OGIP: '', devKey: '' }];
+          newDev = [{ id: 0, OGIP: '', devKey: '' }];
         } else {
           newDev = devices.slice()
         }
         if (newDev[currDev] === undefined) {
-          newDev[currDev] = { id: currDev , OGIP: '', devKey: '' };
+          newDev[currDev] = { id: currDev, OGIP: '', devKey: '' };
         }
         newDev[currDev].OGIP = IP
         await setDevices(newDev);
@@ -64,12 +64,12 @@ function IPModal({ navigation }) {
       const [currDev, devices] = await getDevices();
       // copy the array to change it
       if (devices === null) {
-        newDev = [{ id: 0 , OGIP: '', devKey: '' }];
+        newDev = [{ id: 0, OGIP: '', devKey: '' }];
       } else {
-        newDev = devices.slice()        
+        newDev = devices.slice()
       }
       if (newDev[currDev] === undefined) {
-        newDev[currDev] = { id: currDev , OGIP: '', devKey: '' };
+        newDev[currDev] = { id: currDev, OGIP: '', devKey: '' };
       }
       newDev[currDev].devKey = key
       await setDevices(newDev);
@@ -435,7 +435,7 @@ function SettingsStack({ navigation }) {
 
   return (
     <Stack.Navigator
-    initialRouteName='Settings'
+      initialRouteName='Settings'
       screenOptions={{ headerShown: false }}
     >
       <Stack.Screen name="Settings" component={SettingsScreen} />

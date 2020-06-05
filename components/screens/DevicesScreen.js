@@ -47,7 +47,7 @@ export default function DevicesScreen({ navigation }) {
 
   const onAdd = () => {
     setCurrDev(devState.length)
-      .then(navigation.navigate('Settings', { screen: 'IPModal' }))
+      .then(navigation.navigate('Settings', { screen: 'IPModal', initial: false }))
   }
 
   const toggleDel = (index) => {
@@ -61,7 +61,7 @@ export default function DevicesScreen({ navigation }) {
   }
 
   const deleteDevs = () => {
-    devsToDel.forEach((index) => { removeDev(index) })
+    devsToDel.forEach((index) => { removeDev(index).then(() => startUp()) })
   }
 
   const buttonStyle = (index) => {
@@ -100,7 +100,6 @@ export default function DevicesScreen({ navigation }) {
             } }, { text: 'Confirm', onPress: () => {
               deleteDevs();
               setDeleteMode(false);
-              startUp();
             }}])
           }}
         />}
