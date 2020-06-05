@@ -3,26 +3,96 @@ import { AsyncStorage } from "react-native";
 import { Icon, Header } from "react-native-elements";
 import { useNavigation } from '@react-navigation/native';
 
-export const getDevKey = async () => {
+/*
+  device obj{
+    id: number,
+    OGIP: string,
+    devKey: string,
+  }
+*/
+
+// SETTERS
+
+// Set the device array to an array
+// setDevices(devArr: device[]): void
+export const setDevices = async (devArr) => {
   try {
-    const devKey = await AsyncStorage.getItem('devKey')
-    if (devKey !== null)
-      return devKey
+    await AsyncStorage.setItem('devices', JSON.stringify(devArr))
   } catch (err) {
     console.log(err)
   }
 }
 
-export const getOGIP = async () => {
+// Set the current device to the one at the provided index
+// setCurrDev(index: number): void
+export const setCurrDev = async (index) => {
   try {
-    const OGIP = await AsyncStorage.getItem('OGIP');
-    if (OGIP !== null) {
-      return OGIP
-    }
+    await AsyncStorage.setItem('currDev', JSON.stringify(index))
   } catch (err) {
     console.log(err)
   }
 }
+
+// GETTERS
+
+// Get index of device we are currently on and the list of devices
+// getDevices(): number, device[]
+export const getDevices = async () => {
+  try {
+    const currDev = await AsyncStorage.getItem('currDev');
+    const devices = await AsyncStorage.getItem('devices');
+    if (devices === null) {
+      await setCurrDev(0);
+      return [0, null];
+    }
+    // console.log(currDev + ", " + devices);
+    return [JSON.parse(currDev), JSON.parse(devices)];
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+// Get the device key of the current device
+// getDevKey(): string
+export const getDevKey = async () => {
+  try {
+    const [currDev, devices] = await getDevices();
+    return devices[currDev].devKey;
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+// Get the IP of the current device
+// getOGIP(): string
+export const getOGIP = async () => {
+  try {
+    const [currDev, devices] = await getDevices();
+    return devices[currDev].OGIP;
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+// HELPER METHODS
+
+// Remove the device at the given index. Returns the deleted device
+// removeDev(index: number): device
+export const removeDev = async (index) => {
+  try {
+    const [currDev, devices] = await getDevices();
+    if (currDev === index) {
+      setCurrDev(0);
+    }
+    let deleted = devices.splice(index, 1)
+    await setDevices(devices);
+    return deleted;
+  } catch (err) {
+    console.log(err)
+  }
+}
+
+// COMPONENTS
 
 export const ScreenHeader = (props) => {
   const navigation = useNavigation();
@@ -39,8 +109,10 @@ export const ScreenHeader = (props) => {
         comp = <Icon name='home' onPress={() => navigation.navigate('Home')} />;
         break;
       case 'check':
-        comp = <Icon name='check' onPress={() => { props.onCheck() }} />
+        comp = <Icon name='check' onPress={props.onCheck} />
         break;
+      case 'add':
+        comp = <Icon name='add' onPress={props.onAdd} />
       default:
         break;
     }

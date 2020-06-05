@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Linking, ScrollView, AsyncStorage, Button, Alert } from 'react-native';
+import { StyleSheet, Text, View, Linking, ScrollView, AsyncStorage, Button, Alert, Picker, Switch } from 'react-native';
 import 'react-native-gesture-handler';
 import { createStackNavigator } from '@react-navigation/stack';
 import { TouchableHighlight, TextInput } from 'react-native-gesture-handler';
-import { getDevKey, getOGIP, ScreenHeader } from './utils'
+import { getDevKey, getOGIP, ScreenHeader, getDevices, setDevices } from './utils'
+import { ButtonGroup, CheckBox } from 'react-native-elements';
+import { StackActions } from '@react-navigation/native';
 
 export default SettingsStack;
 
@@ -34,26 +36,52 @@ function IPModal({ navigation }) {
   useEffect(() => { getDevKey().then((key) => setDevKey(key)) }, [])
 
   const setOGIP = async (IP) => {
+    if (IP) {
+      let newDev;
+      try {
+        const [currDev, devices] = await getDevices();
+        // copy the array to change it
+        if (devices === null) {
+          newDev = [{ id: 0 , OGIP: '', devKey: '' }];
+        } else {
+          newDev = devices.slice()
+        }
+        if (newDev[currDev] === undefined) {
+          newDev[currDev] = { id: currDev , OGIP: '', devKey: '' };
+        }
+        newDev[currDev].OGIP = IP
+        await setDevices(newDev);
+        setIP(IP);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  };
+
+  const setOGDevKey = async (key) => {
+    let newDev;
     try {
-      await AsyncStorage.setItem('OGIP', IP);
-      setIP(IP);
+      const [currDev, devices] = await getDevices();
+      // copy the array to change it
+      if (devices === null) {
+        newDev = [{ id: 0 , OGIP: '', devKey: '' }];
+      } else {
+        newDev = devices.slice()        
+      }
+      if (newDev[currDev] === undefined) {
+        newDev[currDev] = { id: currDev , OGIP: '', devKey: '' };
+      }
+      newDev[currDev].devKey = key
+      await setDevices(newDev);
+      setDevKey(key);
     } catch (error) {
       console.log(error);
     }
   };
 
-  const setOGDevKey = async (key) => {
-    try {
-      await AsyncStorage.setItem('devKey', key);
-      setDevKey(key);
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
   const updateParams = () => {
     setOGDevKey(devKey)
-      .then(setOGIP(IP))
+      .then(() => setOGIP(IP))
       .catch((err) => console.log(err))
   }
 
@@ -103,14 +131,35 @@ function IPModal({ navigation }) {
 
 function BasicSettings({ navigation, route }) {
 
-  const [devName, setDevName] = useState('')
+  const [currParams, setCurrParams] = useState({});
+  const setParam = (param, val) => {
+    setCurrParams({
+      ...currParams,
+      [param]: val
+    });
+  }
+
+  const getCurrParams = () => {
+    getOGIP()
+      .then((OGIP) => fetch('http://' + OGIP + '/jo'))
+      .then((response) => response.json())
+      .then((json) => {
+        setCurrParams(json);
+      })
+      .catch((err) => {
+        Alert.alert('No Device Found', 'No device was found at the entered address',
+          [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPModal') }])
+        console.log(err);
+      })
+  }
 
   const updateBasicSettings = () => {
     getDevKey()
       .then((devKey) => 'http://' + route.params.OGIP + '/co?dkey=' + devKey)
       .then((req) => {
-        if (devName !== '')
-          return req + '&name=' + encodeURIComponent(devName);
+        Object.keys(currParams).forEach((key) => {
+          req += '&' + key + '=' + encodeURIComponent(currParams[key])
+        })
         return req
       })
       .then((req) => fetch(req))
@@ -131,10 +180,18 @@ function BasicSettings({ navigation, route }) {
       });
   }
 
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      getCurrParams();
+    });
+    return unsubscribe;
+  }, []);
+
   return (
     <ScrollView
-      contentContainerStyle={{ flexGrow: 1 }}
-      keyboardShouldPersistTaps={"handled"}
+      contentContainerStyle={{ flexGrow: 1, paddingBottom: 10 }}
+      keyboardShouldPersistTaps={'handled'}
+      stickyHeaderIndices={[0]}
     >
       <ScreenHeader
         text={'Basic Settings'}
@@ -146,9 +203,119 @@ function BasicSettings({ navigation, route }) {
         <Text style={styles.optionTitle}>Device Name:</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setDevName(text)}
-          value={devName}
+          onChangeText={(text) => setParam('name', text)}
+          value={currParams.name}
+          selectTextOnFocus
         />
+        <Text style={styles.optionTitle}>Door Sensor:</Text>
+        <View style={{ backgroundColor: '#fff', paddingVertical: 5 }}>
+          <Picker
+            style={styles.optionPicker}
+            // itemStyle={styles.optionInput}
+            selectedValue={currParams.mnt}
+            onValueChange={(type) => setParam('mnt', type)}
+          >
+            <Picker.Item label='Ceiling Mount' value={0} />
+            <Picker.Item label='Side Mount' value={1} />
+            {/* <Picker.Item label='Norm Closed Switch on GO4' value='' /> */}
+            {/* <Picker.Item label='Norm Open Switch on GO4' value='' /> */}
+          </Picker>
+        </View>
+        <Text style={styles.optionTitle}>Door Threshold (cm):</Text>
+        <TextInput
+          style={styles.optionInput}
+          onChangeText={(text) => setParam('dth', Number(text))}
+          value={'' + currParams.dth}
+          keyboardType={"number-pad"}
+          selectTextOnFocus
+        />
+        <Text style={styles.optionTitle}>Car Threshold (cm):</Text>
+        <TextInput
+          style={styles.optionInput}
+          onChangeText={(text) => setParam('vth', Number(text))}
+          value={'' + currParams.vth}
+          // defaultValue={'' + currParams.vth}
+          keyboardType={"number-pad"}
+          selectTextOnFocus
+        />
+        <Text style={styles.setttingSubText}>set to 0 to disable  </Text>
+        <Text style={styles.optionTitle}>Read Interval (s):</Text>
+        <TextInput
+          style={styles.optionInput}
+          onChangeText={(text) => setParam('riv', Number(text))}
+          value={'' + currParams.riv}
+          keyboardType={"number-pad"}
+          selectTextOnFocus
+        />
+        <Text style={styles.optionTitle}>Click Time (ms):</Text>
+        <TextInput
+          style={styles.optionInput}
+          onChangeText={(text) => setParam('cdt', Number(text))}
+          value={'' + currParams.cdt}
+          keyboardType={"number-pad"}
+          selectTextOnFocus
+        />
+        <Text style={styles.optionTitle}>Distance Read (ms):</Text>
+        <TextInput
+          style={styles.optionInput}
+          onChangeText={(text) => setParam('dri', Number(text))}
+          value={'' + currParams.dri}
+          keyboardType={"number-pad"}
+          selectTextOnFocus
+        />
+        <Text style={styles.optionTitle}>Sensor Timeout:</Text>
+        <ButtonGroup
+          onPress={(idx) => setParam('sto', idx)}
+          selectedIndex={currParams.sto}
+          buttons={['Ignore', 'Cap']}
+          containerStyle={{ width: '85%', alignSelf: 'center' }}
+        />
+        <Text style={styles.optionTitle}>Sound Alarm:</Text>
+        <View style={{ backgroundColor: '#fff', paddingVertical: 5 }}>
+          <Picker
+            style={styles.optionPicker}
+            selectedValue={currParams.alm}
+            onValueChange={(type) => setParam('alm', type)}
+          >
+            <Picker.Item label="Disabled" value={0} />
+            <Picker.Item label="5 seconds" value={1} />
+            <Picker.Item label="10 seconds" value={2} />
+          </Picker>
+        </View>
+        {/* <View style={{flex: 1, flexDirection:'row' , justifyContent: 'space-between'}}>
+          <Text style={styles.optionTitle}>Disable Alarm:</Text>
+          <CheckBox 
+            checked={}
+          />
+        </View> */}
+        <Text style={styles.optionTitle}>Log Size:</Text>
+        <View style={{ backgroundColor: '#fff', paddingVertical: 5 }}>
+          <Picker
+            style={styles.optionPicker}
+            selectedValue={currParams.lsz}
+            onValueChange={(type) => setParam('lsz', type)}
+          >
+            <Picker.Item label="20" value={20} />
+            <Picker.Item label="50" value={50} />
+            <Picker.Item label="100" value={100} />
+            <Picker.Item label="200" value={200} />
+            <Picker.Item label="400" value={400} />
+          </Picker>
+        </View>
+        <Text style={styles.optionTitle}>T/H Sensor:</Text>
+        <View style={{ backgroundColor: '#fff', paddingVertical: 5 }}>
+          <Picker
+            style={styles.optionPicker}
+            selectedValue={currParams.tsn}
+            onValueChange={(type) => setParam('tsn', type)}
+          >
+            <Picker.Item label="(none)" value={0} />
+            <Picker.Item label="AM2320 (I2C)" value={1} />
+            <Picker.Item label="DHT11 on G05" value={2} />
+            <Picker.Item label="DHT22 on G05" value={3} />
+            <Picker.Item label="DS18B20 on G05" value={4} />
+          </Picker>
+        </View>
       </View>
 
     </ScrollView>
@@ -247,6 +414,13 @@ function SettingsScreen({ navigation }) {
             });
           }}
         />
+        <Setting
+          text="Clear AsyncStorage"
+          subText="DEBUG"
+          onPress={() => {
+            AsyncStorage.clear()
+          }}
+        />
         <Text style={{ alignSelf: 'center' }}>App Version 0</Text>
       </ScrollView>
     </View>
@@ -254,8 +428,14 @@ function SettingsScreen({ navigation }) {
 }
 
 function SettingsStack({ navigation }) {
+
+  useEffect(() => {
+    StackActions.reset
+  }, [])
+
   return (
     <Stack.Navigator
+    initialRouteName='Settings'
       screenOptions={{ headerShown: false }}
     >
       <Stack.Screen name="Settings" component={SettingsScreen} />
@@ -351,7 +531,7 @@ const styles = StyleSheet.create({
 
   optionTitle: {
     fontSize: 26,
-    width: '100%',
+    // width: '100%',
     // borderBottomWidth: 1,
     // borderColor: '#aaa',
     padding: 8,
@@ -359,17 +539,21 @@ const styles = StyleSheet.create({
 
   optionInput: {
     width: '100%',
-    // height: 60,
     fontSize: 20,
-    // borderBottomWidth: 1,
+    color: '#000',
     backgroundColor: '#fff',
-    // borderColor: '#aaa',
-    // shadowColor: '#000',
-    // shadowOffset: {
-    //   width: 10,
-    //   height: 10,
-    // },
-    // shadowOpacity: 1.0,
+    padding: 10,
+  },
+
+  optionPicker: {
+    alignSelf: 'center',
+    width: '84%',
+    height: 40,
+    transform: [
+      { scaleX: 1.18 },
+      { scaleY: 1.18 },
+    ],
+    // backgroundColor: '#fff',
     padding: 10,
   },
 
