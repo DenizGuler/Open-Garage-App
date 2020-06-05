@@ -85,7 +85,7 @@ function LogScreen({ navigation }) {
   };
 
   // grab the logs as soon as possible
-  useEffect(() => { 
+  useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => grabLogs());
     return unsubscribe;
   }, []);
