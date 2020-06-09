@@ -123,10 +123,14 @@ export default function DevicesScreen({ navigation }) {
       style={styles.container}
       ListHeaderComponent={() =>
         <ScreenHeader
-          left="hamburger"
+          left={deleteMode ? "cancel" : "hamburger"}
           text="Devices"
           right={deleteMode ? "check" : "add"}
           onAdd={onAdd}
+          onCancel={() => {
+            setDevsToDel([]);
+            setDeleteMode(false);
+          }}
           onCheck={() => {
             Alert.alert("ARE YOU SURE ABOUT THAT?", "", [{
               text: 'Cancel', onPress: () => {
@@ -166,7 +170,7 @@ export default function DevicesScreen({ navigation }) {
             }
           >
             <View style={{ flex: 1, justifyContent: 'center' }}>
-              <Text style={[styles.deviceName, index === currState ? { color: '#12dd12' } : {}]}>{item.name === undefined ? 'Loading Device' : item.name }</Text>
+              <Text style={[styles.deviceName, index === currState ? { color: '#12dd12' } : {}]}>{item.name}</Text>
               <Text style={styles.devSubText}>{item.conInput}</Text>
             </View>
           </TouchableHighlight>

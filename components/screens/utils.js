@@ -179,6 +179,10 @@ export const ScreenHeader = (props) => {
         break;
       case 'add':
         comp = <Icon name='add' onPress={props.onAdd} />
+        break;
+      case 'cancel':
+        comp = <Icon name='close' onPress={props.onCancel} />
+        break;
       default:
         break;
     }
