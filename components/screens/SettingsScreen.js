@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Linking, ScrollView, AsyncStorage, Button, Alert, Picker, Switch } from 'react-native';
+import { StyleSheet, Text, View, Linking, ScrollView, AsyncStorage, Button, Alert, Picker } from 'react-native';
 import 'react-native-gesture-handler';
 import { createStackNavigator } from '@react-navigation/stack';
 import { TouchableHighlight, TextInput } from 'react-native-gesture-handler';
-import { getDevKey, getOGIP, ScreenHeader, getDevices, setDevices } from './utils'
+import { getDevKey, ScreenHeader, getDevices, setDevices, getURL, getConInput } from './utils'
 import { ButtonGroup, CheckBox } from 'react-native-elements';
-import { StackActions } from '@react-navigation/native';
+import { CommonActions } from '@react-navigation/native';
 
 export default SettingsStack;
 
@@ -28,74 +28,86 @@ const Setting = (props) => {
 };
 
 function IPModal({ navigation }) {
-  const [currIP, setCurrIP] = useState('');
-  const [IP, setIP] = useState('');
-  const [devKey, setDevKey] = useState('');
-  // const { currIP } = route.params
+  const CON_METHODS = ['IP', 'OTF']
 
-  useEffect(() => { getDevKey().then((key) => setDevKey(key)) }, [])
+  const [device, setDevice] = useState({
+    conMethod: 'IP',
+    conInput: '',
+    devKey: '',
+  });
 
-  const setOGIP = async (IP) => {
-    if (IP) {
-      let newDev;
-      try {
-        const [currDev, devices] = await getDevices();
-        // copy the array to change it
-        if (devices === null) {
-          newDev = [{ id: 0, OGIP: '', devKey: '' }];
-        } else {
-          newDev = devices.slice()
-        }
-        if (newDev[currDev] === undefined) {
-          newDev[currDev] = { id: currDev, OGIP: '', devKey: '' };
-        }
-        newDev[currDev].OGIP = IP
-        await setDevices(newDev);
-        setIP(IP);
-      } catch (error) {
-        console.log(error);
+  const setDeviceParam = (param, val) => {
+    setDevice({
+      ...device,
+      [param]: val,
+    });
+  }
+
+  useEffect(() => {
+    getDevices().then((tuple) => {
+      const [currIdx, devs] = tuple
+      if (devs !== null && devs[currIdx] !== undefined)
+        return setDevice(devs[currIdx])
+    })
+    // const unsubscribe = navigation.addListener('blur', () => {
+    //   navigation.dispatch(
+    //     CommonActions.reset({
+    //       index: 0,
+    //       routes: [{ name: 'Settings' }],
+    //     })
+    //   )
+    // })
+    // return unsubscribe
+  }, [])
+
+  const updateDeivce = async (param) => {
+
+    if (param === undefined || param === 'conMethod') {
+      // regex for an IP address (can probably be improved)
+      if (/^(?!0)(?!.*\.$)((1?\d?\d|25[0-5]|2[0-4]\d)(\.|$)){4}$/.test(device.conInput)) {
+        setDeviceParam('conMethod', 'IP')
+        device.conMethod = 'IP'
+      } else {
+        setDeviceParam('conMethod', 'OTF')
+        device.conMethod = 'OTF'
       }
     }
-  };
 
-  const setOGDevKey = async (key) => {
-    let newDev;
+    let newDevs;
     try {
       const [currDev, devices] = await getDevices();
       // copy the array to change it
       if (devices === null) {
-        newDev = [{ id: 0, OGIP: '', devKey: '' }];
+        newDevs = [{}];
       } else {
-        newDev = devices.slice()
+        newDevs = devices.slice()
       }
-      if (newDev[currDev] === undefined) {
-        newDev[currDev] = { id: currDev, OGIP: '', devKey: '' };
+      if (newDevs[currDev] === undefined) {
+        newDevs[currDev] = {};
       }
-      newDev[currDev].devKey = key
-      await setDevices(newDev);
-      setDevKey(key);
+      // console.log(device)
+      if (param === undefined) {
+        newDevs[currDev] = device
+      } else {
+        newDevs[currDev][param] = device[param]
+      }
+      console.log(newDevs)
+      await setDevices(newDevs);
+      // await setDevice(device);
     } catch (error) {
       console.log(error);
     }
-  };
-
-  const updateParams = () => {
-    setOGDevKey(devKey)
-      .then(() => setOGIP(IP))
-      .catch((err) => console.log(err))
   }
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      getOGIP().then((OGIP) => setCurrIP(OGIP));
-    })
-    return unsubscribe;
-  }, []);
+  const updateParams = () => {
+    updateDeivce().catch((err) => console.log(err))
+  }
 
   return (
     <ScrollView
       contentContainerStyle={{ flexGrow: 1 }}
       keyboardShouldPersistTaps={"handled"}
+      stickyHeaderIndices={[0]}
     >
       <ScreenHeader
         text={'Set Device IP'}
@@ -107,29 +119,43 @@ function IPModal({ navigation }) {
         }}
       />
       <View style={styles.fsModal}>
-        <Text style={styles.optionTitle}>IP:</Text>
+        <Text style={styles.optionTitle}>Connection Method:</Text>
+        <ButtonGroup
+          onPress={(idx) => setDeviceParam('conMethod', CON_METHODS[idx])}
+          selectedIndex={CON_METHODS.indexOf(device.conMethod)}
+          buttons={['IP', 'OTF']}
+          containerStyle={{ width: '85%', alignSelf: 'center' }}
+          disabled
+        />
+        <Text style={styles.optionTitle}>IP or OTF Token:</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setIP(text)}
-          value={IP}
-          placeholder={currIP}
-          onSubmitEditing={() => setOGIP(IP)}
+          onChangeText={(text) => setDeviceParam('conInput', text)}
+          value={device.conInput}
+          placeholder={'e.g.: 127.0.0.1 or [token]'}
+          onSubmitEditing={() => {
+            updateDeivce('conInput')
+              .then(() => updateDeivce('conMethod'))
+          }}
           autoCapitalize={"none"}
+          selectTextOnFocus
         />
         <Text style={styles.optionTitle}>Device Key:</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setDevKey(text)}
-          value={devKey}
-          onSubmitEditing={() => setOGDevKey(devKey)}
+          onChangeText={(text) => setDeviceParam('devKey', text)}
+          value={device.devKey}
+          onSubmitEditing={() => updateDeivce('devKey')}
           secureTextEntry
+          selectTextOnFocus
         />
+        {/* <Text>{JSON.stringify(device)}</Text> */}
       </View>
     </ScrollView>
   );
 }
 
-function BasicSettings({ navigation, route }) {
+function BasicSettings({ navigation }) {
 
   const [currParams, setCurrParams] = useState({});
   const setParam = (param, val) => {
@@ -140,8 +166,8 @@ function BasicSettings({ navigation, route }) {
   }
 
   const getCurrParams = () => {
-    getOGIP()
-      .then((OGIP) => fetch('http://' + OGIP + '/jo'))
+    getURL()
+      .then((url) => fetch(url + '/jo'))
       .then((response) => response.json())
       .then((json) => {
         setCurrParams(json);
@@ -154,13 +180,16 @@ function BasicSettings({ navigation, route }) {
   }
 
   const updateBasicSettings = () => {
-    getDevKey()
-      .then((devKey) => 'http://' + route.params.OGIP + '/co?dkey=' + devKey)
+    Promise.all([getURL(), getDevKey()])
+      .then((values) => {
+        const [url, devKey] = values;
+        return url + '/co?dkey=' + devKey;
+      })
       .then((req) => {
         Object.keys(currParams).forEach((key) => {
-          req += '&' + key + '=' + encodeURIComponent(currParams[key])
+          req += '&' + key + '=' + encodeURIComponent(currParams[key]);
         })
-        return req
+        return req;
       })
       .then((req) => fetch(req))
       .then((response) => response.json())
@@ -361,13 +390,13 @@ const TextPrompt = (props) => {
 
 function SettingsScreen({ navigation }) {
   const [hideIPPrompt, setHideIPPrompt] = useState(true);
-  const [IP, setIP] = useState('');
+  const [conInput, setConInput] = useState('');
 
   const docs = 'https://nbviewer.jupyter.org/github/OpenGarage/OpenGarage-Firmware/blob/master/docs/OGManual.pdf';
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
-      getOGIP().then((OGIP) => setIP(OGIP));
+      getConInput().then((conInput) => setConInput(conInput));
     })
     return unsubscribe;
   }, []);
@@ -379,27 +408,27 @@ function SettingsScreen({ navigation }) {
         left={'hamburger'}
         right={'home'}
       />
-      <TextPrompt
+      {/* <TextPrompt
         hidden={hideIPPrompt}
         hider={setHideIPPrompt}
         value={IP}
         setter={setIP}
         // submitter={setOGIP}
         getter={getOGIP}
-      />
+      /> */}
       <ScrollView contentContainerStyle={styles.list}>
         <Setting
           text="Open Garage Device IP & Key"
-          subText={IP}
+          subText={conInput}
           onPress={() =>
             //setHideIPPrompt(!hideIPPrompt)
-            navigation.navigate('IPModal', { currIP: IP })
+            navigation.navigate('IPModal')
           }
         />
         <Setting
           text="Basic Device Settings"
           subText={'Configure basic settings'}
-          onPress={() => navigation.navigate('BasicSettings', { OGIP: IP })}
+          onPress={() => navigation.navigate('BasicSettings')}
         />
         <Setting
           text="Documentation"
@@ -429,13 +458,20 @@ function SettingsScreen({ navigation }) {
 
 function SettingsStack({ navigation }) {
 
-  useEffect(() => {
-    StackActions.reset
-  }, [])
+  // useEffect(() => {
+  //   const unsubscribe = navigation.addListener('blur', () => {
+  //     navigation.dispatch(
+  //       CommonActions.reset({
+  //         index: 0,
+  //         routes: [{ name: 'Settings' }],
+  //       })
+  //     )
+  //   })
+  //   return unsubscribe
+  // }, [navigation])
 
   return (
     <Stack.Navigator
-      initialRouteName='Settings'
       screenOptions={{ headerShown: false }}
     >
       <Stack.Screen name="Settings" component={SettingsScreen} />
