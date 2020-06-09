@@ -214,7 +214,7 @@ function BasicSettings({ navigation }) {
       getCurrParams();
     });
     return unsubscribe;
-  }, []);
+  }, [navigation]);
 
   return (
     <ScrollView
