@@ -15,11 +15,6 @@ export default function App() {
     <NavigationContainer>
       <Drawer.Navigator
         initialRouteName='Home'
-        screenOptions={{
-          headerStyle: {
-            backgroundColor: '#fff',
-          },
-        }}
       >
         <Drawer.Screen name='Home' component={HomeScreen} />
         <Drawer.Screen name='Log' component={LogScreen} />
