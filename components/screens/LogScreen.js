@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, FlatList } from 'react-native';
 import 'react-native-gesture-handler';
 import { Icon } from 'react-native-elements';
-import { getOGIP, ScreenHeader } from './utils';
+import { getURL, ScreenHeader } from './utils';
 
 export default LogScreen;
 
@@ -66,17 +66,17 @@ function LogScreen({ navigation }) {
   // fetch the logs from https://OGIP/jl
   const grabLogs = async () => {
     setLoading(true);
-    let OGIP = await getOGIP();
-    if (OGIP === '') {
+    let url = await getURL();
+    if (url === '') {
       setLogs([]);
       return;
     }
-    fetch('http://' + OGIP + '/jl')
+    fetch(url + '/jl')
       .then((response) => response.json())
       .then((json) => setLogs(json.logs))
-      .catch((error) => {
+      .catch((err) => {
         setLogs([]);
-        console.log(error);
+        console.log(err);
       })
       .finally(() => {
         setLoading(false);
@@ -88,7 +88,7 @@ function LogScreen({ navigation }) {
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => grabLogs());
     return unsubscribe;
-  }, []);
+  }, [navigation]);
 
   const refreshLogs = async () => {
     setRefreshing(true);

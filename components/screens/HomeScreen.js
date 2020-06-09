@@ -4,13 +4,15 @@ import 'react-native-gesture-handler';
 import { Notifications } from 'expo';
 import * as Permissions from 'expo-permissions';
 import Constants from 'expo-constants';
-import { getDevKey, getOGIP, ScreenHeader } from './utils';
+import { getDevKey, ScreenHeader, getURL } from './utils';
 
 function HomeScreen({ navigation }) {
   let pollInterval;
   const [expoPushToken, setExpoPushToken] = useState('');
   const [notification, setNotification] = useState({});
 
+  // registers device for Expo push notifications ands sets the expoPushToken state to this device's
+  // expo push token, we can use this with FCM, APNS, OTF, or HTTP requests.
   const registerForPushNotifAsync = async () => {
     if (Constants.isDevice) {
       // check if notifications permissions already granted
@@ -29,7 +31,7 @@ function HomeScreen({ navigation }) {
       console.log(token);
       setExpoPushToken(token);
     } else {
-      Alert.alert('must be a physical device to receive push notificaitons')
+      // Alert.alert('must be a physical device to receive push notificaitons')
     }
   }
 
@@ -46,16 +48,22 @@ function HomeScreen({ navigation }) {
     const unsubBlur = navigation.addListener('blur', () => {
       clearInterval(pollInterval);
     })
-    return unsubFocus, unsubBlur;
-  }, []);
+    return () => {
+      unsubFocus;
+      unsubBlur;
+    }
+  }, [navigation]);
 
   // states for grabInfo (can add more just name for now)
   const [name, setName] = useState('')
   const [doorStatus, setDoorStatus] = useState(true);
 
   const grabInfo = function () {
-    getOGIP()
-      .then((OGIP) => fetch('http://' + OGIP + '/jc'))
+    getURL()
+      .then((url) => {
+        console.log(url + '/jc')
+        return fetch(url + '/jc')
+      })
       .then((response) => response.json())
       .then((json) => {
         if (json) {
@@ -66,7 +74,7 @@ function HomeScreen({ navigation }) {
       .catch((err) => {
         clearInterval(pollInterval);
         Alert.alert('No Device Found', 'No device was found at the entered address',
-          [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('Settings', { screen: 'IPModal', initial: false }) }])
+          [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('Settings', { screen: 'IPModal' }) }])
         setName('No Device Connected')
         console.log(err);
       })
@@ -74,9 +82,9 @@ function HomeScreen({ navigation }) {
 
   const toggleDoor = function () {
     let req = ''
-    getOGIP()
-      .then((OGIP) => {
-        req += 'http://' + OGIP
+    getURL()
+      .then((url) => {
+        req += url
         let devKey = getDevKey();
         return devKey
       })
@@ -92,7 +100,7 @@ function HomeScreen({ navigation }) {
           setDoorStatus(!doorStatus)
         } else if (json.result === 2) {
           Alert.alert('Invalid Device Key', 'The entered device key was rejected',
-            [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('Settings', { screen: 'IPModal', initial: false }) }])
+            [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('Settings', { screen: 'IPModal' }) }])
         } else {
           console.log(json.result)
         }
@@ -144,19 +152,19 @@ const styles = StyleSheet.create({
   },
 
   green: {
-    backgroundColor: '#12dd12'
+    backgroundColor: '#2a2'
   },
 
   red: {
-    backgroundColor: '#ff1212'
+    backgroundColor: '#a22'
   },
 
   greenText: {
-    color: '#12dd12'
+    color: '#2a2'
   },
 
   redText: {
-    color: '#ff1212'
+    color: '#a22'
   },
 
   buttonText: {
