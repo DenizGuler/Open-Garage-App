@@ -4,7 +4,7 @@ import 'react-native-gesture-handler';
 import { createStackNavigator } from '@react-navigation/stack';
 import { TouchableHighlight, TextInput, TouchableOpacity } from 'react-native-gesture-handler';
 import { getDevKey, ScreenHeader, getDevices, setDevices, getURL, getConInput } from './utils'
-import { ButtonGroup, CheckBox } from 'react-native-elements';
+import { ButtonGroup } from 'react-native-elements';
 import { CommonActions } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
@@ -108,7 +108,6 @@ function IPModal({ navigation }) {
         right={'check'}
         onCheck={() => {
           updateParams().then(() => {
-            navigation.popToTop();
             navigation.goBack();
           });
         }}

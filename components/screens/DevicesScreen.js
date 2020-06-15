@@ -57,7 +57,7 @@ export default function DevicesScreen({ navigation }) {
           return false;
         }
       };
-      
+
       BackHandler.addEventListener('hardwareBackPress', onBackPress);
 
       return () =>
@@ -112,71 +112,74 @@ export default function DevicesScreen({ navigation }) {
       height: 60,
       alignSelf: 'stretch',
       paddingHorizontal: 10,
-      margin: 5,
+      marginVertical: 2,
       borderRadius: 3,
       backgroundColor: bgColor,
     }
   }
 
   return (
-    <FlatList
-      style={styles.container}
-      ListHeaderComponent={() =>
-        <ScreenHeader
-          left={deleteMode ? "cancel" : "hamburger"}
-          text="Devices"
-          right={deleteMode ? "check" : "add"}
-          onAdd={onAdd}
-          onCancel={() => {
-            setDevsToDel([]);
-            setDeleteMode(false);
-          }}
-          onCheck={() => {
-            Alert.alert("ARE YOU SURE ABOUT THAT?", "", [{
-              text: 'Cancel', onPress: () => {
-                setDevsToDel([]);
-                setDeleteMode(false);
-              }
-            }, {
-              text: 'Confirm', onPress: () => {
-                deleteDevs();
-                setDeleteMode(false);
-              }
-            }])
-          }}
-        />}
-      data={devState}
-      keyExtractor={(item, index) => index.toString()}
-      renderItem={({ item, index }) => {
-        return (
-          <TouchableHighlight
-            style={buttonStyle(index)}
-            underlayColor="#e0efff"
-            activeOpacity={1}
-            onPress={() => {
-              if (!deleteMode) {
-                setCurrIndex(index).then(() => setCurrState(index));
-                // navigation.navigate('Home')
-              } else {
-                toggleDel(index);
-              }
-            }}
-            onLongPress={
-              () => {
-                Vibration.vibrate(100)
-                setDeleteMode(true);
-                toggleDel(index)
-              }
+    <View style={styles.container}>
+      <ScreenHeader
+        left={deleteMode ? "cancel" : "hamburger"}
+        text="Devices"
+        right={deleteMode ? "check" : "add"}
+        onAdd={onAdd}
+        onCancel={() => {
+          setDevsToDel([]);
+          setDeleteMode(false);
+        }}
+        onCheck={() => {
+          Alert.alert("ARE YOU SURE ABOUT THAT?", "", [{
+            text: 'Cancel', onPress: () => {
+              setDevsToDel([]);
+              setDeleteMode(false);
             }
-          >
-            <View style={{ flex: 1, justifyContent: 'center' }}>
-              <Text style={[styles.deviceName, index === currState ? { color: '#12dd12' } : {}]}>{item.name}</Text>
-              <Text style={styles.devSubText}>{item.conInput}</Text>
-            </View>
-          </TouchableHighlight>
-        )
-      }}
-    />
+          }, {
+            text: 'Confirm', onPress: () => {
+              deleteDevs();
+              setDeleteMode(false);
+            }
+          }])
+        }}
+      />
+
+      <FlatList
+        style={styles.list}
+        data={devState}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item, index }) => {
+          return (
+            <TouchableHighlight
+              style={buttonStyle(index)}
+              underlayColor="#e0efff"
+              activeOpacity={1}
+              onPress={() => {
+                if (!deleteMode) {
+                  setCurrIndex(index).then(() => setCurrState(index));
+                  // navigation.navigate('Home')
+                } else {
+                  toggleDel(index);
+                }
+              }}
+              onLongPress={
+                () => {
+                  Vibration.vibrate(100)
+                  setDeleteMode(true);
+                  toggleDel(index)
+                }
+              }
+            >
+              <View style={{ flex: 1, justifyContent: 'center' }}>
+                <Text style={[styles.deviceName, index === currState ? { color: '#12dd12' } : {}]}>{item.name}</Text>
+                <Text style={styles.devSubText}>{item.conInput}</Text>
+              </View>
+            </TouchableHighlight>
+          )
+        }}
+      />
+    </View>
+
   );
 }
 
@@ -186,8 +189,20 @@ export default function DevicesScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     height: '100%',
+    marginBottom: 10,
     width: '100%',
     backgroundColor: '#fff',
+
+  },
+
+  list: {
+    display: 'flex',
+    maxWidth: 600,
+    width: '100%',
+    padding: 5,
+    flex: 1,
+    flexDirection: 'column',
+    alignSelf: 'center',
   },
 
   deviceName: {

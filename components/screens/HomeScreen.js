@@ -6,8 +6,9 @@ import * as Permissions from 'expo-permissions';
 import Constants from 'expo-constants';
 import { getDevKey, ScreenHeader, getURL } from './utils';
 
+export default HomeScreen;
+
 function HomeScreen({ navigation }) {
-  let pollInterval;
   const [expoPushToken, setExpoPushToken] = useState('');
   const [notification, setNotification] = useState({});
 
@@ -40,10 +41,14 @@ function HomeScreen({ navigation }) {
     if (Platform.OS !== 'web') {
       registerForPushNotifAsync();
     }
+  }, [])
+
+  // grab info every 5 seconds while focused on the Home screen
+  let pollInterval;
+  useEffect(() => {
     const unsubFocus = navigation.addListener('focus', () => {
       grabInfo();
       pollInterval = setInterval(grabInfo, 5000);
-
     });
     const unsubBlur = navigation.addListener('blur', () => {
       clearInterval(pollInterval);
@@ -61,7 +66,6 @@ function HomeScreen({ navigation }) {
   const grabInfo = function () {
     getURL()
       .then((url) => {
-        console.log(url + '/jc')
         return fetch(url + '/jc')
       })
       .then((response) => response.json())
@@ -97,7 +101,7 @@ function HomeScreen({ navigation }) {
       .then((json) => {
         if (json.result === 1) {
           // we can have the device send a notification and force an update instead of manually setting the door's status
-          setDoorStatus(!doorStatus)
+          // setDoorStatus(!doorStatus)
         } else if (json.result === 2) {
           Alert.alert('Invalid Device Key', 'The entered device key was rejected',
             [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('Settings', { screen: 'IPModal' }) }])
@@ -176,5 +180,3 @@ const styles = StyleSheet.create({
     fontSize: 40,
   },
 });
-
-export default HomeScreen;
