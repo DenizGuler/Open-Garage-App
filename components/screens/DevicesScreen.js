@@ -76,7 +76,7 @@ export default function DevicesScreen({ navigation }) {
   // onAdd():void
   const onAdd = () => {
     setCurrIndex(devState?.length ? devState.length : 0)
-      .then(navigation.navigate('Settings', { screen: 'IPModal' }))
+      .then(navigation.navigate('IPModal'))
   }
 
   // Function that handles marking devices for deletion

@@ -1,16 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Linking, ScrollView, AsyncStorage, Button, Alert, Picker, Switch, Vibration } from 'react-native';
 import 'react-native-gesture-handler';
-import { createStackNavigator } from '@react-navigation/stack';
 import { TouchableHighlight, TextInput, TouchableOpacity } from 'react-native-gesture-handler';
 import { getDevKey, ScreenHeader, getDevices, setDevices, getURL, getConInput } from './utils'
 import { ButtonGroup } from 'react-native-elements';
-import { CommonActions } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-export default SettingsStack;
-
-const Stack = createStackNavigator();
 
 const Setting = (props) => {
   return (
@@ -28,7 +23,7 @@ const Setting = (props) => {
   )
 };
 
-function IPModal({ navigation }) {
+export function IPModal({ navigation }) {
   const CON_METHODS = ['IP', 'OTF']
 
   const [device, setDevice] = useState({
@@ -84,7 +79,6 @@ function IPModal({ navigation }) {
       } else {
         newDevs[currDev][param] = device[param]
       }
-      console.log(newDevs)
       await setDevices(newDevs);
       // await setDevice(device);
     } catch (error) {
@@ -150,7 +144,7 @@ function IPModal({ navigation }) {
   );
 }
 
-function BasicSettings({ navigation }) {
+export function BasicSettings({ navigation }) {
   const [currParams, setCurrParams] = useState({});
   const setParam = (param, val) => {
     setCurrParams({
@@ -345,7 +339,7 @@ function BasicSettings({ navigation }) {
   )
 }
 
-function IntegrationSettings({ navigation }) {
+export function IntegrationSettings({ navigation }) {
   const [currParams, setCurrParams] = useState({});
   const setParam = (param, val) => {
     setCurrParams({
@@ -563,7 +557,7 @@ function IntegrationSettings({ navigation }) {
   )
 }
 
-function AdvancedSettings({ navigation }) {
+export function AdvancedSettings({ navigation }) {
   const [changingKey, setChangingKey] = useState(false);
   const [currParams, setCurrParams] = useState({});
   const setParam = (param, val) => {
@@ -743,7 +737,7 @@ const TextPrompt = (props) => {
   return null;
 }
 
-function SettingsScreen({ navigation }) {
+export default function SettingsScreen({ navigation }) {
   const [hideIPPrompt, setHideIPPrompt] = useState(true);
   const [conInput, setConInput] = useState('');
 
@@ -818,20 +812,6 @@ function SettingsScreen({ navigation }) {
         <Text style={{ alignSelf: 'center' }}>App Version 0</Text>
       </ScrollView>
     </View>
-  );
-}
-
-function SettingsStack({ navigation }) {
-  return (
-    <Stack.Navigator
-      screenOptions={{ headerShown: false }}
-    >
-      <Stack.Screen name="Settings" component={SettingsScreen} />
-      <Stack.Screen name="IPModal" component={IPModal} />
-      <Stack.Screen name="BasicSettings" component={BasicSettings} />
-      <Stack.Screen name="IntegrationSettings" component={IntegrationSettings} />
-      <Stack.Screen name="AdvancedSettings" component={AdvancedSettings} />
-    </Stack.Navigator>
   );
 }
 

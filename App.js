@@ -3,24 +3,39 @@ import 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createStackNavigator } from '@react-navigation/stack';
-import { HomeScreen, LogScreen, SettingsStack, DevicesScreen } from './components/screens/';
+import { HomeScreen, LogScreen, SettingsScreen, DevicesScreen } from './components/screens/';
+import * as Settings from './components/screens/SettingsScreen';
 // import EventEmitter from 'events';
 
-const Drawer = createDrawerNavigator();
+const MainDrawer = createDrawerNavigator();
+const RootStack = createStackNavigator();
+
+function MainDrawerScreen() {
+  return (
+    <MainDrawer.Navigator
+      initialRouteName='Home'
+    >
+      <MainDrawer.Screen name='Home' component={HomeScreen} />
+      <MainDrawer.Screen name='Log' component={LogScreen} />
+      <MainDrawer.Screen name='Settings' component={SettingsScreen} />
+      <MainDrawer.Screen name='Devices' component={DevicesScreen} />
+    </MainDrawer.Navigator>
+  )
+}
 
 export default function App() {
-  // const emiter = new EventEmitter();
-
   return (
     <NavigationContainer>
-      <Drawer.Navigator
-        initialRouteName='Home'
+      <RootStack.Navigator
+        screenOptions={{ headerShown: false }}
+        initialRouteName='Main'
       >
-        <Drawer.Screen name='Home' component={HomeScreen} />
-        <Drawer.Screen name='Log' component={LogScreen} />
-        <Drawer.Screen name='Settings' component={SettingsStack} />
-        <Drawer.Screen name='Devices' component={DevicesScreen} />
-      </Drawer.Navigator>
+        <RootStack.Screen name='Main' component={MainDrawerScreen} />
+        <RootStack.Screen name='IPModal' component={Settings.IPModal} />
+        <RootStack.Screen name='BasicSettings' component={Settings.BasicSettings} />
+        <RootStack.Screen name='IntegrationSettings' component={Settings.IntegrationSettings} />
+        <RootStack.Screen name='AdvancedSettings' component={Settings.AdvancedSettings} />
+      </RootStack.Navigator>
     </NavigationContainer>
   );
 }
