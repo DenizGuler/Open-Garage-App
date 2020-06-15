@@ -1,5 +1,5 @@
 import React from 'react';
-import { AsyncStorage } from "react-native";
+import { AsyncStorage, StyleSheet } from "react-native";
 import { Icon, Header } from "react-native-elements";
 import { useNavigation } from '@react-navigation/native';
 
@@ -191,12 +191,28 @@ export const ScreenHeader = (props) => {
 
   return (
     <Header
-      containerStyle={{ width: '100%' }}
+      containerStyle={style.header}
       statusBarProps={{ translucent: true }}
-      backgroundColor="#d8d8d8"
+      backgroundColor="#fff"
       leftComponent={HeaderComponent(props.left)}
-      centerComponent={{ text: props.text, style: { fontSize: 20 } }}
+      centerComponent={{ text: props.text, style: { fontSize: 24 } }}
       rightComponent={HeaderComponent(props.right)}
     />
   );
 }
+
+const style = StyleSheet.create({
+  header: {
+    zIndex: 1,
+    width: '100%',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.34,
+    shadowRadius: 6.27,
+
+    elevation: 10,
+  },
+})
