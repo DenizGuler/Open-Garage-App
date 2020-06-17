@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { StyleSheet, Text, View, FlatList } from 'react-native';
 import 'react-native-gesture-handler';
 import { Icon } from 'react-native-elements';
 import { getURL, ScreenHeader } from './utils';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default LogScreen;
 
@@ -26,7 +27,7 @@ const LogTable = (props) => {
       </View>
     );
   }
-
+  // sort logs by time
   props.logs.sort((a, b) => (b[0] - a[0]))
   return (
     <FlatList
@@ -50,7 +51,7 @@ const LogTable = (props) => {
         }}>
           <Text style={styles.tableItem}>{item[1] ? 'Opened' : 'Closed'}</Text>
           <Text style={[styles.tableItem, { flexGrow: 2 }]}>{new Date(item[0] * 1000).toLocaleString()}</Text>
-          <Text style={styles.tableItem}>{item[2]} cm</Text>
+          <Text style={[styles.tableItem, { borderRightWidth: 1 }]}>{item[2]} cm</Text>
         </View>
       )}
     />
@@ -85,10 +86,11 @@ function LogScreen({ navigation }) {
   };
 
   // grab the logs as soon as possible
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => grabLogs());
-    return unsubscribe;
-  }, [navigation]);
+  useFocusEffect(
+    useCallback(() => {
+      grabLogs();
+    }, [])
+  )
 
   const refreshLogs = async () => {
     setRefreshing(true);
@@ -112,8 +114,8 @@ function LogScreen({ navigation }) {
             return (
               <View style={{ flex: 1, flexDirection: 'row', width: '100%' }}>
                 <Text style={[styles.tableItem, styles.tableHeader]}>Event</Text>
-                <Text style={[styles.tableItem, styles.tableHeader, { flexGrow: 2 }]}>Date &amp; Time</Text>
-                <Text style={[styles.tableItem, styles.tableHeader]}>Details</Text>
+                <Text style={[styles.tableItem, styles.tableHeader, { flexGrow: 2, }]}>Date &amp; Time</Text>
+                <Text style={[styles.tableItem, styles.tableHeader, { borderRightWidth: 1 }]}>Details</Text>
               </View>
             )
           }}
@@ -145,12 +147,14 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     height: 50,
     textAlignVertical: 'center',
-    borderWidth: 1,
+    borderLeftWidth: 1,
+    borderBottomWidth: 1,
     padding: 5,
   },
 
   tableHeader: {
     fontSize: 18,
     fontWeight: 'bold',
+    borderTopWidth: 1,
   },
 });
