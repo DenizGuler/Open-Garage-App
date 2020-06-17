@@ -78,7 +78,7 @@ function HomeScreen({ navigation }) {
       .catch((err) => {
         clearInterval(pollInterval);
         Alert.alert('No Device Found', 'No device was found at the entered address',
-          [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPModal') }])
+          [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
         setName('No Device Connected')
         console.log(err);
       })
@@ -104,14 +104,14 @@ function HomeScreen({ navigation }) {
           // setDoorStatus(!doorStatus)
         } else if (json.result === 2) {
           Alert.alert('Invalid Device Key', 'The entered device key was rejected',
-            [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPModal') }])
+            [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
         } else {
           console.log(json.result);
         }
       })
       .catch((err) => {
         Alert.alert('No Device Found', 'No device was found at the entered address',
-          [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPModal') }])
+          [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
         console.log(err)
       })
   }

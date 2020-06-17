@@ -7,7 +7,9 @@ import { HomeScreen, LogScreen, SettingsScreen, DevicesScreen } from './componen
 import * as Settings from './components/screens/SettingsScreen';
 // import EventEmitter from 'events';
 
+// Main drawer where all 'main' screens are held (i.e.: Home, Settings, etc.)
 const MainDrawer = createDrawerNavigator();
+// The 'root' stack used to have all 'pop-up/modal' screens show up on top of any main screens
 const RootStack = createStackNavigator();
 
 function MainDrawerScreen() {
@@ -31,7 +33,7 @@ export default function App() {
         initialRouteName='Main'
       >
         <RootStack.Screen name='Main' component={MainDrawerScreen} />
-        <RootStack.Screen name='IPModal' component={Settings.IPModal} />
+        <RootStack.Screen name='IPSettings' component={Settings.IPSettings} />
         <RootStack.Screen name='BasicSettings' component={Settings.BasicSettings} />
         <RootStack.Screen name='IntegrationSettings' component={Settings.IntegrationSettings} />
         <RootStack.Screen name='AdvancedSettings' component={Settings.AdvancedSettings} />

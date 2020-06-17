@@ -17,10 +17,11 @@ export default function DevicesScreen({ navigation }) {
       .then((tuple) => {
         const [curr, devs] = tuple
         setCurrState(curr);
-        // setDevState(devs);
+        setDevState(devs);
         return devs;
       })
-      .then((devs) => getNames(devs));
+      .then((devs) => getNames(devs))
+      .catch((err) => console.log(err));
   }
 
   // function that grabs all the names of a given array of devices
@@ -48,6 +49,11 @@ export default function DevicesScreen({ navigation }) {
   useFocusEffect(
     useCallback(() => {
       startUp();
+    }, [])
+  )
+
+  useFocusEffect(
+    useCallback(() => {
       const onBackPress = () => {
         if (deleteMode) {
           setDevsToDel([])
@@ -72,11 +78,11 @@ export default function DevicesScreen({ navigation }) {
   //   return unsubscribe;
   // }, [navigation]);
 
-  // Function that handles adding a new device by incrementing the device number and sending the user to the IPModal to set it up
+  // Function that handles adding a new device by incrementing the device number and sending the user to the IPSettings to set it up
   // onAdd():void
   const onAdd = () => {
     setCurrIndex(devState?.length ? devState.length : 0)
-      .then(navigation.navigate('IPModal'))
+      .then(navigation.navigate('IPSettings'))
   }
 
   // Function that handles marking devices for deletion
@@ -148,6 +154,9 @@ export default function DevicesScreen({ navigation }) {
         style={styles.list}
         data={devState}
         keyExtractor={(item, index) => index.toString()}
+        ListFooterComponent={
+          <Text style={{ alignSelf: 'center', fontSize: 14, color: '#aaa' }}>Hold down on a device to toggle deletion mode.</Text>
+        }
         renderItem={({ item, index }) => {
           return (
             <TouchableHighlight

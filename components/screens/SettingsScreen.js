@@ -1,29 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Linking, ScrollView, AsyncStorage, Button, Alert, Picker, Switch, Vibration } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { StyleSheet, Text, View, Linking, ScrollView, AsyncStorage, Button, Alert, Picker, Switch, Vibration, Platform } from 'react-native';
 import 'react-native-gesture-handler';
 import { TouchableHighlight, TextInput, TouchableOpacity } from 'react-native-gesture-handler';
 import { getDevKey, ScreenHeader, getDevices, setDevices, getURL, getConInput } from './utils'
 import { ButtonGroup } from 'react-native-elements';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useFocusEffect } from '@react-navigation/native';
 
 
 const Setting = (props) => {
   return (
-    <TouchableHighlight
-      style={styles.settingButton}
-      onPress={props.onPress}
-      underlayColor="#e0efff"
-      activeOpacity={1}
-    >
-      <View style={{ flex: 1, justifyContent: 'center' }}>
-        <Text style={styles.settingText}>{props.text}</Text>
-        <Text style={styles.setttingSubText}>{props.subText ? props.subText : ''}</Text>
-      </View>
-    </TouchableHighlight>
+    <>
+      <TouchableHighlight
+        style={styles.settingButton}
+        onPress={props.onPress}
+        underlayColor="#e0efff"
+        activeOpacity={1}
+      >
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <Text style={styles.settingText}>{props.text}</Text>
+          <Text style={styles.setttingSubText}>{props.subText ? props.subText : ''}</Text>
+        </View>
+      </TouchableHighlight>
+      {/* <View style={styles.line} /> */}
+    </>
   )
 };
 
-export function IPModal({ navigation }) {
+export function IPSettings({ navigation }) {
   const CON_METHODS = ['IP', 'OTF']
 
   const [device, setDevice] = useState({
@@ -162,7 +166,7 @@ export function BasicSettings({ navigation }) {
       })
       .catch((err) => {
         Alert.alert('No Device Found', 'No device was found at the entered address',
-          [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPModal') }])
+          [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
         console.log(err);
       })
   }
@@ -186,7 +190,7 @@ export function BasicSettings({ navigation }) {
           navigation.goBack();
         } else if (json.result === 2) {
           Alert.alert('Invalid Device Key', 'The entered device key was rejected',
-            [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPModal') }])
+            [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
         } else {
           console.log('ERROR CODE: ' + json.result)
         }
@@ -198,11 +202,8 @@ export function BasicSettings({ navigation }) {
   }
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      grabCurrParams();
-    });
-    return unsubscribe;
-  }, [navigation]);
+    grabCurrParams();
+  }, []);
 
   return (
     <ScrollView
@@ -358,7 +359,7 @@ export function IntegrationSettings({ navigation }) {
       })
       .catch((err) => {
         Alert.alert('No Device Found', 'No device was found at the entered address',
-          [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPModal') }])
+          [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
         console.log(err);
       })
   }
@@ -386,7 +387,7 @@ export function IntegrationSettings({ navigation }) {
           navigation.goBack();
         } else if (json.result === 2) {
           Alert.alert('Invalid Device Key', 'The entered device key was rejected',
-            [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPModal') }])
+            [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
         } else {
           console.log('ERROR CODE: ' + json.result)
         }
@@ -487,7 +488,7 @@ export function IntegrationSettings({ navigation }) {
         </View>
         <Text style={styles.optionTitle}>Automation:</Text>
         <View style={styles.inlineContainer}>
-          <Text style={styles.optionText}>If open for longer than</Text>
+          <Text style={styles.inlineOptionText}>If open for longer than</Text>
           <TextInput
             style={styles.inlineInput}
             onChangeText={(text) => setParam('ati', Number(text))}
@@ -495,7 +496,7 @@ export function IntegrationSettings({ navigation }) {
             keyboardType={'number-pad'}
             selectTextOnFocus
           />
-          <Text style={styles.optionText}>minutes...</Text>
+          <Text style={styles.inlineOptionText}>minutes...</Text>
         </View>
         <View style={[styles.switchContainer, { marginLeft: 10 }]}>
           <Text style={styles.optionText}>Notify me</Text>
@@ -512,7 +513,7 @@ export function IntegrationSettings({ navigation }) {
           />
         </View>
         <View style={styles.inlineContainer}>
-          <Text style={styles.optionText}>If open after</Text>
+          <Text style={styles.inlineOptionText}>If open after</Text>
           {showTimePicker && (<DateTimePicker
             value={new Date(Date.now()).setUTCHours((currParams.atib ? currParams.atib : 0), 0, 0, 0)}
             mode={'time'}
@@ -523,20 +524,22 @@ export function IntegrationSettings({ navigation }) {
               setShowTimePicker(false);
             }}
           />)}
-          <TouchableOpacity
-            style={[styles.inlineInput, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}
-            onPress={() => setShowTimePicker(true)}
-          >
-            <Text style={{ fontSize: 20 }}>{'' + currParams.atib}</Text>
-          </TouchableOpacity>
-          {/* <TextInput
-            style={styles.inlineInput}
-            onChangeText={(text) => setParam('atib', Number(text))}
-            value={'' + currParams.atib}
-            keyboardType={'number-pad'}
-            selectTextOnFocus
-          /> */}
-          <Text style={styles.optionText}>UTC...</Text>
+          {Platform.OS !== 'web' &&
+            (<TouchableOpacity
+              style={[styles.inlineInput, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}
+              onPress={() => setShowTimePicker(true)}
+            >
+              <Text style={{ fontSize: 20 }}>{'' + currParams.atib}</Text>
+            </TouchableOpacity>)}
+          {Platform.OS === 'web' &&
+            (<TextInput
+              style={styles.inlineInput}
+              onChangeText={(text) => setParam('atib', Number(text))}
+              value={'' + currParams.atib}
+              keyboardType={'number-pad'}
+              selectTextOnFocus
+            />)}
+          <Text style={styles.inlineOptionText}>UTC...</Text>
         </View>
         <View style={[styles.switchContainer, { marginLeft: 10 }]}>
           <Text style={styles.optionText}>Notify me</Text>
@@ -576,7 +579,7 @@ export function AdvancedSettings({ navigation }) {
       })
       .catch((err) => {
         Alert.alert('No Device Found', 'No device was found at the entered address',
-          [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPModal') }])
+          [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
         console.log(err);
       })
   }
@@ -604,7 +607,7 @@ export function AdvancedSettings({ navigation }) {
           navigation.goBack();
         } else if (json.result === 2) {
           Alert.alert('Invalid Device Key', 'The entered device key was rejected',
-            [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPModal') }])
+            [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
         } else {
           console.log('ERROR CODE: ' + json.result)
         }
@@ -743,12 +746,41 @@ export default function SettingsScreen({ navigation }) {
 
   const docs = 'https://nbviewer.jupyter.org/github/OpenGarage/OpenGarage-Firmware/blob/master/docs/OGManual.pdf';
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
+  const issueCommand = (command) => {
+    Promise.all([getURL(), getDevKey()])
+      .then((values) => {
+        const [url, devKey] = values;
+        let req = url
+        switch (command) {
+          case 'clearlog':
+            req += '/clearlog?dkey=' + devKey;
+            break;
+          case 'reboot':
+            req += '/cc?dkey=' + devKey + '&reboot=1';
+            break;
+          case 'apmode':
+            req += '/cc?dkey=' + devKey + '&apmode=1';
+            break;
+        }
+        return fetch(req);
+      })
+      .then((response) => response.json())
+      .then((json) => {
+        if (json.result === 1) {
+          Alert.alert('Command Issued Successfully')
+        } else if (json.result === 2) {
+          Alert.alert('Invalid Device Key', 'The entered device key was rejected',
+            [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
+        }
+      })
+      .catch((err) => console.log(err));
+  }
+
+  useFocusEffect(
+    useCallback(() => {
       getConInput().then((conInput) => setConInput(conInput));
-    })
-    return unsubscribe;
-  }, []);
+    }, [])
+  )
 
   return (
     <View style={styles.container}>
@@ -767,11 +799,11 @@ export default function SettingsScreen({ navigation }) {
       /> */}
       <ScrollView contentContainerStyle={styles.list}>
         <Setting
-          text="Open Garage Device IP & Key"
+          text="Open Garage Device Set-up"
           subText={conInput}
           onPress={() =>
             //setHideIPPrompt(!hideIPPrompt)
-            navigation.navigate('IPModal')
+            navigation.navigate('IPSettings')
           }
         />
         <Setting
@@ -788,6 +820,20 @@ export default function SettingsScreen({ navigation }) {
           text="Advanced Settings"
           subText={'Configure advanced settings'}
           onPress={() => navigation.navigate('AdvancedSettings')}
+        />
+        <Setting
+          text="Clear Logs"
+          subText={'Clear the logs collected by your device'}
+          onPress={() => Alert.alert('Confirm Clear Logs', 'Are you sure you want to clear the logs?',
+            [{ text: 'Cancel' }, { text: 'Reset Logs', onPress: () => { issueCommand('clearlog') } }]
+          )}
+        />
+        <Setting
+          text="Reboot Device"
+          subText={'Reboot the OpenGarage Controller'}
+          onPress={() => Alert.alert('Confirm Reboot Device', 'Are you sure you want to reboot the controller?',
+            [{ text: 'Cancel' }, { text: 'Reboot Device', onPress: () => { issueCommand('reboot') } }]
+          )}
         />
         <Setting
           text="User Manual"
@@ -846,6 +892,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
 
+  inlineOptionText: {
+    fontSize: 20,
+    padding: 8,
+  },
+
   inlineInput: {
     // flexGrow: 1,
     fontSize: 20,
@@ -865,6 +916,13 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'column',
     alignSelf: 'center',
+  },
+
+  line: {
+    width: 600,
+    height: 1,
+    alignSelf: 'center',
+    backgroundColor: '#aaa'
   },
 
   settingButton: {
