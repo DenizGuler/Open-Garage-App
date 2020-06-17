@@ -15,6 +15,7 @@
     "@react-navigation/native": "^5.5.1",
     "@react-navigation/stack": "^5.5.1",
     "expo": "^37.0.0",
+    "expo-image-picker": "~8.1.0",
     "native-base": "^2.13.12",
     "react": "16.9.0",
     "react-dom": "16.9.0",
@@ -31,5 +32,6 @@
     "@babel/core": "^7.10.2",
     "babel-preset-expo": "^8.1.0"
   },
+  "resolutions": {"logkitty": "^0.7.1"},
   "private": true
 }
