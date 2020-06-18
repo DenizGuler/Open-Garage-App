@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "TestProj",
-    "slug": "test-proj",
+    "name": "OpenGarage",
+    "slug": "OpenGarage-App",
     "owner": "deniz_guler",
     "platforms": [
       "ios",
