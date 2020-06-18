@@ -1,5 +1,5 @@
 import React from 'react';
-import { AsyncStorage, StyleSheet } from "react-native";
+import { AsyncStorage, StyleSheet, Platform } from "react-native";
 import { Icon, Header } from "react-native-elements";
 import { useNavigation } from '@react-navigation/native';
 
@@ -161,12 +161,29 @@ export const removeDev = async (index) => {
   }
 */
 export const ScreenHeader = (props) => {
+  const style = StyleSheet.create({
+    header: {
+      zIndex: 1,
+      width: '100%',
+      shadowColor: "#000",
+      shadowOffset: {
+        width: 0,
+        height: 5,
+      },
+      shadowOpacity: 0.34,
+      shadowRadius: 6.27,
+
+      elevation: 10,
+    },
+  })
   const navigation = useNavigation();
   const HeaderComponent = (type) => {
     let comp = null;
     switch (type) {
       case 'hamburger':
-        comp = <Icon name='menu' onPress={() => navigation.toggleDrawer()} />;
+        if (Platform.OS !== 'web') {
+          comp = <Icon name='menu' onPress={() => navigation.toggleDrawer()} />;
+        }
         break;
       case 'back':
         comp = <Icon name='chevron-left' onPress={() => navigation.goBack()} />;
@@ -201,18 +218,4 @@ export const ScreenHeader = (props) => {
   );
 }
 
-const style = StyleSheet.create({
-  header: {
-    zIndex: 1,
-    width: '100%',
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 5,
-    },
-    shadowOpacity: 0.34,
-    shadowRadius: 6.27,
-
-    elevation: 10,
-  },
-})
+// export const 
