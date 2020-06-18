@@ -1,29 +1,43 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, View, Linking, ScrollView, AsyncStorage, Button, Alert, Picker, Switch, Vibration, Platform } from 'react-native';
+import { StyleSheet, Text, View, Linking, ScrollView, AsyncStorage, Button, Alert, Picker, Switch, Vibration, Platform, Image } from 'react-native';
 import 'react-native-gesture-handler';
-import { TouchableHighlight, TextInput, TouchableOpacity } from 'react-native-gesture-handler';
+import { TouchableHighlight, TextInput, TouchableOpacity, TouchableNativeFeedback } from 'react-native-gesture-handler';
 import { getDevKey, ScreenHeader, getDevices, setDevices, getURL, getConInput } from './utils'
-import { ButtonGroup } from 'react-native-elements';
+import { ButtonGroup, Icon } from 'react-native-elements';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
 
-
 const Setting = (props) => {
-  return (
-    <>
-      <TouchableHighlight
+  if (Platform.OS === 'android') {
+    return (
+      <TouchableNativeFeedback
         style={styles.settingButton}
         onPress={props.onPress}
-        underlayColor="#e0efff"
-        activeOpacity={1}
+        background={TouchableNativeFeedback.Ripple('#adacac', false)}
       >
-        <View style={{ flex: 1, justifyContent: 'center' }}>
-          <Text style={styles.settingText}>{props.text}</Text>
-          <Text style={styles.setttingSubText}>{props.subText ? props.subText : ''}</Text>
+        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+          {props.icon && <Icon style={{ paddingRight: 10 }} name={props.icon.name} type={'material-community'} color={props.icon.color} />}
+          <View style={{ flex: 1 }} >
+            <Text style={styles.settingText}>{props.text}</Text>
+            <Text style={styles.setttingSubText}>{props.subText ? props.subText : ''}</Text>
+          </View>
         </View>
-      </TouchableHighlight>
-      {/* <View style={styles.line} /> */}
-    </>
+      </TouchableNativeFeedback>
+    )
+  }
+  return (
+    <TouchableHighlight
+      style={styles.settingButton}
+      onPress={props.onPress}
+      underlayColor={'#adacac'}
+      activeOpacity={.75}
+    >
+      <View style={{ flex: 1, justifyContent: 'center' }}>
+        <Text style={styles.settingText}>{props.text}</Text>
+        <Text style={styles.setttingSubText}>{props.subText ? props.subText : ''}</Text>
+      </View>
+    </TouchableHighlight>
   )
 };
 
@@ -34,6 +48,11 @@ export function IPSettings({ navigation }) {
     conMethod: 'IP',
     conInput: '',
     devKey: '',
+    image: {
+      uri: null,
+      width: 1,
+      height: 1,
+    },
   });
   const setDeviceParam = (param, val) => {
     setDevice({
@@ -49,6 +68,18 @@ export function IPSettings({ navigation }) {
         return setDevice(devs[currIdx])
     })
   }, [])
+
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    })
+
+    if (!result.cancelled) {
+      setDeviceParam('image', result);
+    }
+  }
 
   // Updates the device (or given param) in async storage 
   // updateDevice(param?: string): void
@@ -143,6 +174,18 @@ export function IPSettings({ navigation }) {
         />
         {/* <Text>{JSON.stringify(device)}</Text> */}
         <Text selectable>6bfcd666b6a8d948f1f5090b0e5d900e</Text>
+        <Text style={styles.optionTitle}>Site Image:</Text>
+        <TouchableOpacity
+          onPress={pickImage}
+        >
+          <View style={[styles.optionInput, { flex: 1, flexDirection: 'row', alignItems: 'center' }]}>
+            {device.image.uri !== null ?
+              <Image source={{ uri: device.image.uri }} style={{ width: 200, height: device.image.height / device.image.width * 200 }} /> :
+              <Icon name='image' type='material-community'/>
+            }
+            <Text style={styles.optionText}>Pick Image</Text>
+          </View>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -799,6 +842,7 @@ export default function SettingsScreen({ navigation }) {
       /> */}
       <ScrollView contentContainerStyle={styles.list}>
         <Setting
+          icon={{ name: 'garage-alert' }}
           text="Open Garage Device Set-up"
           subText={conInput}
           onPress={() =>
@@ -807,21 +851,25 @@ export default function SettingsScreen({ navigation }) {
           }
         />
         <Setting
+          icon={{ name: 'settings' }}
           text="Basic Device Settings"
           subText={'Configure basic settings'}
           onPress={() => navigation.navigate('BasicSettings')}
         />
         <Setting
+          icon={{ name: 'arrow-decision' }}
           text="Integration Settings"
           subText={'Configure integration settings'}
           onPress={() => navigation.navigate('IntegrationSettings')}
         />
         <Setting
+          icon={{ name: 'cogs' }}
           text="Advanced Settings"
           subText={'Configure advanced settings'}
           onPress={() => navigation.navigate('AdvancedSettings')}
         />
         <Setting
+          icon={{ name: 'script-outline' }}
           text="Clear Logs"
           subText={'Clear the logs collected by your device'}
           onPress={() => Alert.alert('Confirm Clear Logs', 'Are you sure you want to clear the logs?',
@@ -829,6 +877,7 @@ export default function SettingsScreen({ navigation }) {
           )}
         />
         <Setting
+          icon={{ name: 'restart' }}
           text="Reboot Device"
           subText={'Reboot the OpenGarage Controller'}
           onPress={() => Alert.alert('Confirm Reboot Device', 'Are you sure you want to reboot the controller?',
@@ -836,6 +885,7 @@ export default function SettingsScreen({ navigation }) {
           )}
         />
         <Setting
+          icon={{ name: 'book-open-variant' }}
           text="User Manual"
           subText={"Links you out of this app"}
           onPress={() => {
@@ -849,6 +899,7 @@ export default function SettingsScreen({ navigation }) {
           }}
         />
         <Setting
+          icon={{ name: 'delete' }}
           text="Clear AsyncStorage"
           subText="DEBUG"
           onPress={() => {
@@ -912,7 +963,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     maxWidth: 600,
     width: '100%',
-    padding: 5,
+    paddingBottom: 5,
     flex: 1,
     flexDirection: 'column',
     alignSelf: 'center',
@@ -931,9 +982,11 @@ const styles = StyleSheet.create({
     height: 60,
     // margin: 2,
     alignSelf: 'stretch',
-    paddingHorizontal: 10,
-    marginVertical: 2,
-    borderRadius: 3,
+    paddingHorizontal: 15,
+    // marginVertical: 2,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e5e5'
+    // borderRadius: 3,
   },
 
   settingText: {
@@ -941,7 +994,7 @@ const styles = StyleSheet.create({
   },
 
   setttingSubText: {
-    alignSelf: 'flex-end',
+    alignSelf: 'flex-start',
     fontSize: 16,
     color: '#aaa',
   },
