@@ -163,7 +163,7 @@ export const removeDev = async (index) => {
 export const ScreenHeader = (props) => {
   const style = StyleSheet.create({
     header: {
-      zIndex: 1,
+      zIndex: 2,
       width: '100%',
       shadowColor: "#000",
       shadowOffset: {
@@ -199,6 +199,9 @@ export const ScreenHeader = (props) => {
         break;
       case 'cancel':
         comp = <Icon name='close' onPress={props.onCancel} />
+        break;
+      case 'info':
+        comp = <Icon name='info-outline' onPress={props.onInfo} />
         break;
       default:
         break;
