@@ -1,25 +1,34 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, Alert, TouchableOpacity, Platform } from 'react-native';
+import { StyleSheet, Text, View, Alert, TouchableOpacity, Platform, Image } from 'react-native';
 import 'react-native-gesture-handler';
 import { Notifications } from 'expo';
 import * as Permissions from 'expo-permissions';
 import Constants from 'expo-constants';
-import { getDevKey, ScreenHeader, getURL } from './utils';
-import Animated from 'react-native-reanimated';
-import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
-import { Overlay } from 'react-native-elements';
+import { getDevKey, ScreenHeader, getURL, getImage } from './utils';
+// import Animated from 'react-native-reanimated';
+// import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
+import { Overlay, Icon } from 'react-native-elements';
 
 export default HomeScreen;
 
 const InfoWindow = (props) => {
-  const fadeAnimation = useRef(new Animated.Value(0)).current;
+  // const fadeAnimation = useRef(new Animated.Value(0)).current;
+
+  // useEffect(() => {
+  //   Animated.timing(fadeAnimation, {
+  //     toValue: .65,
+  //     duration: 500,
+  //   }).start();
+  // }, [])
+
+  const [image, setImage] = useState({});
 
   useEffect(() => {
-    Animated.timing(fadeAnimation, {
-      toValue: .65,
-      duration: 500,
-    }).start();
-  }, [])
+    getImage().then((img) => {
+      setImage(img)
+      console.log(img)
+    })
+  }, [props.visible])
 
   const windowStyles = StyleSheet.create({
     backdrop: {
@@ -52,6 +61,12 @@ const InfoWindow = (props) => {
 
     bodyText: {
       fontSize: 20,
+    },
+
+    closeButton: {
+      position: 'absolute',
+      top: -15,
+      right: -15,
     }
   })
 
@@ -65,13 +80,16 @@ const InfoWindow = (props) => {
       overlayStyle={windowStyles.modal}
       onBackdropPress={() => props.setVisible(false)}
     >
-      <Text style={windowStyles.titleText}>More Information:</Text>
-      <Text style={windowStyles.bodyText}>Distance: {props.vars.dist}</Text>
-      <Text style={windowStyles.bodyText}>Read Count: {props.vars.rcnt}</Text>
-      <Text style={windowStyles.bodyText}>WiFi Signal: {props.vars.rssi}</Text>
-      <Text style={windowStyles.bodyText}>MAC address:</Text>
-      <Text style={windowStyles.bodyText}>{props.vars.mac}</Text>
-      
+      <View>
+        <Icon containerStyle={windowStyles.closeButton} name='close' size={28} onPress={() => props.setVisible(false)}/>
+        <Text style={windowStyles.titleText}>More Information:</Text>
+        <Text style={windowStyles.bodyText}>Distance: {props.vars.dist}</Text>
+        <Text style={windowStyles.bodyText}>Read Count: {props.vars.rcnt}</Text>
+        <Text style={windowStyles.bodyText}>WiFi Signal: {props.vars.rssi}</Text>
+        <Text style={windowStyles.bodyText}>MAC address:</Text>
+        <Text style={windowStyles.bodyText}>{props.vars.mac}</Text>
+        {image && <Image source={{ uri: image.uri }} style={{ width: 200, height: image.height / image.width * 200, alignSelf: 'center', borderRadius: 5}} />}
+      </View>
     </Overlay>
   );
 };

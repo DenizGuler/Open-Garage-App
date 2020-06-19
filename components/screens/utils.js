@@ -8,6 +8,11 @@ import { useNavigation } from '@react-navigation/native';
     conMethod: 'IP' | 'OTF',
     conInput: string,
     devKey: string,
+    image?: {
+      uri: string,
+      width: number,
+      height: number,
+    },
   }
 */
 
@@ -116,6 +121,20 @@ export const getURL = async (index) => {
         break;
     }
     return url;
+  } catch (err) {
+    console.log(err)
+  }
+}
+
+// Get the image attached to the device at the given index/current device
+// Returns undefined if no image exists
+// getImage(index?: number): image
+export const getImage = async (index) => {
+  try {
+    const [currIdx, devices] = await getDevices();
+    index = (index === undefined) ? currIdx : index
+    let device = devices[index]
+    return device.image
   } catch (err) {
     console.log(err)
   }
