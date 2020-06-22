@@ -9,18 +9,53 @@ import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
 
 const Setting = (props) => {
+
+  const settingStyles = StyleSheet.create({
+    line: {
+      width: 600,
+      height: 1,
+      alignSelf: 'center',
+      backgroundColor: '#aaa'
+    },
+
+    settingButton: {
+      // flex: 1,
+      // justifyContent: 'center',
+      height: 60,
+      // margin: 2,
+      alignSelf: 'stretch',
+      paddingHorizontal: 15,
+      // marginVertical: 2,
+      borderBottomWidth: 1,
+      borderBottomColor: '#e5e5e5'
+      // borderRadius: 3,
+    },
+
+    settingText: {
+      fontSize: 20,
+      color: '#444'
+    },
+
+    setttingSubText: {
+      alignSelf: 'flex-start',
+      fontSize: 16,
+      color: '#aaa',
+    },
+  })
+
+
   if (Platform.OS === 'android') {
     return (
       <TouchableNativeFeedback
-        style={styles.settingButton}
+        style={settingStyles.settingButton}
         onPress={props.onPress}
         background={TouchableNativeFeedback.Ripple('#adacac', false)}
       >
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-          {props.icon && <Icon style={{ paddingRight: 10 }} name={props.icon.name} type={'material-community'} color={props.icon.color} />}
+          {props.icon && <Icon style={{ paddingRight: 10 }} name={props.icon.name} type={'material-community'} color={"#444"} />}
           <View style={{ flex: 1 }} >
-            <Text style={styles.settingText}>{props.text}</Text>
-            <Text style={styles.setttingSubText}>{props.subText ? props.subText : ''}</Text>
+            <Text style={settingStyles.settingText}>{props.text}</Text>
+            <Text style={settingStyles.setttingSubText}>{props.subText ? props.subText : ''}</Text>
           </View>
         </View>
       </TouchableNativeFeedback>
@@ -28,15 +63,18 @@ const Setting = (props) => {
   }
   return (
     <TouchableHighlight
-      style={styles.settingButton}
+      style={settingStyles.settingButton}
       onPress={props.onPress}
       underlayColor={'#adacac'}
       activeOpacity={.75}
     >
-      <View style={{ flex: 1, justifyContent: 'center' }}>
-        <Text style={styles.settingText}>{props.text}</Text>
-        <Text style={styles.setttingSubText}>{props.subText ? props.subText : ''}</Text>
-      </View>
+      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+          {props.icon && <Icon style={{ paddingRight: 10 }} name={props.icon.name} type={'material-community'} color={"#444"} />}
+          <View style={{ flex: 1 }} >
+            <Text style={settingStyles.settingText}>{props.text}</Text>
+            <Text style={settingStyles.setttingSubText}>{props.subText ? props.subText : ''}</Text>
+          </View>
+        </View>
     </TouchableHighlight>
   )
 };
@@ -181,7 +219,7 @@ export function IPSettings({ navigation }) {
           <View style={[styles.optionInput, { flex: 1, flexDirection: 'row', alignItems: 'center' }]}>
             {device.image.uri !== null ?
               <Image source={{ uri: device.image.uri }} style={{ width: 200, height: device.image.height / device.image.width * 200 }} /> :
-              <Icon name='image' type='material-community'/>
+              <Icon name='image' type='material-community' />
             }
             <Text style={styles.optionText}>Pick Image</Text>
           </View>
@@ -967,36 +1005,6 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'column',
     alignSelf: 'center',
-  },
-
-  line: {
-    width: 600,
-    height: 1,
-    alignSelf: 'center',
-    backgroundColor: '#aaa'
-  },
-
-  settingButton: {
-    // flex: 1,
-    // justifyContent: 'center',
-    height: 60,
-    // margin: 2,
-    alignSelf: 'stretch',
-    paddingHorizontal: 15,
-    // marginVertical: 2,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e5e5'
-    // borderRadius: 3,
-  },
-
-  settingText: {
-    fontSize: 20,
-  },
-
-  setttingSubText: {
-    alignSelf: 'flex-start',
-    fontSize: 16,
-    color: '#aaa',
   },
 
   modal: {
