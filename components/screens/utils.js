@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
 
-const FONT = Platform.OS === 'ios' ? 'San Fransisco' : 'sans-serif'
+const FONT = Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif'
 /*
   device obj{
     conMethod: 'IP' | 'OTF',
