@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FlatList, TouchableHighlight } from 'react-native-gesture-handler';
-import { ScreenHeader, getDevices, setCurrIndex, removeDev, getURL } from './utils';
-import { StyleSheet, Text, View, Alert, Vibration, BackHandler } from 'react-native';
+import { ScreenHeader, getDevices, setCurrIndex, removeDev, getURL, BaseText as Text } from './utils';
+import { StyleSheet, View, Alert, Vibration, BackHandler } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 
 export default function DevicesScreen({ navigation }) {

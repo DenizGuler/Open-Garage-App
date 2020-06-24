@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, View, Linking, ScrollView, AsyncStorage, Button, Alert, Picker, Switch, Vibration, Platform, Image } from 'react-native';
+import { StyleSheet, View, Linking, ScrollView, AsyncStorage, Button, Alert, Picker, Switch, Platform, Image } from 'react-native';
 import 'react-native-gesture-handler';
 import { TouchableHighlight, TextInput, TouchableOpacity, TouchableNativeFeedback } from 'react-native-gesture-handler';
-import { getDevKey, ScreenHeader, getDevices, setDevices, getURL, getConInput } from './utils'
+import { getDevKey, ScreenHeader, getDevices, setDevices, getURL, getConInput, BaseText as Text } from './utils'
 import { ButtonGroup, Icon } from 'react-native-elements';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
@@ -69,12 +69,12 @@ const Setting = (props) => {
       activeOpacity={.75}
     >
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-          {props.icon && <Icon style={{ paddingRight: 10 }} name={props.icon.name} type={'material-community'} color={"#444"} />}
-          <View style={{ flex: 1 }} >
-            <Text style={settingStyles.settingText}>{props.text}</Text>
-            <Text style={settingStyles.setttingSubText}>{props.subText ? props.subText : ''}</Text>
-          </View>
+        {props.icon && <Icon style={{ paddingRight: 10 }} name={props.icon.name} type={'material-community'} color={"#444"} />}
+        <View style={{ flex: 1 }} >
+          <Text style={settingStyles.settingText}>{props.text}</Text>
+          <Text style={settingStyles.setttingSubText}>{props.subText ? props.subText : ''}</Text>
         </View>
+      </View>
     </TouchableHighlight>
   )
 };
