@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Alert, TouchableOpacity, Platform, Image } from 'react-native';
+import { StyleSheet, View, Alert, TouchableOpacity, Platform, Image, Dimensions } from 'react-native';
 import 'react-native-gesture-handler';
 import { Notifications } from 'expo';
 import * as Permissions from 'expo-permissions';
@@ -265,7 +265,7 @@ function HomeScreen({ navigation }) {
           shadowColor: "#000",
           shadowOffset: {
             width: 0,
-            height: 2,
+            height: -1,
           },
           shadowOpacity: 0.23,
           shadowRadius: 2.62,
@@ -277,7 +277,8 @@ function HomeScreen({ navigation }) {
             width: '100%',
             backgroundColor: 'white',
             marginTop: 4,
-            borderRadius: 20
+            borderTopRightRadius: 20,
+            borderTopLeftRadius: 20,
           }}>
             <View style={{
               height: 4,

@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { AsyncStorage, StyleSheet, Platform, Text } from "react-native";
+import { AsyncStorage, StyleSheet, Platform, Text, Dimensions } from "react-native";
 import { Icon, Header } from "react-native-elements";
 import { useNavigation } from '@react-navigation/native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
@@ -256,6 +256,8 @@ const {
   add,
   multiply,
   cond,
+  min,
+  max,
   or,
   not,
   clockRunning,
@@ -284,7 +286,6 @@ function runSpring(clock, value, velocity, dest) {
     restDisplacementThreshold: 0.001,
     toValue: new Value(0)
   };
-
   return [
     cond(clockRunning(clock), 0, [
       set(state.finished, 0),
@@ -303,9 +304,10 @@ export class BottomDraggable extends React.Component {
 
   constructor(props) {
     super(props);
-    this.translateY = new Value(0);
+    this.translateY = new Value(props.minHeight);
     const dragY = new Value(0);
     const dragVY = new Value(0);
+    const absY = new Value(0);
     const state = new Value(-1);
     const snapped = new Value(false);
 
@@ -327,8 +329,10 @@ export class BottomDraggable extends React.Component {
       ])
     }
 
+
     this.onGestureEvent = event([{
       nativeEvent: {
+        absoluteY: absY,
         translationY: dragY,
         velocityY: dragVY,
         state: state
@@ -343,15 +347,18 @@ export class BottomDraggable extends React.Component {
         // state active
         stopClock(clock),
         set(oldSnapped, snapped),
+        // set(transY, sub(Dimensions.get('window').height, absY)),
         cond(oldSnapped, 
-          set(transY, add(multiply(sub(dragY, props.maxHeight), -1)), props.minHeight), 
+          // transY = -dragY + maxHeight
+          set(transY, add(multiply(dragY, -1), props.maxHeight)), 
+          // transY = -dragY + minHeight
           set(transY, add(multiply(dragY, -1), props.minHeight))),
         transY
       ], [
         // state inactive
         set(
           transY,
-          cond(defined(transY), runSpring(clock, transY, dragVY, this.getSnapPoint(transY)), props.minHeight),
+          cond(defined(transY), runSpring(clock, transY, 5, this.getSnapPoint(transY)), props.minHeight),
           // debug('transY ', transY),
         )
       ]);
@@ -372,6 +379,8 @@ export class BottomDraggable extends React.Component {
           bottom: 0, 
           width: '100%',
           height: this.translateY,
+          paddingTop: 5,
+          marginTop: -5,
           overflow: 'hidden',
           // transform: [{ translateY: this.translateY }]
         }}>
