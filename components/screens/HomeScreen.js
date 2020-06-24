@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, Alert, TouchableOpacity, Platform, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Alert, TouchableOpacity, Platform, Image } from 'react-native';
 import 'react-native-gesture-handler';
 import { Notifications } from 'expo';
 import * as Permissions from 'expo-permissions';
 import Constants from 'expo-constants';
-import { getDevKey, ScreenHeader, getURL, getImage } from './utils';
+import { getDevKey, ScreenHeader, getURL, getImage, BaseText as Text, BottomDraggable } from './utils';
 // import Animated from 'react-native-reanimated';
 // import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
-import { Overlay, Icon } from 'react-native-elements';
+// import SwipeUpDown from 'react-native-swipe-up-down';
+// import { Overlay, Icon } from 'react-native-elements';
 
 export default HomeScreen;
 
@@ -21,12 +22,11 @@ const InfoWindow = (props) => {
   //   }).start();
   // }, [])
 
-  const [image, setImage] = useState({});
+  const [image, setImage] = useState(null);
 
   useEffect(() => {
     getImage().then((img) => {
       setImage(img)
-      console.log(img)
     })
   }, [props.visible])
 
@@ -39,10 +39,12 @@ const InfoWindow = (props) => {
       height: '100%',
     },
 
-    centered: {
+    cardContainer: {
       flex: 1,
       alignContent: 'center',
-      justifyContent: 'center',
+      padding: 20,
+      paddingTop: 12,
+      // justifyContent: 'center',
     },
 
     modal: {
@@ -56,10 +58,20 @@ const InfoWindow = (props) => {
     },
 
     titleText: {
-      fontSize: 26,
+      fontSize: 30,
+      // padding: 10,
+      marginBottom: 10,
+      // borderBottomWidth: 1,
     },
 
-    bodyText: {
+    row: {
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+
+    rowText: {
       fontSize: 20,
     },
 
@@ -70,27 +82,29 @@ const InfoWindow = (props) => {
     }
   })
 
-  if (!props.visible) return null;
+  // if (!props.visible) return null;
   return (
-
-    <Overlay
-      animationType='slide'
-      isVisible={props.visible}
-      backdropStyle={windowStyles.backdrop}
-      overlayStyle={windowStyles.modal}
-      onBackdropPress={() => props.setVisible(false)}
-    >
-      <View>
-        <Icon containerStyle={windowStyles.closeButton} name='close' size={28} onPress={() => props.setVisible(false)}/>
-        <Text style={windowStyles.titleText}>More Information:</Text>
-        <Text style={windowStyles.bodyText}>Distance: {props.vars.dist}</Text>
-        <Text style={windowStyles.bodyText}>Read Count: {props.vars.rcnt}</Text>
-        <Text style={windowStyles.bodyText}>WiFi Signal: {props.vars.rssi}</Text>
-        <Text style={windowStyles.bodyText}>MAC address:</Text>
-        <Text style={windowStyles.bodyText}>{props.vars.mac}</Text>
-        {image && <Image source={{ uri: image.uri }} style={{ width: 200, height: image.height / image.width * 200, alignSelf: 'center', borderRadius: 5}} />}
+    <View style={windowStyles.cardContainer}>
+      {/* <Icon containerStyle={windowStyles.closeButton} name='close' size={28}/> */}
+      <Text style={windowStyles.titleText}>More Information</Text>
+      <View style={windowStyles.row}>
+        <Text style={windowStyles.rowText}>Distance:</Text>
+        <Text style={windowStyles.rowText}>{props.vars.dist} cm</Text>
       </View>
-    </Overlay>
+      <View style={windowStyles.row}>
+        <Text style={windowStyles.rowText}>Read Count:</Text>
+        <Text style={windowStyles.rowText}>{props.vars.rcnt}</Text>
+      </View>
+      <View style={windowStyles.row}>
+        <Text style={windowStyles.rowText}>WiFi Signal:</Text>
+        <Text style={windowStyles.rowText}>{props.vars.rssi} dBm</Text>
+      </View>
+      <View style={windowStyles.row}>
+        <Text style={windowStyles.rowText}>MAC address:</Text>
+        <Text style={[windowStyles.rowText, { fontFamily: 'monospace', fontSize: 18 }]} selectable>{props.vars.mac}</Text>
+      </View>
+      {/* {image && <Image source={{ uri: image.uri }} style={{ width: 400, height: image.height / image.width * 400, alignSelf: 'center', borderRadius: 5 }} />} */}
+    </View>
   );
 };
 
@@ -214,7 +228,7 @@ function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <InfoWindow visible={infoVisible} setVisible={setInfoVisible} vars={controlVars} />
+      {/* <InfoWindow visible={infoVisible} setVisible={setInfoVisible} vars={controlVars} /> */}
       <ScreenHeader
         text={controlVars.name}
         left={'hamburger'}
@@ -229,8 +243,87 @@ function HomeScreen({ navigation }) {
         >
           <Text style={styles.buttonText}>{controlVars.door ? 'Close' : 'Open'}</Text>
         </TouchableOpacity>
-        <Text style={styles.largeText}>Status: <Text style={controlVars.door ? styles.redText : styles.greenText}>{controlVars.door ? 'Opened' : 'Closed'}</Text></Text>
+        <View>
+          <View style={styles.row}>
+            <Text style={styles.largeText}>Door Status  </Text>
+            <Text style={[styles.largeText, controlVars.door ? styles.redText : styles.greenText]}>{controlVars.door ? 'Opened' : 'Closed'}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.largeText}>Vehicle Status  </Text>
+            <Text style={[styles.largeText, controlVars.vehicle ? styles.greenText : styles.redText]}>{controlVars.vehicle ? 'Present' : 'Absent'}</Text>
+          </View>
+        </View>
       </View>
+      {/* <View style={{ position: 'absolute', bottom: 0, width: '100%', height: 75 }}> */}
+      <BottomDraggable
+        threshold={138}
+        thresholdGive={.25}
+        maxHeight={200}
+        minHeight={75}
+      >
+        <View style={{
+          shadowColor: "#000",
+          shadowOffset: {
+            width: 0,
+            height: 2,
+          },
+          shadowOpacity: 0.23,
+          shadowRadius: 2.62,
+          borderRadius: 20,
+          elevation: 4,
+        }}>
+          <View style={{
+            height: '100%',
+            width: '100%',
+            backgroundColor: 'white',
+            marginTop: 4,
+            borderRadius: 20
+          }}>
+            <View style={{
+              height: 4,
+              borderRadius: 2,
+              width: '20%',
+              backgroundColor: '#55555555',
+              alignSelf: 'center',
+              marginTop: 8,
+            }} />
+            <InfoWindow vars={controlVars} />
+          </View>
+        </View>
+      </BottomDraggable>
+      {/* </View> */}
+      {/* <ScrollView
+        style={{
+          position: 'absolute',
+          top: '90%',
+          width: '100%',
+        }}
+        contentContainerStyle={{
+          backgroundColor: 'grey',
+          display: 'flex',
+          alignItems: 'center',
+          // height: 100,
+        }}
+      >
+        <InfoWindow vars={controlVars}/>
+      </ScrollView> */}
+      {/* <SwipeUpDown
+        itemMini={
+          <View style={{ alignItems: 'center' }}>
+            <Text>This is the mini view, swipe up!</Text>
+          </View>
+        } // Pass props component when collapsed
+        itemFull={<InfoWindow vars={controlVars} />} // Pass props component when show full
+        // onShowMini={() => console.log('mini')}
+        // onShowFull={() => console.log('full')}
+        // onMoveDown={() => console.log('down')}
+        // onMoveUp={() => console.log('up')}
+        disablePressToShow={true} // Press item mini to show full
+        style={{
+          backgroundColor: 'white',
+          elevation: 10,
+        }} // style for swipe
+      /> */}
     </View >
   );
 }
@@ -258,6 +351,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#121212',
   },
 
+  row: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  },
+
   green: {
     backgroundColor: '#2a2'
   },
@@ -267,10 +366,12 @@ const styles = StyleSheet.create({
   },
 
   greenText: {
+    alignSelf: 'flex-end',
     color: '#2a2'
   },
 
   redText: {
+    alignSelf: 'flex-end',
     color: '#a22'
   },
 
@@ -280,6 +381,6 @@ const styles = StyleSheet.create({
   },
 
   largeText: {
-    fontSize: 40,
+    fontSize: 34,
   },
 });

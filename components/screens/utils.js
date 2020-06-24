@@ -1,8 +1,11 @@
-import React from 'react';
-import { AsyncStorage, StyleSheet, Platform } from "react-native";
+import React, { useRef, useState, useEffect } from 'react';
+import { AsyncStorage, StyleSheet, Platform, Text } from "react-native";
 import { Icon, Header } from "react-native-elements";
 import { useNavigation } from '@react-navigation/native';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
+import Animated from 'react-native-reanimated';
 
+const FONT = Platform.OS === 'ios' ? 'San Fransisco' : 'sans-serif'
 /*
   device obj{
     conMethod: 'IP' | 'OTF',
@@ -234,10 +237,147 @@ export const ScreenHeader = (props) => {
       statusBarProps={{ translucent: true }}
       backgroundColor="#fff"
       leftComponent={HeaderComponent(props.left)}
-      centerComponent={{ text: props.text, style: { fontSize: 24 } }}
+      centerComponent={{ text: props.text, style: { fontSize: 24, fontFamily: FONT } }}
       rightComponent={HeaderComponent(props.right)}
     />
   );
 }
 
-// export const 
+export const BaseText = (props) => <Text {...props} style={[{ fontFamily: FONT }, props.style]}>{props.children}</Text>
+
+const {
+  event,
+  set,
+  defined,
+  greaterOrEq,
+  lessOrEq,
+  eq,
+  sub,
+  add,
+  multiply,
+  cond,
+  or,
+  not,
+  clockRunning,
+  Clock,
+  Value,
+  stopClock,
+  startClock,
+  spring,
+  debug,
+} = Animated;
+
+function runSpring(clock, value, velocity, dest) {
+  const state = {
+    finished: new Value(0),
+    velocity: new Value(0),
+    position: new Value(0),
+    time: new Value(0)
+  };
+
+  const config = {
+    damping: 12,
+    mass: 1,
+    stiffness: 121.6,
+    overshootClamping: false,
+    restSpeedThreshold: 0.001,
+    restDisplacementThreshold: 0.001,
+    toValue: new Value(0)
+  };
+
+  return [
+    cond(clockRunning(clock), 0, [
+      set(state.finished, 0),
+      set(state.velocity, velocity),
+      set(state.position, value),
+      set(config.toValue, dest),
+      startClock(clock)
+    ]),
+    spring(clock, state, config),
+    cond(state.finished, stopClock(clock)),
+    state.position
+  ];
+}
+
+export class BottomDraggable extends React.Component {
+
+  constructor(props) {
+    super(props);
+    this.translateY = new Value(0);
+    const dragY = new Value(0);
+    const dragVY = new Value(0);
+    const state = new Value(-1);
+    const snapped = new Value(false);
+
+    const thresh = new Value(props.threshold * (1 - props.thresholdGive));
+    this.getSnapPoint = (currPos) => {
+      // debug('snapped: ', snapped)
+      // cond(snapped, setThresh(-props.threshold - props.thresholdGive), setThresh(-props.threshold + props.thresholdGive))
+      // console.log(thresh)
+      return cond(
+        lessOrEq(currPos, thresh)
+      , [
+        set(snapped, false),
+        set(thresh, props.threshold * (1 - props.thresholdGive)),
+        props.minHeight
+      ], [
+        set(snapped, true),
+        set(thresh, props.threshold * (1 + props.thresholdGive)),
+        props.maxHeight
+      ])
+    }
+
+    this.onGestureEvent = event([{
+      nativeEvent: {
+        translationY: dragY,
+        velocityY: dragVY,
+        state: state
+      }
+    }])
+
+    const clock = new Clock();
+    const transY = new Value();
+    const oldSnapped = new Value(false);
+
+    this.translateY = cond(eq(state, State.ACTIVE), [
+        // state active
+        stopClock(clock),
+        set(oldSnapped, snapped),
+        cond(oldSnapped, 
+          set(transY, add(multiply(sub(dragY, props.maxHeight), -1)), props.minHeight), 
+          set(transY, add(multiply(dragY, -1), props.minHeight))),
+        transY
+      ], [
+        // state inactive
+        set(
+          transY,
+          cond(defined(transY), runSpring(clock, transY, dragVY, this.getSnapPoint(transY)), props.minHeight),
+          // debug('transY ', transY),
+        )
+      ]);
+  }
+
+  // console.log(greaterOrEq(currPos, new Value(-props.threshold)))
+  // return greaterOrEq(currPos, new Value(-props.threshold)) ? 0 : -props.height
+
+  render() {
+    return (
+      <PanGestureHandler
+        onGestureEvent={this.onGestureEvent}
+        onHandlerStateChange={this.onGestureEvent}
+        // failOffsetY={[-this.props.height * 1.25, this.props.height * 1.25]}
+      >
+        <Animated.View style={{
+          position: 'absolute',
+          bottom: 0, 
+          width: '100%',
+          height: this.translateY,
+          overflow: 'hidden',
+          // transform: [{ translateY: this.translateY }]
+        }}>
+          {this.props.children}
+        </Animated.View>
+      </PanGestureHandler>
+    )
+  }
+}
