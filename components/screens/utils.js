@@ -1,8 +1,8 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { AsyncStorage, StyleSheet, Platform, Text, Dimensions } from "react-native";
+import { AsyncStorage, StyleSheet, Platform, Text, View } from "react-native";
 import { Icon, Header } from "react-native-elements";
 import { useNavigation } from '@react-navigation/native';
-import { PanGestureHandler, State } from 'react-native-gesture-handler';
+import { PanGestureHandler, State, TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
 
 const FONT = Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif'
@@ -309,24 +309,23 @@ export class BottomDraggable extends React.Component {
     const dragVY = new Value(0);
     const absY = new Value(0);
     const state = new Value(-1);
-    const snapped = new Value(false);
+    // this.snapped = false;
+    this.snapped = new Value(false);
 
     const thresh = new Value(props.threshold * (1 - props.thresholdGive));
     this.getSnapPoint = (currPos) => {
-      // debug('snapped: ', snapped)
-      // cond(snapped, setThresh(-props.threshold - props.thresholdGive), setThresh(-props.threshold + props.thresholdGive))
-      // console.log(thresh)
       return cond(
         lessOrEq(currPos, thresh)
-      , [
-        set(snapped, false),
-        set(thresh, props.threshold * (1 - props.thresholdGive)),
-        props.minHeight
-      ], [
-        set(snapped, true),
-        set(thresh, props.threshold * (1 + props.thresholdGive)),
-        props.maxHeight
-      ])
+        , [
+          set(this.snapped, false),
+          set(thresh, props.threshold * (1 - props.thresholdGive)),
+          props.minHeight
+        ]
+        , [
+          set(this.snapped, true),
+          set(thresh, props.threshold * (1 + props.thresholdGive)),
+          props.maxHeight
+        ])
     }
 
 
@@ -344,39 +343,62 @@ export class BottomDraggable extends React.Component {
     const oldSnapped = new Value(false);
 
     this.translateY = cond(eq(state, State.ACTIVE), [
-        // state active
+      // state active
+      stopClock(clock),
+      set(oldSnapped, this.snapped),
+      // set(transY, sub(Dimensions.get('window').height, absY)),
+      cond(oldSnapped,
+        // transY = -dragY + maxHeight
+        set(transY, add(multiply(dragY, -1), props.maxHeight)),
+        // transY = -dragY + minHeight
+        set(transY, add(multiply(dragY, -1), props.minHeight))),
+      transY
+    ], [
+      // state inactive
+      set(
+        transY,
+        cond(defined(transY), runSpring(clock, transY, 5, this.getSnapPoint(transY)), props.minHeight),
+        // debug('transY ', transY),
+      )
+    ]);
+
+    this.toggleDraggable = () => {
+      this.translateY = cond(eq(this.snapped, false), [
         stopClock(clock),
-        set(oldSnapped, snapped),
-        // set(transY, sub(Dimensions.get('window').height, absY)),
-        cond(oldSnapped, 
-          // transY = -dragY + maxHeight
-          set(transY, add(multiply(dragY, -1), props.maxHeight)), 
-          // transY = -dragY + minHeight
-          set(transY, add(multiply(dragY, -1), props.minHeight))),
-        transY
+        set(this.snapped, true),
+        runSpring(clock, this.translateY, 5, 500),
+        // this.translateY
       ], [
-        // state inactive
-        set(
-          transY,
-          cond(defined(transY), runSpring(clock, transY, 5, this.getSnapPoint(transY)), props.minHeight),
-          // debug('transY ', transY),
-        )
-      ]);
+        stopClock(clock),
+        set(this.snapped, false),
+        runSpring(clock, this.translateY, 5, 100),
+      ])
+    }
+
+
+    // this.translateY = cond(eq(this.snapped, false), [
+    //   stopClock(clock),
+    //   runSpring(clock, this.translateY, 5, 500),
+    //   // set(this.snapped, true),
+    //   // this.translateY
+    // ], [
+    //   stopClock(clock),
+    //   runSpring(clock, this.translateY, -5, 100),
+    //   // set(this.snapped, false),
+    // ])
   }
 
-  // console.log(greaterOrEq(currPos, new Value(-props.threshold)))
-  // return greaterOrEq(currPos, new Value(-props.threshold)) ? 0 : -props.height
 
   render() {
     return (
       <PanGestureHandler
         onGestureEvent={this.onGestureEvent}
         onHandlerStateChange={this.onGestureEvent}
-        // failOffsetY={[-this.props.height * 1.25, this.props.height * 1.25]}
+      // failOffsetY={[-this.props.height * 1.25, this.props.height * 1.25]}
       >
         <Animated.View style={{
-          position: 'absolute',
-          bottom: 0, 
+          // position: 'absolute',
+          bottom: 0,
           width: '100%',
           height: this.translateY,
           paddingTop: 5,
@@ -384,7 +406,39 @@ export class BottomDraggable extends React.Component {
           overflow: 'hidden',
           // transform: [{ translateY: this.translateY }]
         }}>
-          {this.props.children}
+          <View style={{
+            shadowColor: "#000",
+            shadowOffset: {
+              width: 0,
+              height: -1,
+            },
+            shadowOpacity: 0.23,
+            shadowRadius: 2.62,
+            borderRadius: 20,
+            elevation: 4,
+          }}>
+            <View style={{
+              height: '100%',
+              width: '100%',
+              backgroundColor: 'white',
+              marginTop: 4,
+              borderTopRightRadius: 20,
+              borderTopLeftRadius: 20,
+            }}>
+              <TouchableWithoutFeedback
+                style={{
+                  height: 4,
+                  borderRadius: 2,
+                  width: '20%',
+                  backgroundColor: '#55555555',
+                  alignSelf: 'center',
+                  marginTop: 8,
+                }}
+                // onPress={this.toggleDraggable}
+              />
+              {this.props.children}
+            </View>
+          </View>
         </Animated.View>
       </PanGestureHandler>
     )

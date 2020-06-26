@@ -101,7 +101,11 @@ const InfoWindow = (props) => {
       </View>
       <View style={windowStyles.row}>
         <Text style={windowStyles.rowText}>MAC address:</Text>
-        <Text style={[windowStyles.rowText, { fontFamily: 'monospace', fontSize: 18 }]} selectable>{props.vars.mac}</Text>
+        <Text style={windowStyles.rowText} selectable>{props.vars.mac}</Text>
+      </View>
+      <View style={windowStyles.row}>
+        <Text style={windowStyles.rowText}>Firmware Version</Text>
+        <Text style={windowStyles.rowText} selectable>{props.vars.fwv}</Text>
       </View>
       {/* {image && <Image source={{ uri: image.uri }} style={{ width: 400, height: image.height / image.width * 400, alignSelf: 'center', borderRadius: 5 }} />} */}
     </View>
@@ -256,41 +260,12 @@ function HomeScreen({ navigation }) {
       </View>
       {/* <View style={{ position: 'absolute', bottom: 0, width: '100%', height: 75 }}> */}
       <BottomDraggable
-        threshold={138}
+        threshold={17 * Dimensions.get('window').height / 60}
         thresholdGive={.25}
-        maxHeight={200}
-        minHeight={75}
+        maxHeight={2 * Dimensions.get('window').height / 5}
+        minHeight={Dimensions.get('window').height / 6}
       >
-        <View style={{
-          shadowColor: "#000",
-          shadowOffset: {
-            width: 0,
-            height: -1,
-          },
-          shadowOpacity: 0.23,
-          shadowRadius: 2.62,
-          borderRadius: 20,
-          elevation: 4,
-        }}>
-          <View style={{
-            height: '100%',
-            width: '100%',
-            backgroundColor: 'white',
-            marginTop: 4,
-            borderTopRightRadius: 20,
-            borderTopLeftRadius: 20,
-          }}>
-            <View style={{
-              height: 4,
-              borderRadius: 2,
-              width: '20%',
-              backgroundColor: '#55555555',
-              alignSelf: 'center',
-              marginTop: 8,
-            }} />
-            <InfoWindow vars={controlVars} />
-          </View>
-        </View>
+        <InfoWindow vars={controlVars} />
       </BottomDraggable>
       {/* </View> */}
       {/* <ScrollView
