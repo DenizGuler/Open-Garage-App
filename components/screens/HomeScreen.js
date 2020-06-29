@@ -22,13 +22,13 @@ const InfoWindow = (props) => {
   //   }).start();
   // }, [])
 
-  const [image, setImage] = useState(null);
+  // const [image, setImage] = useState(null);
 
-  useEffect(() => {
-    getImage().then((img) => {
-      setImage(img)
-    })
-  }, [props.visible])
+  // useEffect(() => {
+  //   getImage().then((img) => {
+  //     setImage(img)
+  //   })
+  // }, [props.visible])
 
   const windowStyles = StyleSheet.create({
     backdrop: {
@@ -60,7 +60,7 @@ const InfoWindow = (props) => {
     titleText: {
       fontSize: 30,
       // padding: 10,
-      marginBottom: 10,
+      marginBottom: 50,
       // borderBottomWidth: 1,
     },
 
