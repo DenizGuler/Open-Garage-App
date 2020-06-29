@@ -8,7 +8,6 @@ import { useFocusEffect } from '@react-navigation/native';
 export default LogScreen;
 
 
-
 const LogTable = (props) => {
   if (props.loading) {
     return <Text>Log Loading</Text>;

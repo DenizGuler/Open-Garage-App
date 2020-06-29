@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, Linking, ScrollView, AsyncStorage, Button, Alert, Picker, Switch, Platform, Image } from 'react-native';
+import { StyleSheet, View, Linking, ScrollView, AsyncStorage, Alert, Picker, Switch, Platform, Image } from 'react-native';
 import 'react-native-gesture-handler';
 import { TouchableHighlight, TextInput, TouchableOpacity, TouchableNativeFeedback } from 'react-native-gesture-handler';
 import { getDevKey, ScreenHeader, getDevices, setDevices, getURL, getConInput, BaseText as Text } from './utils'
@@ -19,16 +19,11 @@ const Setting = (props) => {
     },
 
     settingButton: {
-      // flex: 1,
-      // justifyContent: 'center',
       height: 60,
-      // margin: 2,
       alignSelf: 'stretch',
       paddingHorizontal: 15,
-      // marginVertical: 2,
       borderBottomWidth: 1,
       borderBottomColor: '#e5e5e5'
-      // borderRadius: 3,
     },
 
     settingText: {
@@ -480,11 +475,7 @@ export function IntegrationSettings({ navigation }) {
   }
 
   return (
-    <ScrollView
-      // style={}
-      // contentContainerStyle={styles.list}
-      stickyHeaderIndices={[0]}
-    >
+    <ScrollView stickyHeaderIndices={[0]}>
       <ScreenHeader
         text={'Integration Settings'}
         left={'back'}
@@ -700,11 +691,7 @@ export function AdvancedSettings({ navigation }) {
   }
 
   return (
-    <ScrollView
-      // style={}
-      // contentContainerStyle={styles.list}
-      stickyHeaderIndices={[0]}
-    >
+    <ScrollView stickyHeaderIndices={[0]}>
       <ScreenHeader
         text={'Advanced Settings'}
         left={'back'}
@@ -784,45 +771,7 @@ export function AdvancedSettings({ navigation }) {
   )
 }
 
-const TextPrompt = (props) => {
-  if (!props.hidden) {
-    return (
-      <View style={styles.modal}>
-        <Text>IP:</Text>
-        <TextInput
-          style={[styles.input]}
-          // {...props}
-          onChangeText={(text) => props.setter(text)}
-          value={props.value}
-          onSubmitEditing={() => {
-            props.hider(!props.hidden);
-            props.submitter(props.value);
-          }}
-        />
-        <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-evenly' }} accessible={false}>
-          <Button
-            style={styles.button}
-            onPress={() => {
-              props.hider(!props.hidden);
-              props.submitter(props.value);
-            }}
-            title={'OK'} />
-          <Button
-            style={styles.button}
-            onPress={() => {
-              props.hider(!props.hidden);
-              props.getter();
-            }}
-            title={'Cancel'} />
-        </View>
-      </View>
-    )
-  }
-  return null;
-}
-
 export default function SettingsScreen({ navigation }) {
-  const [hideIPPrompt, setHideIPPrompt] = useState(true);
   const [conInput, setConInput] = useState('');
 
   const docs = 'https://nbviewer.jupyter.org/github/OpenGarage/OpenGarage-Firmware/blob/master/docs/OGManual.pdf';
@@ -870,14 +819,6 @@ export default function SettingsScreen({ navigation }) {
         left={'hamburger'}
         right={'home'}
       />
-      {/* <TextPrompt
-        hidden={hideIPPrompt}
-        hider={setHideIPPrompt}
-        value={IP}
-        setter={setIP}
-        // submitter={setOGIP}
-        getter={getOGIP}
-      /> */}
       <ScrollView contentContainerStyle={styles.list}>
         <Setting
           icon={{ name: 'garage-alert' }}
@@ -958,23 +899,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
 
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'space-evenly',
-  },
-
-  input: {
-    width: '70%',
-    alignSelf: 'center',
-    paddingHorizontal: 6,
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderColor: '#000',
-    borderRadius: 2,
-    marginVertical: 10,
-  },
-
   inlineContainer: {
     marginLeft: 10,
     flex: 1,
@@ -1005,35 +929,6 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'column',
     alignSelf: 'center',
-  },
-
-  modal: {
-    position: 'absolute',
-    zIndex: 1,
-    top: '35%',
-    width: '85%',
-    maxWidth: 510,
-    padding: 20,
-    borderRadius: 2,
-    alignSelf: 'center',
-    alignContent: 'center',
-    backgroundColor: '#fff',
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    justifyContent: 'center',
-  },
-
-  button: {
-    display: 'flex',
-    flexBasis: 1,
-    flexGrow: 1,
-    margin: 5,
   },
 
   optionTitle: {
