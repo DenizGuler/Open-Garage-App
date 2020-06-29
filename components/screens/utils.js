@@ -1,9 +1,10 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { AsyncStorage, StyleSheet, Platform, Text, View } from "react-native";
+import { AsyncStorage, StyleSheet, Platform, Text, View, Image } from "react-native";
 import { Icon, Header } from "react-native-elements";
 import { useNavigation } from '@react-navigation/native';
 import { PanGestureHandler, State, TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
+import { DrawerContentScrollView, DrawerItemList, useIsDrawerOpen } from '@react-navigation/drawer';
 
 const FONT = Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif'
 /*
@@ -434,7 +435,7 @@ export class BottomDraggable extends React.Component {
                   alignSelf: 'center',
                   marginTop: 8,
                 }}
-                // onPress={this.toggleDraggable}
+              // onPress={this.toggleDraggable}
               />
               {this.props.children}
             </View>
@@ -443,4 +444,48 @@ export class BottomDraggable extends React.Component {
       </PanGestureHandler>
     )
   }
+}
+
+export const DrawerContent = (props) => {
+  const isDrawerOpen = useIsDrawerOpen();
+  const [image, setImage] = useState(null);
+
+  useEffect(() => {
+    getImage().then((img) => {
+      setImage(img)
+    })
+  }, [isDrawerOpen])
+
+  return (
+    <DrawerContentScrollView {...props}
+    >
+      {image && <Image source={{ uri: image.uri }} style={{
+        height: 200,
+        width: image.width / image.height * 200,
+        alignSelf: 'center',
+        borderRadius: 5,
+        marginBottom: 5,
+      }} />}
+      <DrawerItemList {...props}
+        itemStyle={{
+          width: '100%',
+          marginHorizontal: 0,
+          marginVertical: 0,
+          borderRadius: 0,
+          borderColor: '#adacac',
+          borderBottomWidth: 1,
+          paddingLeft: 0,
+        }}
+        labelStyle={{
+          // position: 'absolute',
+          left: -15,
+          bottom: -10,
+          top: 0,
+          // top: '50%'
+        }}
+        activeBackgroundColor='#adacac'
+        activeTintColor='#fff'
+      />
+    </DrawerContentScrollView>
+  )
 }

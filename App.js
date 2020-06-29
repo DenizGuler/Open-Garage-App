@@ -7,6 +7,7 @@ import { HomeScreen, LogScreen, SettingsScreen, DevicesScreen } from './componen
 import * as Settings from './components/screens/SettingsScreen';
 import { StatusBar, Dimensions } from 'react-native';
 import { Icon } from 'react-native-elements';
+import { DrawerContent } from './components/screens/utils';
 // import EventEmitter from 'events';
 
 // Main drawer where all 'main' screens are held (i.e.: Home, Settings, etc.)
@@ -19,6 +20,7 @@ function MainDrawerScreen() {
     <MainDrawer.Navigator
       initialRouteName='Home'
       drawerType={Dimensions.get('window').width < 600 ? 'front' : 'permanent'}
+      drawerContent={(props) => <DrawerContent {...props}/>}
     >
       <MainDrawer.Screen name='Home' component={HomeScreen} options={{
         drawerIcon: (props) => (
