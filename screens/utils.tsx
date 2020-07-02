@@ -1,17 +1,10 @@
-import React, { useRef, useState, useEffect, FC } from 'react';
-import { AsyncStorage, StyleSheet, Platform, Text, View, Image, TextProps } from "react-native";
-import { Icon, Header } from "react-native-elements";
-// import { useNavigation } from '@react-navigation/native';
+import React, { FC } from 'react';
+import { AsyncStorage, StyleSheet, Platform, Text, View, TextProps } from "react-native";
 import { PanGestureHandler, State, TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
-import { DrawerContentScrollView, DrawerItemList, useIsDrawerOpen, DrawerNavigationProp, DrawerContentOptions } from '@react-navigation/drawer';
-import { useNavigation, CompositeNavigationProp, DrawerNavigationState } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
 import { ImageInfo } from 'expo-image-picker/build/ImagePicker.types';
-import { MainDrawerParams, RootStackParams, AppNavigationProp } from '../App';
-import { DrawerNavigationHelpers, DrawerDescriptorMap } from '@react-navigation/drawer/lib/typescript/src/types';
 
-const FONT = Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif'
+export const FONT = Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif'
 
 // INTERFACES
 
@@ -70,7 +63,6 @@ export interface Params {
 
 // SETTERS
 
-// setDevices(devArr: device[]): void
 /** 
  * Set the device array to an array
  */
@@ -82,7 +74,6 @@ export const setDevices = async (devArr: Device[]) => {
   }
 }
 
-// setCurrIndex(index: number): void
 /** 
  * Set the current device to the one at the provided index
  */
@@ -94,7 +85,6 @@ export const setCurrIndex = async (index: number) => {
   }
 }
 
-// setCurrDeviceParam(param: string, val: any): void
 /**
  * set the current device with the provided param and value
  */
@@ -102,14 +92,17 @@ export const setCurrDeviceParam = async (params: Device) => {
   let newDevs;
   try {
     const [currIdx, devices] = await getDevices();
+    let newDevice: Device = {
+      conMethod: 'IP',
+      conInput: '',
+    };
     if (devices === null) {
-      let newDevice: Device = {};
       newDevs = [newDevice];
     } else {
       newDevs = devices.slice()
     }
     if (newDevs[currIdx] === undefined) {
-      newDevs[currIdx] = {};
+      newDevs[currIdx] = newDevice;
     }
     newDevs[currIdx] = {
       ...newDevs[currIdx],
@@ -123,7 +116,6 @@ export const setCurrDeviceParam = async (params: Device) => {
 
 // GETTERS
 
-// getDevices(): number, device[]undefined
 /**
  * Get index of device we are currently on and the list of devices
  */
@@ -143,16 +135,19 @@ export const getDevices = async (): Promise<[number, Device[]]> => {
   return [0, []];
 }
 
-// getDevKey(): string
 /**
  *  Get the device key of the current device
  */
-export const getDevKey = async (): Promise<string | undefined> => {
+export const getDevKey = async (): Promise<string> => {
   try {
     const [currIdx, devices] = await getDevices();
-    return devices[currIdx].devKey;
+    const deviceKey = devices[currIdx].devKey;
+    if (deviceKey !== undefined)
+      return deviceKey;
+    return ''
   } catch (err) {
     console.log(err);
+    return '';
   }
 }
 
@@ -226,89 +221,6 @@ export const removeDev = async (index: number): Promise<Device | undefined> => {
 }
 
 // COMPONENTS
-
-
-// Header component for screens
-
-interface ScreenHeaderProps {
-  left?: 'hamburger' | 'back' | 'home' | 'check' | 'add' | 'cancel' | 'info',
-  text?: string,
-  right?: 'hamburger' | 'back' | 'home' | 'check' | 'add' | 'cancel' | 'info',
-  onCancel?: () => void,
-  onInfo?: () => void,
-  onCheck?: () => void,
-  onAdd?: () => void,
-}
-/*
-  'hamburger': menu hamburger; opens the navigation drawer 
-  'back': back button; invokes navigate.goBack() 
-  'home' : home button; navigates to the 'Home' screen 
-  'check' : check button; invokes onCheck() 
-  'add' : plus/add button; invokes onAdd()
-  'cancel' : 'X' button; invokes onCancel()
-  'info' : info button; invokes onInfo()
-*/
-export const ScreenHeader: FC<ScreenHeaderProps> = (props) => {
-  const style = StyleSheet.create({
-    header: {
-      zIndex: 2,
-      width: '100%',
-      shadowColor: "#000",
-      shadowOffset: {
-        width: 0,
-        height: 5,
-      },
-      shadowOpacity: 0.34,
-      shadowRadius: 6.27,
-
-      elevation: 10,
-    },
-  })
-
-  const navigation = useNavigation<AppNavigationProp<'Home'>>();
-  const HeaderComponent = (type: 'hamburger' | 'back' | 'home' | 'check' | 'add' | 'cancel' | 'info' | undefined) => {
-    let comp = undefined;
-    switch (type) {
-      case 'hamburger':
-        if (Platform.OS !== 'web') {
-          comp = <Icon name='menu' onPress={() => navigation.toggleDrawer()} />;
-        }
-        break;
-      case 'back':
-        comp = <Icon name='chevron-left' onPress={() => navigation.goBack()} />;
-        break;
-      case 'home':
-        comp = <Icon name='home' onPress={() => navigation.navigate('Home')} />;
-        break;
-      case 'check':
-        comp = <Icon name='check' onPress={props.onCheck} />
-        break;
-      case 'add':
-        comp = <Icon name='add' onPress={props.onAdd} />
-        break;
-      case 'cancel':
-        comp = <Icon name='close' onPress={props.onCancel} />
-        break;
-      case 'info':
-        comp = <Icon name='info-outline' onPress={props.onInfo} />
-        break;
-      default:
-        break;
-    }
-    return comp
-  }
-
-  return (
-    <Header
-      containerStyle={style.header}
-      statusBarProps={{ translucent: true }}
-      backgroundColor="#fff"
-      leftComponent={HeaderComponent(props.left)}
-      centerComponent={{ text: props.text, style: { fontSize: 24, fontFamily: FONT } }}
-      rightComponent={HeaderComponent(props.right)}
-    />
-  );
-}
 
 /**
  * 'Base Text' component for the Open Garage App 

@@ -1,93 +1,15 @@
-import React, { useState, useEffect, useCallback, FC, Props } from 'react';
-import { StyleSheet, View, Linking, ScrollView, AsyncStorage, Alert, Picker, Switch, Platform, Image, TouchableNativeFeedback, ViewStyle, TextStyle } from 'react-native';
+import React, { useState, useEffect, useCallback, FC } from 'react';
+import { StyleSheet, View, Linking, ScrollView, AsyncStorage, Alert, Picker, Switch, Platform, Image, TouchableNativeFeedback } from 'react-native';
 import 'react-native-gesture-handler';
 import { TouchableHighlight, TextInput, TouchableOpacity } from 'react-native-gesture-handler';
-import { getDevKey, ScreenHeader, getDevices, setDevices, getURL, getConInput, BaseText as Text, Device, setCurrDeviceParam, Params } from './utils'
+import { getDevKey, getDevices, setDevices, getURL, getConInput, BaseText as Text, Device, Params } from './utils'
 import { ButtonGroup, Icon } from 'react-native-elements';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
-import { useFocusEffect, CompositeNavigationProp } from '@react-navigation/native';
-import { StackScreenProps, StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParams, AppNavigationProp, MainDrawerParams } from '../App';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
-
-
-interface SettingProps {
-  onPress: () => void,
-  icon: { name: string },
-  text: string,
-  subText?: string,
-}
-
-/**
- * Settings button component
- */
-const Setting: FC<SettingProps> = (props) => {
-
-  // type Styles = {
-  //   line: ViewStyle,
-  //   settingButton: ViewStyle,
-  //   settingText: TextStyle,
-  //   settingSubText: TextStyle,
-  // }
-
-  const settingStyles = StyleSheet.create({
-    settingButton: {
-      height: 60,
-      paddingHorizontal: 15,
-      borderBottomWidth: 1,
-      borderBottomColor: '#e5e5e5',
-      flex: 1,
-      flexDirection: 'row',
-      alignSelf: 'stretch',
-      alignItems: 'center'
-    },
-
-    settingText: {
-      fontSize: 20,
-      color: '#444'
-    },
-
-    settingSubText: {
-      alignSelf: 'flex-start',
-      fontSize: 16,
-      color: '#aaa',
-    },
-  })
-
-
-  if (Platform.OS === 'android') {
-    return (
-      <TouchableNativeFeedback
-        onPress={props.onPress}
-        background={TouchableNativeFeedback.Ripple('#adacac', false)}
-      >
-        <View style={settingStyles.settingButton}>
-          {props.icon && <Icon style={{ paddingRight: 15 }} name={props.icon.name} type={'material-community'} color={"#444"} />}
-          <View style={{ flex: 1 }} >
-            <Text style={settingStyles.settingText}>{props.text}</Text>
-            <Text style={settingStyles.settingSubText}>{props.subText ? props.subText : ''}</Text>
-          </View>
-        </View>
-      </TouchableNativeFeedback>
-    )
-  }
-  return (
-    <TouchableHighlight
-      onPress={props.onPress}
-      underlayColor={'#adacac'}
-      activeOpacity={.75}
-    >
-      <View style={settingStyles.settingButton}>
-        {props.icon && <Icon style={{ paddingRight: 10 }} name={props.icon.name} type={'material-community'} color={"#444"} />}
-        <View style={{ flex: 1 }} >
-          <Text style={settingStyles.settingText}>{props.text}</Text>
-          <Text style={settingStyles.settingSubText}>{props.subText ? props.subText : ''}</Text>
-        </View>
-      </View>
-    </TouchableHighlight>
-  )
-};
+import { useFocusEffect } from '@react-navigation/native';
+import { StackScreenProps } from '@react-navigation/stack';
+import { RootStackParams, AppNavigationProp } from '../App';
+import { FullLengthButton, ScreenHeader } from '../components';
 
 export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IPSettings'>) {
   const CON_METHODS = ['IP', 'OTF']
@@ -95,12 +17,8 @@ export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IP
   const [device, setDevice] = useState<Device>({
     conMethod: 'IP',
     conInput: '',
-    devKey: '',
-    image: {
-      uri: '',
-      width: 1,
-      height: 1,
-    },
+    // devKey: '',
+    // image: undefined,
   });
   const setDeviceParam = (param: Device) => {
     setDevice({
@@ -118,9 +36,16 @@ export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IP
   }, [])
 
   const pickImage = async () => {
+    let permissionResult = await ImagePicker.requestCameraRollPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+      Alert.alert('Permission to access camera roll is required')
+      return;
+    }
+
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
+      allowsEditing: false,
       quality: 1,
     })
 
@@ -817,11 +742,7 @@ export function AdvancedSettings({ navigation }: StackScreenProps<RootStackParam
   )
 }
 
-type SettingsScreenProps = {
-  navigation: AppNavigationProp<'Settings'>
-}
-
-export default function SettingsScreen({ navigation }: SettingsScreenProps) {
+export default function SettingsScreen({ navigation }: { navigation: AppNavigationProp<'Settings'> }) {
   const [conInput, setConInput] = useState('');
 
   const docs = 'https://nbviewer.jupyter.org/github/OpenGarage/OpenGarage-Firmware/blob/master/docs/OGManual.pdf';
@@ -871,31 +792,31 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         right={'home'}
       />
       <ScrollView contentContainerStyle={styles.list}>
-        <Setting
+        <FullLengthButton
           icon={{ name: 'garage-alert' }}
           text="Open Garage Device Set-up"
           subText={conInput}
           onPress={() => navigation.navigate('IPSettings')}
         />
-        <Setting
+        <FullLengthButton
           icon={{ name: 'settings' }}
           text="Basic Device Settings"
           subText={'Configure basic settings'}
           onPress={() => navigation.navigate('BasicSettings')}
         />
-        <Setting
+        <FullLengthButton
           icon={{ name: 'arrow-decision' }}
           text="Integration Settings"
           subText={'Configure integration settings'}
           onPress={() => navigation.navigate('IntegrationSettings')}
         />
-        <Setting
+        <FullLengthButton
           icon={{ name: 'cogs' }}
           text="Advanced Settings"
           subText={'Configure advanced settings'}
           onPress={() => navigation.navigate('AdvancedSettings')}
         />
-        <Setting
+        <FullLengthButton
           icon={{ name: 'script-outline' }}
           text="Clear Logs"
           subText={'Clear the logs collected by your device'}
@@ -903,7 +824,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
             [{ text: 'Cancel' }, { text: 'Reset Logs', onPress: () => { issueCommand('clearlog') } }]
           )}
         />
-        <Setting
+        <FullLengthButton
           icon={{ name: 'restart' }}
           text="Reboot Device"
           subText={'Reboot the OpenGarage Controller'}
@@ -911,7 +832,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
             [{ text: 'Cancel' }, { text: 'Reboot Device', onPress: () => { issueCommand('reboot') } }]
           )}
         />
-        <Setting
+        <FullLengthButton
           icon={{ name: 'book-open-variant' }}
           text="User Manual"
           subText={"Links you out of this app"}
@@ -925,7 +846,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
             });
           }}
         />
-        <Setting
+        <FullLengthButton
           icon={{ name: 'delete' }}
           text="Clear AsyncStorage"
           subText="DEBUG"
@@ -970,12 +891,9 @@ const styles = StyleSheet.create({
   },
 
   list: {
-    display: 'flex',
     maxWidth: 600,
     width: '100%',
     paddingBottom: 5,
-    flex: 1,
-    flexDirection: 'column',
     alignSelf: 'center',
   },
 

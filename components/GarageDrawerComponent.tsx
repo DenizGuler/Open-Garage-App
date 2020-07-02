@@ -22,7 +22,7 @@ const GarageDrawerComponent: FC<DrawerContentOptions & {
   }, [isDrawerOpen])
 
   return (
-    <DrawerContentScrollView {...props}>
+    <DrawerContentScrollView {...props} style={{ zIndex: -1 }}>
       {image && <Image source={{ uri: image.uri }} style={{
         height: 200,
         width: image.width / image.height * 200,

@@ -2,9 +2,10 @@ import React, { useState, useCallback, FC } from 'react';
 import { StyleSheet, View, FlatList } from 'react-native';
 import 'react-native-gesture-handler';
 import { Icon } from 'react-native-elements';
-import { getURL, ScreenHeader, BaseText as Text } from './utils';
+import { getURL, BaseText as Text } from './utils';
 import { useFocusEffect } from '@react-navigation/native';
 import { AppNavigationProp } from '../App';
+import { ScreenHeader } from '../components';
 
 export default LogScreen;
 

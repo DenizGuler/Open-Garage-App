@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { FlatList, TouchableHighlight } from 'react-native-gesture-handler';
-import { ScreenHeader, getDevices, setCurrIndex, removeDev, getURL, BaseText as Text, Device } from './utils';
-import { StyleSheet, View, Alert, Vibration, BackHandler, ViewStyle } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { FlatList } from 'react-native-gesture-handler';
+import { getDevices, setCurrIndex, removeDev, getURL, BaseText as Text, Device } from './utils';
+import { StyleSheet, View, Alert, Vibration, BackHandler } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { AppNavigationProp } from '../App';
+import { FullLengthButton, ScreenHeader } from '../components';
 
-export default function DevicesScreen({ navigation }: {navigation : AppNavigationProp<'Sites'>}) {
+export default function DevicesScreen({ navigation }: { navigation: AppNavigationProp<'Sites'> }) {
   const [deleteMode, setDeleteMode] = useState<boolean>(false);
   const [devsToDel, setDevsToDel] = useState<number[]>([]);
   const [devState, setDevState] = useState<Device[]>([]);
@@ -53,6 +54,9 @@ export default function DevicesScreen({ navigation }: {navigation : AppNavigatio
     }, [])
   )
 
+  /**
+   * Handle back button presses on Android
+   */
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
@@ -71,13 +75,6 @@ export default function DevicesScreen({ navigation }: {navigation : AppNavigatio
         BackHandler.removeEventListener('hardwareBackPress', onBackPress);
     }, [deleteMode])
   )
-
-  // useEffect(() => {
-  //   const unsubscribe = navigation.addListener('focus', () => {
-  //     startUp();
-  //   })
-  //   return unsubscribe;
-  // }, [navigation]);
 
   // Function that handles adding a new device by incrementing the device number and sending the user to the IPSettings to set it up
   // onAdd():void
@@ -98,16 +95,18 @@ export default function DevicesScreen({ navigation }: {navigation : AppNavigatio
     setDevsToDel(newDevsToDel);
   }
 
-  // Function that handles deleting the marked devices and refreshes the device list
-  // deleteDevs(): void
+  /**
+   * Function that handles deleting the marked devices and refreshes the device list
+   */
   const deleteDevs = () => {
     devsToDel.forEach((index) => { removeDev(index).then(() => startUp()) })
   }
 
-  // Returns what the style of the button at index should be
-  // buttonStyle(index: number): style
-  const buttonStyle = (index: number): ViewStyle => {
-    let bgColor = '#fff';
+  /** 
+   * Returns what the background color of the button at index should be
+   */
+  const backgroundStyle = (index: number) => {
+    let bgColor = 'transparent';
     if (deleteMode && devsToDel.indexOf(index) >= 0) {
       bgColor = '#ffd8d8'
     }
@@ -115,14 +114,7 @@ export default function DevicesScreen({ navigation }: {navigation : AppNavigatio
       bgColor = '#d8ffd8'
     }
 
-    return {
-      height: 60,
-      alignSelf: 'stretch',
-      paddingHorizontal: 10,
-      marginVertical: 2,
-      borderRadius: 3,
-      backgroundColor: bgColor,
-    }
+    return bgColor
   }
 
   return (
@@ -160,10 +152,8 @@ export default function DevicesScreen({ navigation }: {navigation : AppNavigatio
         }
         renderItem={({ item, index }) => {
           return (
-            <TouchableHighlight
-              containerStyle={buttonStyle(index)}
-              underlayColor="#e0efff"
-              activeOpacity={1}
+            <FullLengthButton
+              backgroundColor={backgroundStyle(index)}
               onPress={() => {
                 if (!deleteMode) {
                   setCurrIndex(index).then(() => setCurrState(index));
@@ -179,12 +169,10 @@ export default function DevicesScreen({ navigation }: {navigation : AppNavigatio
                   toggleDel(index)
                 }
               }
-            >
-              <View style={{ flex: 1, justifyContent: 'center' }}>
-                <Text style={[styles.deviceName, index === currState ? { color: '#12dd12' } : {}]}>{item.name}</Text>
-                <Text style={styles.devSubText}>{item.conInput}</Text>
-              </View>
-            </TouchableHighlight>
+              text={item.name ? item.name : ''}
+              subText={item.conInput}
+              icon={{ name: 'garage' }}
+            />
           )
         }}
       />
@@ -209,19 +197,9 @@ const styles = StyleSheet.create({
     display: 'flex',
     maxWidth: 600,
     width: '100%',
-    padding: 5,
+    // padding: 5,
     flex: 1,
     flexDirection: 'column',
     alignSelf: 'center',
-  },
-
-  deviceName: {
-    fontSize: 20,
-  },
-
-  devSubText: {
-    alignSelf: 'flex-end',
-    fontSize: 16,
-    color: '#aaa',
   },
 });
