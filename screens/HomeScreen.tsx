@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, FC } from 'react';
 import { StyleSheet, View, Alert, TouchableOpacity, Platform, Image, Dimensions } from 'react-native';
 import 'react-native-gesture-handler';
 import { Notifications } from 'expo';
 import * as Permissions from 'expo-permissions';
 import Constants from 'expo-constants';
 import { getDevKey, ScreenHeader, getURL, getImage, BaseText as Text, BottomDraggable } from './utils';
+import { AppNavigationProp } from '../App';
 // import Animated from 'react-native-reanimated';
 // import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 // import SwipeUpDown from 'react-native-swipe-up-down';
@@ -12,7 +13,11 @@ import { getDevKey, ScreenHeader, getURL, getImage, BaseText as Text, BottomDrag
 
 export default HomeScreen;
 
-const InfoWindow = (props) => {
+type InfoWindowProps = {
+  vars: any
+}
+
+const InfoWindow: FC<InfoWindowProps> = (props) => {
   // const fadeAnimation = useRef(new Animated.Value(0)).current;
 
   // useEffect(() => {
@@ -112,7 +117,7 @@ const InfoWindow = (props) => {
   );
 };
 
-function HomeScreen({ navigation }) {
+function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
   const [expoPushToken, setExpoPushToken] = useState('');
   const [notification, setNotification] = useState({});
 
@@ -148,7 +153,7 @@ function HomeScreen({ navigation }) {
   }, [])
 
   // grab info every 5 seconds while focused on the Home screen
-  let pollInterval;
+  let pollInterval: number;
   useEffect(() => {
     const unsubFocus = navigation.addListener('focus', () => {
       grabInfo();

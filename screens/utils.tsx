@@ -1,30 +1,80 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { AsyncStorage, StyleSheet, Platform, Text, View, Image } from "react-native";
+import React, { useRef, useState, useEffect, FC } from 'react';
+import { AsyncStorage, StyleSheet, Platform, Text, View, Image, TextProps } from "react-native";
 import { Icon, Header } from "react-native-elements";
-import { useNavigation } from '@react-navigation/native';
+// import { useNavigation } from '@react-navigation/native';
 import { PanGestureHandler, State, TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
-import { DrawerContentScrollView, DrawerItemList, useIsDrawerOpen } from '@react-navigation/drawer';
+import { DrawerContentScrollView, DrawerItemList, useIsDrawerOpen, DrawerNavigationProp, DrawerContentOptions } from '@react-navigation/drawer';
+import { useNavigation, CompositeNavigationProp, DrawerNavigationState } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { ImageInfo } from 'expo-image-picker/build/ImagePicker.types';
+import { MainDrawerParams, RootStackParams, AppNavigationProp } from '../App';
+import { DrawerNavigationHelpers, DrawerDescriptorMap } from '@react-navigation/drawer/lib/typescript/src/types';
 
 const FONT = Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif'
-/*
-  device obj{
-    conMethod: 'IP' | 'OTF',
-    conInput: string,
-    devKey: string,
-    image?: {
-      uri: string,
-      width: number,
-      height: number,
-    },
-  }
-*/
+
+// INTERFACES
+
+/**
+ * Interface for local device settings
+ */
+export interface Device {
+  conMethod?: 'IP' | 'OTF',
+  conInput?: string,
+  devKey?: string,
+  image?: ImageInfo,
+  name?: string,
+  // [param: string]: any,
+}
+
+/**
+ * Interface for device params as described by the Open Garage API
+ */
+export interface Params {
+  fwv?: number,
+  mnt?: number,
+  dth?: number,
+  vth?: number,
+  riv?: number,
+  alm?: number,
+  lsz?: number,
+  tsn?: number,
+  htp?: number,
+  cdt?: number,
+  dri?: number,
+  sto?: number,
+  mod?: number,
+  ati?: number,
+  ato?: number,
+  atib?: number,
+  atob?: number,
+  noto?: number,
+  usi?: number,
+  ssid?: string,
+  auth?: string,
+  bdmn?: string,
+  bprt?: number,
+  name?: string,
+  iftt?: string,
+  mqtt?: string,
+  mqpt?: number,
+  mqun?: string,
+  mqpw?: string,
+  dvip?: string,
+  gwip?: string,
+  subn?: string,
+  nkey?: string,
+  ckey?: string,
+  [key: string]: string | number | undefined,
+}
 
 // SETTERS
 
-// Set the device array to an array
 // setDevices(devArr: device[]): void
-export const setDevices = async (devArr) => {
+/** 
+ * Set the device array to an array
+ */
+export const setDevices = async (devArr: Device[]) => {
   try {
     await AsyncStorage.setItem('devices', JSON.stringify(devArr))
   } catch (err) {
@@ -32,9 +82,11 @@ export const setDevices = async (devArr) => {
   }
 }
 
-// Set the current device to the one at the provided index
 // setCurrIndex(index: number): void
-export const setCurrIndex = async (index) => {
+/** 
+ * Set the current device to the one at the provided index
+ */
+export const setCurrIndex = async (index: number) => {
   try {
     await AsyncStorage.setItem('currIndex', JSON.stringify(index))
   } catch (err) {
@@ -42,49 +94,60 @@ export const setCurrIndex = async (index) => {
   }
 }
 
-// set the current device with the provided param and value
 // setCurrDeviceParam(param: string, val: any): void
-export const setCurrDeviceParam = async (param, val) => {
+/**
+ * set the current device with the provided param and value
+ */
+export const setCurrDeviceParam = async (params: Device) => {
   let newDevs;
   try {
     const [currIdx, devices] = await getDevices();
     if (devices === null) {
-      newDevs = [{}];
+      let newDevice: Device = {};
+      newDevs = [newDevice];
     } else {
       newDevs = devices.slice()
     }
     if (newDevs[currIdx] === undefined) {
       newDevs[currIdx] = {};
     }
-    newDevs[currIdx][param] = val
+    newDevs[currIdx] = {
+      ...newDevs[currIdx],
+      ...params,
+    }
     await setDevices(newDevs);
-  } catch {
+  } catch (err) {
     console.log(err)
   }
 }
 
 // GETTERS
 
-// Get index of device we are currently on and the list of devices
-// getDevices(): number, device[]
-export const getDevices = async () => {
+// getDevices(): number, device[]undefined
+/**
+ * Get index of device we are currently on and the list of devices
+ */
+export const getDevices = async (): Promise<[number, Device[]]> => {
   try {
     const currIndex = await AsyncStorage.getItem('currIndex');
     const devices = await AsyncStorage.getItem('devices');
-    if (devices === null) {
+    if (devices === null || currIndex === null) {
       await setCurrIndex(0);
-      return [0, null];
+      return [0, []];
     }
     // console.log(currDev + ", " + devices);
     return [JSON.parse(currIndex), JSON.parse(devices)];
   } catch (err) {
     console.log(err);
   }
+  return [0, []];
 }
 
-// Get the device key of the current device
 // getDevKey(): string
-export const getDevKey = async () => {
+/**
+ *  Get the device key of the current device
+ */
+export const getDevKey = async (): Promise<string | undefined> => {
   try {
     const [currIdx, devices] = await getDevices();
     return devices[currIdx].devKey;
@@ -93,9 +156,9 @@ export const getDevKey = async () => {
   }
 }
 
-// Get the inputted value for connectivity
+// Get the inputted value for connectivity 
 // getConInput(): string
-export const getConInput = async () => {
+export const getConInput = async (): Promise<string | undefined> => {
   try {
     const [currIdx, devices] = await getDevices();
     return devices[currIdx].conInput;
@@ -106,7 +169,7 @@ export const getConInput = async () => {
 
 // Get the url of the device at the given index (or the current device if no index is given)
 // getURL(index?: number): string
-export const getURL = async (index) => {
+export const getURL = async (index?: number) => {
   try {
     let url;
     const [currIdx, devices] = await getDevices();
@@ -133,10 +196,10 @@ export const getURL = async (index) => {
 // Get the image attached to the device at the given index/current device
 // Returns undefined if no image exists
 // getImage(index?: number): image
-export const getImage = async (index) => {
+export const getImage = async (index?: number) => {
   try {
     const [currIdx, devices] = await getDevices();
-    index = (index === undefined) ? currIdx : index
+    if (index === undefined) index = currIdx;
     let device = devices[index]
     return device.image
   } catch (err) {
@@ -146,9 +209,9 @@ export const getImage = async (index) => {
 
 // HELPER METHODS
 
-// Remove the device at the given index. Returns the deleted device
+// Remove the device at the given index. Returns the deleted devices
 // removeDev(index: number): device
-export const removeDev = async (index) => {
+export const removeDev = async (index: number): Promise<Device | undefined> => {
   try {
     const [currIdx, devices] = await getDevices();
     if (currIdx === index) {
@@ -156,7 +219,7 @@ export const removeDev = async (index) => {
     }
     let deleted = devices.splice(index, 1)
     await setDevices(devices);
-    return deleted;
+    return deleted[0];
   } catch (err) {
     console.log(err)
   }
@@ -164,26 +227,28 @@ export const removeDev = async (index) => {
 
 // COMPONENTS
 
-/* 
-  Header component for screens
 
-  props: {
-    left?={type}
-    text?={string}
-    right?={type}
-    onCheck?={function}
-    onAdd?={function}
-  }
+// Header component for screens
 
-  type: {
-    'hamburger': menu hamburger; opens the navigation drawer,
-    'back': back button; invokes navigate.goBack(),
-    'home' : home button; navigates to the 'Home' screen,
-    'check' : check button; invokes onCheck(),
-    'add' : plus/add button; invokes onAdd(),
-  }
+interface ScreenHeaderProps {
+  left?: 'hamburger' | 'back' | 'home' | 'check' | 'add' | 'cancel' | 'info',
+  text?: string,
+  right?: 'hamburger' | 'back' | 'home' | 'check' | 'add' | 'cancel' | 'info',
+  onCancel?: () => void,
+  onInfo?: () => void,
+  onCheck?: () => void,
+  onAdd?: () => void,
+}
+/*
+  'hamburger': menu hamburger; opens the navigation drawer 
+  'back': back button; invokes navigate.goBack() 
+  'home' : home button; navigates to the 'Home' screen 
+  'check' : check button; invokes onCheck() 
+  'add' : plus/add button; invokes onAdd()
+  'cancel' : 'X' button; invokes onCancel()
+  'info' : info button; invokes onInfo()
 */
-export const ScreenHeader = (props) => {
+export const ScreenHeader: FC<ScreenHeaderProps> = (props) => {
   const style = StyleSheet.create({
     header: {
       zIndex: 2,
@@ -199,9 +264,10 @@ export const ScreenHeader = (props) => {
       elevation: 10,
     },
   })
-  const navigation = useNavigation();
-  const HeaderComponent = (type) => {
-    let comp = null;
+
+  const navigation = useNavigation<AppNavigationProp<'Home'>>();
+  const HeaderComponent = (type: 'hamburger' | 'back' | 'home' | 'check' | 'add' | 'cancel' | 'info' | undefined) => {
+    let comp = undefined;
     switch (type) {
       case 'hamburger':
         if (Platform.OS !== 'web') {
@@ -244,23 +310,21 @@ export const ScreenHeader = (props) => {
   );
 }
 
-export const BaseText = (props) => <Text {...props} style={[{ fontFamily: FONT }, props.style]}>{props.children}</Text>
+/**
+ * 'Base Text' component for the Open Garage App 
+ * @param props same props as the Text component
+ */
+export const BaseText: FC<TextProps> = (props) => <Text style={[{ fontFamily: FONT }]} {...props}>{props.children}</Text>
 
 const {
   event,
   set,
   defined,
-  greaterOrEq,
   lessOrEq,
   eq,
-  sub,
   add,
   multiply,
   cond,
-  min,
-  max,
-  or,
-  not,
   clockRunning,
   Clock,
   Value,
@@ -270,7 +334,7 @@ const {
   debug,
 } = Animated;
 
-function runSpring(clock, value, velocity, dest) {
+function runSpring(clock: Animated.Clock, value: Animated.Adaptable<any>, velocity: Animated.Adaptable<number> | number, dest: Animated.Adaptable<number>) {
   const state = {
     finished: new Value(0),
     velocity: new Value(0),
@@ -301,9 +365,21 @@ function runSpring(clock, value, velocity, dest) {
   ];
 }
 
-export class BottomDraggable extends React.Component {
+type BottomDraggableProps = {
+  minHeight: number,
+  maxHeight: number,
+  threshold: number,
+  thresholdGive: number,
+}
 
-  constructor(props) {
+export class BottomDraggable extends React.Component<BottomDraggableProps>{
+  translateY: Animated.Node<any>;
+  snapped: Animated.Value<number>;
+  getSnapPoint: (currPos: any) => Animated.Node<any>;
+  onGestureEvent: (...args: any[]) => void;
+  toggleDraggable: () => void;
+
+  constructor(props: BottomDraggableProps) {
     super(props);
     this.translateY = new Value(props.minHeight);
     const dragY = new Value(0);
@@ -311,19 +387,23 @@ export class BottomDraggable extends React.Component {
     const absY = new Value(0);
     const state = new Value(-1);
     // this.snapped = false;
-    this.snapped = new Value(false);
+    this.snapped = new Value(0);
 
     const thresh = new Value(props.threshold * (1 - props.thresholdGive));
     this.getSnapPoint = (currPos) => {
+      // set(this.snapped, false)
       return cond(
         lessOrEq(currPos, thresh)
         , [
-          set(this.snapped, false),
+          // this.snapped = false,
+          // this.snapped.setValue(false),
+          set(this.snapped, 0),
           set(thresh, props.threshold * (1 - props.thresholdGive)),
           props.minHeight
         ]
         , [
-          set(this.snapped, true),
+          set(this.snapped, 1),
+          // this.snapped = true,
           set(thresh, props.threshold * (1 + props.thresholdGive)),
           props.maxHeight
         ])
@@ -346,9 +426,9 @@ export class BottomDraggable extends React.Component {
     this.translateY = cond(eq(state, State.ACTIVE), [
       // state active
       stopClock(clock),
-      set(oldSnapped, this.snapped),
+      // set(oldSnapped, this.snapped),
       // set(transY, sub(Dimensions.get('window').height, absY)),
-      cond(oldSnapped,
+      cond(eq(this.snapped, 1),
         // transY = -dragY + maxHeight
         set(transY, add(multiply(dragY, -1), props.maxHeight)),
         // transY = -dragY + minHeight
@@ -364,14 +444,14 @@ export class BottomDraggable extends React.Component {
     ]);
 
     this.toggleDraggable = () => {
-      this.translateY = cond(eq(this.snapped, false), [
+      this.translateY = cond(eq(this.snapped, 0), [
         stopClock(clock),
-        set(this.snapped, true),
+        set(this.snapped, 1),
         runSpring(clock, this.translateY, 5, 500),
         // this.translateY
       ], [
         stopClock(clock),
-        set(this.snapped, false),
+        set(this.snapped, 0),
         runSpring(clock, this.translateY, 5, 100),
       ])
     }
@@ -444,48 +524,4 @@ export class BottomDraggable extends React.Component {
       </PanGestureHandler>
     )
   }
-}
-
-export const DrawerContent = (props) => {
-  const isDrawerOpen = useIsDrawerOpen();
-  const [image, setImage] = useState(null);
-
-  useEffect(() => {
-    getImage().then((img) => {
-      setImage(img)
-    })
-  }, [isDrawerOpen])
-
-  return (
-    <DrawerContentScrollView {...props}
-    >
-      {image && <Image source={{ uri: image.uri }} style={{
-        height: 200,
-        width: image.width / image.height * 200,
-        alignSelf: 'center',
-        borderRadius: 5,
-        marginBottom: 5,
-      }} />}
-      <DrawerItemList {...props}
-        itemStyle={{
-          width: '100%',
-          marginHorizontal: 0,
-          marginVertical: 0,
-          borderRadius: 0,
-          borderColor: '#adacac',
-          borderBottomWidth: 1,
-          paddingLeft: 0,
-        }}
-        labelStyle={{
-          // position: 'absolute',
-          left: -15,
-          bottom: -10,
-          top: 0,
-          // top: '50%'
-        }}
-        activeBackgroundColor='#adacac'
-        activeTintColor='#fff'
-      />
-    </DrawerContentScrollView>
-  )
 }

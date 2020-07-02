@@ -1,14 +1,22 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, FC } from 'react';
 import { StyleSheet, View, FlatList } from 'react-native';
 import 'react-native-gesture-handler';
 import { Icon } from 'react-native-elements';
 import { getURL, ScreenHeader, BaseText as Text } from './utils';
 import { useFocusEffect } from '@react-navigation/native';
+import { AppNavigationProp } from '../App';
 
 export default LogScreen;
 
+type LogTableProps = {
+  logs: number[][],
+  loading: boolean,
+  refreshing: boolean,
+  onRefresh: () => void,
+  header: React.ReactElement,
+}
 
-const LogTable = (props) => {
+const LogTable: FC<LogTableProps> = (props) => {
   if (props.loading) {
     return <Text>Log Loading</Text>;
   }
@@ -27,7 +35,7 @@ const LogTable = (props) => {
     );
   }
   // sort logs by time
-  props.logs.sort((a, b) => (b[0] - a[0]))
+  props.logs.sort((a: number[], b: number[]) => (b[0] - a[0]))
   return (
     <FlatList
       style={{
@@ -58,10 +66,10 @@ const LogTable = (props) => {
 };
 
 
-function LogScreen({ navigation }) {
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [logs, setLogs] = useState([]);
+function LogScreen({ navigation }: { navigation: AppNavigationProp<'Logs'> }) {
+  const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [logs, setLogs] = useState<number[][]>([]);
 
   // fetch the logs from https://OGIP/jl
   const grabLogs = async () => {
@@ -109,15 +117,12 @@ function LogScreen({ navigation }) {
         logs={logs}
         onRefresh={refreshLogs}
         header={
-          () => {
-            return (
-              <View style={{ flex: 1, flexDirection: 'row', width: '100%' }}>
-                <Text style={[styles.tableItem, styles.tableHeader]}>Event</Text>
-                <Text style={[styles.tableItem, styles.tableHeader, { flexGrow: 2, }]}>Date &amp; Time</Text>
-                <Text style={[styles.tableItem, styles.tableHeader, { borderRightWidth: 1 }]}>Details</Text>
-              </View>
-            )
-          }}
+          <View style={{ flex: 1, flexDirection: 'row', width: '100%' }}>
+            <Text style={[styles.tableItem, styles.tableHeader]}>Event</Text>
+            <Text style={[styles.tableItem, styles.tableHeader, { flexGrow: 2, }]}>Date &amp; Time</Text>
+            <Text style={[styles.tableItem, styles.tableHeader, { borderRightWidth: 1 }]}>Details</Text>
+          </View>
+        }
       />
     </View>
   );
@@ -134,10 +139,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'space-evenly',
-  },
-
-  largeText: {
-    fontSize: 40,
   },
 
   tableItem: {

@@ -1,26 +1,44 @@
 import React from 'react';
 import 'react-native-gesture-handler';
-import { NavigationContainer } from '@react-navigation/native';
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import { createStackNavigator } from '@react-navigation/stack';
-import { HomeScreen, LogScreen, SettingsScreen, DevicesScreen } from './components/screens/';
-import * as Settings from './components/screens/SettingsScreen';
+import { NavigationContainer, CompositeNavigationProp } from '@react-navigation/native';
+import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
+import { createStackNavigator, StackNavigationProp } from '@react-navigation/stack';
+import { HomeScreen, LogScreen, SettingsScreen, DevicesScreen } from './screens';
+import * as Settings from './screens/SettingsScreen';
 import { StatusBar, Dimensions } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { DrawerContent } from './components/screens/utils';
+import { GarageDrawerComponent } from './components';
 // import EventEmitter from 'events';
 
 // Main drawer where all 'main' screens are held (i.e.: Home, Settings, etc.)
 const MainDrawer = createDrawerNavigator();
+export type MainDrawerParams = {
+  Home: undefined,
+  Logs: undefined,
+  Settings: undefined,
+  Sites: undefined,
+}
 // The 'root' stack used to have all 'pop-up/modal' screens show up on top of any main screens
 const RootStack = createStackNavigator();
+export type RootStackParams = {
+  Main: undefined,
+  IPSettings: undefined,
+  BasicSettings: undefined,
+  IntegrationSettings: undefined,
+  AdvancedSettings: undefined
+}
+
+export type AppNavigationProp<A extends keyof MainDrawerParams> = CompositeNavigationProp<
+    DrawerNavigationProp<MainDrawerParams, A>,
+    StackNavigationProp<RootStackParams>
+  >
 
 function MainDrawerScreen() {
   return (
     <MainDrawer.Navigator
       initialRouteName='Home'
       drawerType={Dimensions.get('window').width < 600 ? 'front' : 'permanent'}
-      drawerContent={(props) => <DrawerContent {...props}/>}
+      drawerContent={(props) => <GarageDrawerComponent {...props} />}
     >
       <MainDrawer.Screen name='Home' component={HomeScreen} options={{
         drawerIcon: (props) => (

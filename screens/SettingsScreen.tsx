@@ -1,29 +1,46 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, Linking, ScrollView, AsyncStorage, Alert, Picker, Switch, Platform, Image } from 'react-native';
+import React, { useState, useEffect, useCallback, FC, Props } from 'react';
+import { StyleSheet, View, Linking, ScrollView, AsyncStorage, Alert, Picker, Switch, Platform, Image, TouchableNativeFeedback, ViewStyle, TextStyle } from 'react-native';
 import 'react-native-gesture-handler';
-import { TouchableHighlight, TextInput, TouchableOpacity, TouchableNativeFeedback } from 'react-native-gesture-handler';
-import { getDevKey, ScreenHeader, getDevices, setDevices, getURL, getConInput, BaseText as Text } from './utils'
+import { TouchableHighlight, TextInput, TouchableOpacity } from 'react-native-gesture-handler';
+import { getDevKey, ScreenHeader, getDevices, setDevices, getURL, getConInput, BaseText as Text, Device, setCurrDeviceParam, Params } from './utils'
 import { ButtonGroup, Icon } from 'react-native-elements';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, CompositeNavigationProp } from '@react-navigation/native';
+import { StackScreenProps, StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParams, AppNavigationProp, MainDrawerParams } from '../App';
+import { DrawerNavigationProp } from '@react-navigation/drawer';
 
-const Setting = (props) => {
+
+interface SettingProps {
+  onPress: () => void,
+  icon: { name: string },
+  text: string,
+  subText?: string,
+}
+
+/**
+ * Settings button component
+ */
+const Setting: FC<SettingProps> = (props) => {
+
+  // type Styles = {
+  //   line: ViewStyle,
+  //   settingButton: ViewStyle,
+  //   settingText: TextStyle,
+  //   settingSubText: TextStyle,
+  // }
 
   const settingStyles = StyleSheet.create({
-    line: {
-      width: 600,
-      height: 1,
-      alignSelf: 'center',
-      backgroundColor: '#aaa'
-    },
-
     settingButton: {
       height: 60,
-      alignSelf: 'stretch',
       paddingHorizontal: 15,
       borderBottomWidth: 1,
-      borderBottomColor: '#e5e5e5'
+      borderBottomColor: '#e5e5e5',
+      flex: 1,
+      flexDirection: 'row',
+      alignSelf: 'stretch',
+      alignItems: 'center'
     },
 
     settingText: {
@@ -31,7 +48,7 @@ const Setting = (props) => {
       color: '#444'
     },
 
-    setttingSubText: {
+    settingSubText: {
       alignSelf: 'flex-start',
       fontSize: 16,
       color: '#aaa',
@@ -42,15 +59,14 @@ const Setting = (props) => {
   if (Platform.OS === 'android') {
     return (
       <TouchableNativeFeedback
-        style={settingStyles.settingButton}
         onPress={props.onPress}
         background={TouchableNativeFeedback.Ripple('#adacac', false)}
       >
-        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-          {props.icon && <Icon style={{ paddingRight: 10 }} name={props.icon.name} type={'material-community'} color={"#444"} />}
+        <View style={settingStyles.settingButton}>
+          {props.icon && <Icon style={{ paddingRight: 15 }} name={props.icon.name} type={'material-community'} color={"#444"} />}
           <View style={{ flex: 1 }} >
             <Text style={settingStyles.settingText}>{props.text}</Text>
-            <Text style={settingStyles.setttingSubText}>{props.subText ? props.subText : ''}</Text>
+            <Text style={settingStyles.settingSubText}>{props.subText ? props.subText : ''}</Text>
           </View>
         </View>
       </TouchableNativeFeedback>
@@ -58,39 +74,38 @@ const Setting = (props) => {
   }
   return (
     <TouchableHighlight
-      style={settingStyles.settingButton}
       onPress={props.onPress}
       underlayColor={'#adacac'}
       activeOpacity={.75}
     >
-      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+      <View style={settingStyles.settingButton}>
         {props.icon && <Icon style={{ paddingRight: 10 }} name={props.icon.name} type={'material-community'} color={"#444"} />}
         <View style={{ flex: 1 }} >
           <Text style={settingStyles.settingText}>{props.text}</Text>
-          <Text style={settingStyles.setttingSubText}>{props.subText ? props.subText : ''}</Text>
+          <Text style={settingStyles.settingSubText}>{props.subText ? props.subText : ''}</Text>
         </View>
       </View>
     </TouchableHighlight>
   )
 };
 
-export function IPSettings({ navigation }) {
+export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IPSettings'>) {
   const CON_METHODS = ['IP', 'OTF']
 
-  const [device, setDevice] = useState({
+  const [device, setDevice] = useState<Device>({
     conMethod: 'IP',
     conInput: '',
     devKey: '',
     image: {
-      uri: null,
+      uri: '',
       width: 1,
       height: 1,
     },
   });
-  const setDeviceParam = (param, val) => {
+  const setDeviceParam = (param: Device) => {
     setDevice({
       ...device,
-      [param]: val,
+      ...param,
     });
   }
 
@@ -110,21 +125,21 @@ export function IPSettings({ navigation }) {
     })
 
     if (!result.cancelled) {
-      setDeviceParam('image', result);
+      setDeviceParam({ image: result });
     }
   }
 
   // Updates the device (or given param) in async storage 
   // updateDevice(param?: string): void
-  const updateDeivce = async (param) => {
+  const updateDeivce = async (param?: 'conMethod' | 'conInput' | 'devKey' | 'image') => {
 
-    if (param === undefined || param === 'conMethod') {
+    if ((param === undefined || param === 'conMethod') && device.conInput !== undefined) {
       // regex for an IP address (can probably be improved)
       if (/^(?!0)(?!.*\.$)((1?\d?\d|25[0-5]|2[0-4]\d)(\.|$)){4}$/.test(device.conInput)) {
-        setDeviceParam('conMethod', 'IP')
+        setDeviceParam({ conMethod: 'IP' })
         device.conMethod = 'IP'
       } else {
-        setDeviceParam('conMethod', 'OTF')
+        setDeviceParam({ conMethod: 'OTF' })
         device.conMethod = 'OTF'
       }
     }
@@ -141,11 +156,16 @@ export function IPSettings({ navigation }) {
       if (newDevs[currDev] === undefined) {
         newDevs[currDev] = {};
       }
-      // console.log(device)
       if (param === undefined) {
-        newDevs[currDev] = device
+        newDevs[currDev] = {
+          ...newDevs[currDev],
+          ...device
+        }
       } else {
-        newDevs[currDev][param] = device[param]
+        newDevs[currDev] = {
+          ...newDevs[currDev],
+          [param]: device[param]
+        }
       }
       await setDevices(newDevs);
       // await setDevice(device);
@@ -177,8 +197,8 @@ export function IPSettings({ navigation }) {
       <View style={styles.fsModal}>
         <Text style={styles.optionTitle}>Connection Method:</Text>
         <ButtonGroup
-          onPress={(idx) => setDeviceParam('conMethod', CON_METHODS[idx])}
-          selectedIndex={CON_METHODS.indexOf(device.conMethod)}
+          onPress={(idx) => setDeviceParam({ conMethod: idx === 0 ? 'IP' : 'OTF' })}
+          selectedIndex={device.conMethod === undefined ? 0 : CON_METHODS.indexOf(device.conMethod)}
           buttons={CON_METHODS}
           containerStyle={{ width: '85%', alignSelf: 'center' }}
           disabled
@@ -186,9 +206,9 @@ export function IPSettings({ navigation }) {
         <Text style={styles.optionTitle}>IP or OTF Token:</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setDeviceParam('conInput', text)}
+          onChangeText={(text) => setDeviceParam({ conInput: text })}
           value={device.conInput}
-          placeholder={'e.g.: 127.0.0.1 or [token]'}
+          placeholder={'e.g.: 127.0.0.1 or [token]currDev'}
           onSubmitEditing={() => {
             updateDeivce('conInput')
               .then(() => updateDeivce('conMethod'))
@@ -199,7 +219,7 @@ export function IPSettings({ navigation }) {
         <Text style={styles.optionTitle}>Device Key:</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setDeviceParam('devKey', text)}
+          onChangeText={(text) => setDeviceParam({ devKey: text })}
           value={device.devKey}
           onSubmitEditing={() => updateDeivce('devKey')}
           secureTextEntry
@@ -212,7 +232,7 @@ export function IPSettings({ navigation }) {
           onPress={pickImage}
         >
           <View style={[styles.optionInput, { flex: 1, flexDirection: 'row', alignItems: 'center' }]}>
-            {device.image.uri !== null ?
+            {device.image !== undefined ?
               <Image source={{ uri: device.image.uri }} style={{ width: 200, height: device.image.height / device.image.width * 200 }} /> :
               <Icon name='image' type='material-community' />
             }
@@ -224,9 +244,9 @@ export function IPSettings({ navigation }) {
   );
 }
 
-export function BasicSettings({ navigation }) {
-  const [currParams, setCurrParams] = useState({});
-  const setParam = (param, val) => {
+export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 'BasicSettings'>) {
+  const [currParams, setCurrParams] = useState<Params>({});
+  const setParam = (param: string, val: any) => {
     setCurrParams({
       ...currParams,
       [param]: val
@@ -254,8 +274,11 @@ export function BasicSettings({ navigation }) {
         return url + '/co?dkey=' + devKey;
       })
       .then((req) => {
-        Object.keys(currParams).forEach((key) => {
-          req += '&' + key + '=' + encodeURIComponent(currParams[key]);
+        Object.keys(currParams).forEach((key: string) => {
+          let param = currParams[key]
+          if (param !== undefined) {
+            req += '&' + key + '=' + encodeURIComponent(param);
+          }
         })
         return req;
       })
@@ -332,7 +355,7 @@ export function BasicSettings({ navigation }) {
           keyboardType={"number-pad"}
           selectTextOnFocus
         />
-        <Text style={styles.setttingSubText}>set to 0 to disable  </Text>
+        <Text style={styles.optionSubText}>set to 0 to disable  </Text>
         <Text style={styles.optionTitle}>Read Interval (s):</Text>
         <TextInput
           style={styles.optionInput}
@@ -416,15 +439,15 @@ export function BasicSettings({ navigation }) {
   )
 }
 
-export function IntegrationSettings({ navigation }) {
-  const [currParams, setCurrParams] = useState({});
-  const setParam = (param, val) => {
+export function IntegrationSettings({ navigation }: StackScreenProps<RootStackParams, 'IntegrationSettings'>) {
+  const [showTimePicker, setShowTimePicker] = useState<boolean>(false)
+  const [currParams, setCurrParams] = useState<Params>({});
+  const setParam = (param: string, val: string | number) => {
     setCurrParams({
       ...currParams,
       [param]: val
     });
   }
-  const [showTimePicker, setShowTimePicker] = useState(false);
 
   const grabCurrParams = () => {
     getURL()
@@ -440,10 +463,6 @@ export function IntegrationSettings({ navigation }) {
       })
   }
 
-  useEffect(() => {
-    grabCurrParams();
-  }, [])
-
   const updateSettings = () => {
     Promise.all([getURL(), getDevKey()])
       .then((values) => {
@@ -451,8 +470,11 @@ export function IntegrationSettings({ navigation }) {
         return url + '/co?dkey=' + devKey;
       })
       .then((req) => {
-        Object.keys(currParams).forEach((key) => {
-          req += '&' + key + '=' + encodeURIComponent(currParams[key]);
+        Object.keys(currParams).forEach((key: string) => {
+          let param = currParams[key]
+          if (param !== undefined) {
+            req += '&' + key + '=' + encodeURIComponent(param);
+          }
         })
         return req;
       })
@@ -473,6 +495,10 @@ export function IntegrationSettings({ navigation }) {
         Alert.alert('Invalid Device IP', 'Was not able to establish a connection with the entered device IP. Are you sure the IP is correct and the device is on?', [{ text: 'OK' }])
       });
   }
+
+  useEffect(() => {
+    grabCurrParams();
+  }, [])
 
   return (
     <ScrollView stickyHeaderIndices={[0]}>
@@ -525,7 +551,7 @@ export function IntegrationSettings({ navigation }) {
         <TextInput
           style={styles.optionInput}
           onChangeText={(text) => setParam('mqpt', text)}
-          value={currParams.mqpt}
+          value={'' + currParams.mqpt}
           selectTextOnFocus
         />
         <Text style={styles.optionTitle}>MQTT Username:</Text>
@@ -547,15 +573,21 @@ export function IntegrationSettings({ navigation }) {
         <View style={[styles.switchContainer, { marginLeft: 10 }]}>
           <Text style={styles.optionText}>On Door Open:</Text>
           <Switch
-            value={Boolean(currParams.noto & 1)}
-            onValueChange={(val) => setParam('noto', Number(val) | currParams.noto & 2)}
+            value={currParams.noto ? Boolean(currParams.noto & 1) : false}
+            onValueChange={(val) => {
+              if (currParams.noto === undefined) currParams.noto = 0
+              setParam('noto', Number(val) | currParams.noto & 2)
+            }}
           />
         </View>
         <View style={[styles.switchContainer, { marginLeft: 10 }]}>
           <Text style={styles.optionText}>On Door Close:</Text>
           <Switch
-            value={Boolean((currParams.noto >> 1) & 1)}
-            onValueChange={(val) => setParam('noto', (Number(val) << 1) | currParams.noto & 1)}
+            value={currParams.noto ? Boolean((currParams.noto >> 1) & 1) : false}
+            onValueChange={(val) => {
+              if (currParams.noto === undefined) currParams.noto = 0
+              setParam('noto', (Number(val) << 1) | currParams.noto & 1)
+            }}
           />
         </View>
         <Text style={styles.optionTitle}>Automation:</Text>
@@ -573,25 +605,31 @@ export function IntegrationSettings({ navigation }) {
         <View style={[styles.switchContainer, { marginLeft: 10 }]}>
           <Text style={styles.optionText}>Notify me</Text>
           <Switch
-            value={Boolean(currParams.ato & 1)}
-            onValueChange={(val) => setParam('ato', Number(val) | currParams.ato & 2)}
+            value={currParams.ato ? Boolean(currParams.ato & 1) : false}
+            onValueChange={(val) => {
+              if (currParams.ato === undefined) currParams.ato = 0
+              setParam('ato', Number(val) | currParams.ato & 2)
+            }}
           />
         </View>
         <View style={[styles.switchContainer, { marginLeft: 10 }]}>
           <Text style={styles.optionText}>Auto-close</Text>
           <Switch
-            value={Boolean((currParams.ato >> 1) & 1)}
-            onValueChange={(val) => setParam('ato', (Number(val) << 1) | currParams.ato & 1)}
+            value={currParams.ato ? Boolean((currParams.ato >> 1) & 1) : false}
+            onValueChange={(val) => {
+              if (currParams.ato === undefined) currParams.ato = 0
+              setParam('ato', (Number(val) << 1) | currParams.ato & 1)
+            }}
           />
         </View>
         <View style={styles.inlineContainer}>
           <Text style={styles.inlineOptionText}>If open after</Text>
           {showTimePicker && (<DateTimePicker
-            value={new Date(Date.now()).setUTCHours((currParams.atib ? currParams.atib : 0), 0, 0, 0)}
+            value={new Date(new Date(Date.now()).setUTCHours((currParams.atib ? currParams.atib : 0), 0, 0, 0))}
             mode={'time'}
             display="default"
             onChange={(e, time) => {
-              if (e.type === 'set')
+              if (e.type === 'set' && time !== undefined)
                 setParam('atib', time.getUTCHours());
               setShowTimePicker(false);
             }}
@@ -616,15 +654,21 @@ export function IntegrationSettings({ navigation }) {
         <View style={[styles.switchContainer, { marginLeft: 10 }]}>
           <Text style={styles.optionText}>Notify me</Text>
           <Switch
-            value={Boolean(currParams.atob & 1)}
-            onValueChange={(val) => setParam('atob', Number(val) | currParams.atob & 2)}
+            value={currParams.atob ? Boolean(currParams.atob & 1) : false}
+            onValueChange={(val) => {
+              if (currParams.atob === undefined) currParams.atob = 0
+              setParam('atob', Number(val) | currParams.atob & 2)
+            }}
           />
         </View>
         <View style={[styles.switchContainer, { marginLeft: 10 }]}>
           <Text style={styles.optionText}>Auto-close</Text>
           <Switch
-            value={Boolean((currParams.atob >> 1) & 1)}
-            onValueChange={(val) => setParam('atob', (Number(val) << 1) | currParams.atob & 1)}
+            value={currParams.atob ? Boolean((currParams.atob >> 1) & 1) : false}
+            onValueChange={(val) => {
+              if (currParams.atob === undefined) currParams.atob = 0
+              setParam('atob', (Number(val) << 1) | currParams.atob & 1)
+            }}
           />
         </View>
       </View>
@@ -632,10 +676,10 @@ export function IntegrationSettings({ navigation }) {
   )
 }
 
-export function AdvancedSettings({ navigation }) {
+export function AdvancedSettings({ navigation }: StackScreenProps<RootStackParams, 'AdvancedSettings'>) {
   const [changingKey, setChangingKey] = useState(false);
-  const [currParams, setCurrParams] = useState({});
-  const setParam = (param, val) => {
+  const [currParams, setCurrParams] = useState<Params>({});
+  const setParam = (param: string, val: number | string) => {
     setCurrParams({
       ...currParams,
       [param]: val
@@ -656,10 +700,6 @@ export function AdvancedSettings({ navigation }) {
       })
   }
 
-  useEffect(() => {
-    grabCurrParams();
-  }, [])
-
   const updateSettings = () => {
     Promise.all([getURL(), getDevKey()])
       .then((values) => {
@@ -667,8 +707,11 @@ export function AdvancedSettings({ navigation }) {
         return url + '/co?dkey=' + devKey;
       })
       .then((req) => {
-        Object.keys(currParams).forEach((key) => {
-          req += '&' + key + '=' + encodeURIComponent(currParams[key]);
+        Object.keys(currParams).forEach((key: string) => {
+          let param = currParams[key]
+          if (param !== undefined) {
+            req += '&' + key + '=' + encodeURIComponent(param);
+          }
         })
         return req;
       })
@@ -689,6 +732,9 @@ export function AdvancedSettings({ navigation }) {
         Alert.alert('Invalid Device IP', 'Was not able to establish a connection with the entered device IP. Are you sure the IP is correct and the device is on?', [{ text: 'OK' }])
       });
   }
+  useEffect(() => {
+    grabCurrParams();
+  }, [])
 
   return (
     <ScrollView stickyHeaderIndices={[0]}>
@@ -771,12 +817,16 @@ export function AdvancedSettings({ navigation }) {
   )
 }
 
-export default function SettingsScreen({ navigation }) {
+type SettingsScreenProps = {
+  navigation: AppNavigationProp<'Settings'>
+}
+
+export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [conInput, setConInput] = useState('');
 
   const docs = 'https://nbviewer.jupyter.org/github/OpenGarage/OpenGarage-Firmware/blob/master/docs/OGManual.pdf';
 
-  const issueCommand = (command) => {
+  const issueCommand = (command: 'clearlog' | 'reboot' | 'apmode') => {
     Promise.all([getURL(), getDevKey()])
       .then((values) => {
         const [url, devKey] = values;
@@ -792,6 +842,7 @@ export default function SettingsScreen({ navigation }) {
             req += '/cc?dkey=' + devKey + '&apmode=1';
             break;
         }
+        if (req === undefined) req = ''
         return fetch(req);
       })
       .then((response) => response.json())
@@ -808,7 +859,7 @@ export default function SettingsScreen({ navigation }) {
 
   useFocusEffect(
     useCallback(() => {
-      getConInput().then((conInput) => setConInput(conInput));
+      getConInput().then((conInput) => setConInput(conInput ? conInput : ''));
     }, [])
   )
 
@@ -824,10 +875,7 @@ export default function SettingsScreen({ navigation }) {
           icon={{ name: 'garage-alert' }}
           text="Open Garage Device Set-up"
           subText={conInput}
-          onPress={() =>
-            //setHideIPPrompt(!hideIPPrompt)
-            navigation.navigate('IPSettings')
-          }
+          onPress={() => navigation.navigate('IPSettings')}
         />
         <Setting
           icon={{ name: 'settings' }}
@@ -944,6 +992,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     padding: 8,
     flexGrow: 1,
+  },
+
+  optionSubText: {
+    alignSelf: 'flex-start',
+    fontSize: 16,
+    color: '#aaa',
   },
 
   optionInput: {

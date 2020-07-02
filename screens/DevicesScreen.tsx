@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FlatList, TouchableHighlight } from 'react-native-gesture-handler';
-import { ScreenHeader, getDevices, setCurrIndex, removeDev, getURL, BaseText as Text } from './utils';
-import { StyleSheet, View, Alert, Vibration, BackHandler } from 'react-native';
+import { ScreenHeader, getDevices, setCurrIndex, removeDev, getURL, BaseText as Text, Device } from './utils';
+import { StyleSheet, View, Alert, Vibration, BackHandler, ViewStyle } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { AppNavigationProp } from '../App';
 
-export default function DevicesScreen({ navigation }) {
-  const [deleteMode, setDeleteMode] = useState(false);
-  const [devsToDel, setDevsToDel] = useState([]);
-  const [devState, setDevState] = useState([]);
-  const [currState, setCurrState] = useState(0);
+export default function DevicesScreen({ navigation }: {navigation : AppNavigationProp<'Sites'>}) {
+  const [deleteMode, setDeleteMode] = useState<boolean>(false);
+  const [devsToDel, setDevsToDel] = useState<number[]>([]);
+  const [devState, setDevState] = useState<Device[]>([]);
+  const [currState, setCurrState] = useState<number>(0);
 
   // function that grabs all the devices and their names and stores them in devState
   // startUp(): void
@@ -26,7 +27,7 @@ export default function DevicesScreen({ navigation }) {
 
   // function that grabs all the names of a given array of devices
   // async getNames(devs: device[]): void
-  const getNames = async (devs) => {
+  const getNames = async (devs: Device[]) => {
     let newDevState = devs.slice();
     for (let i = 0; i < devs.length; ++i) {
       try {
@@ -82,12 +83,12 @@ export default function DevicesScreen({ navigation }) {
   // onAdd():void
   const onAdd = () => {
     setCurrIndex(devState?.length ? devState.length : 0)
-      .then(navigation.navigate('IPSettings'))
+      .then(() => navigation.navigate('IPSettings'))
   }
 
   // Function that handles marking devices for deletion
   // toggleDel(index: number): void
-  const toggleDel = (index) => {
+  const toggleDel = (index: number) => {
     let newDevsToDel = devsToDel.slice();
     if (devsToDel.indexOf(index) >= 0) {
       newDevsToDel.splice(devsToDel.indexOf(index), 1);
@@ -105,7 +106,7 @@ export default function DevicesScreen({ navigation }) {
 
   // Returns what the style of the button at index should be
   // buttonStyle(index: number): style
-  const buttonStyle = (index) => {
+  const buttonStyle = (index: number): ViewStyle => {
     let bgColor = '#fff';
     if (deleteMode && devsToDel.indexOf(index) >= 0) {
       bgColor = '#ffd8d8'
@@ -160,7 +161,7 @@ export default function DevicesScreen({ navigation }) {
         renderItem={({ item, index }) => {
           return (
             <TouchableHighlight
-              style={buttonStyle(index)}
+              containerStyle={buttonStyle(index)}
               underlayColor="#e0efff"
               activeOpacity={1}
               onPress={() => {
