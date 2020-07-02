@@ -4,12 +4,9 @@ import 'react-native-gesture-handler';
 import { Notifications } from 'expo';
 import * as Permissions from 'expo-permissions';
 import Constants from 'expo-constants';
-import { getDevKey, ScreenHeader, getURL, getImage, BaseText as Text, BottomDraggable } from './utils';
+import { getDevKey, getURL, BaseText as Text, BottomDraggable } from './utils';
 import { AppNavigationProp } from '../App';
-// import Animated from 'react-native-reanimated';
-// import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
-// import SwipeUpDown from 'react-native-swipe-up-down';
-// import { Overlay, Icon } from 'react-native-elements';
+import { ScreenHeader } from '../components';
 
 export default HomeScreen;
 
@@ -264,47 +261,25 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
         </View>
       </View>
       {/* <View style={{ position: 'absolute', bottom: 0, width: '100%', height: 75 }}> */}
-      <BottomDraggable
+      {Platform.OS !== 'web' && <BottomDraggable
         threshold={17 * Dimensions.get('window').height / 60}
         thresholdGive={.25}
         maxHeight={2 * Dimensions.get('window').height / 5}
         minHeight={Dimensions.get('window').height / 6}
       >
         <InfoWindow vars={controlVars} />
-      </BottomDraggable>
-      {/* </View> */}
-      {/* <ScrollView
-        style={{
-          position: 'absolute',
-          top: '90%',
-          width: '100%',
-        }}
-        contentContainerStyle={{
-          backgroundColor: 'grey',
-          display: 'flex',
-          alignItems: 'center',
-          // height: 100,
-        }}
-      >
+      </BottomDraggable>}
+      {Platform.OS === 'web' && <View style={{
+        // position: 'absolute',
+        // zIndex: 2,
+        // bottom: 0,
+        // left: -360,
+        alignSelf: "center",
+        width: '100%',
+        maxWidth: 600
+      }}>
         <InfoWindow vars={controlVars}/>
-      </ScrollView> */}
-      {/* <SwipeUpDown
-        itemMini={
-          <View style={{ alignItems: 'center' }}>
-            <Text>This is the mini view, swipe up!</Text>
-          </View>
-        } // Pass props component when collapsed
-        itemFull={<InfoWindow vars={controlVars} />} // Pass props component when show full
-        // onShowMini={() => console.log('mini')}
-        // onShowFull={() => console.log('full')}
-        // onMoveDown={() => console.log('down')}
-        // onMoveUp={() => console.log('up')}
-        disablePressToShow={true} // Press item mini to show full
-        style={{
-          backgroundColor: 'white',
-          elevation: 10,
-        }} // style for swipe
-      /> */}
+      </View>}
     </View >
   );
 }
