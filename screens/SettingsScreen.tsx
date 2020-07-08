@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback, FC } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, Linking, ScrollView, AsyncStorage, Alert, Picker, Switch, Platform, Image, TouchableNativeFeedback } from 'react-native';
 import 'react-native-gesture-handler';
-import { TouchableHighlight, TextInput, TouchableOpacity } from 'react-native-gesture-handler';
+import { TextInput, TouchableOpacity } from 'react-native-gesture-handler';
 import { getDevKey, getDevices, setDevices, getURL, getConInput, BaseText as Text, Device, Params } from './utils'
 import { ButtonGroup, Icon } from 'react-native-elements';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -158,7 +158,11 @@ export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IP
         >
           <View style={[styles.optionInput, { flex: 1, flexDirection: 'row', alignItems: 'center' }]}>
             {device.image !== undefined ?
-              <Image source={{ uri: device.image.uri }} style={{ width: 200, height: device.image.height / device.image.width * 200 }} /> :
+              <Image source={{ uri: device.image.uri }}
+                style={{
+                  width: 200,
+                  height: Platform.OS === 'web' ? 180 : device.image.height / device.image.width * 200
+                }} /> :
               <Icon name='image' type='material-community' />
             }
             <Text style={styles.optionText}>Pick Image</Text>
@@ -559,21 +563,22 @@ export function IntegrationSettings({ navigation }: StackScreenProps<RootStackPa
               setShowTimePicker(false);
             }}
           />)}
-          {Platform.OS !== 'web' &&
+          {/* {Platform.OS !== 'web' &&
             (<TouchableOpacity
               style={[styles.inlineInput, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}
               onPress={() => setShowTimePicker(true)}
             >
               <Text style={{ fontSize: 20 }}>{'' + currParams.atib}</Text>
-            </TouchableOpacity>)}
-          {Platform.OS === 'web' &&
-            (<TextInput
-              style={styles.inlineInput}
-              onChangeText={(text) => setParam('atib', Number(text))}
-              value={'' + currParams.atib}
-              keyboardType={'number-pad'}
-              selectTextOnFocus
-            />)}
+            </TouchableOpacity>)} */}
+          {/* {Platform.OS === 'web' && ( */}
+          <TextInput
+            style={styles.inlineInput}
+            onChangeText={(text) => setParam('atib', Number(text))}
+            value={'' + currParams.atib}
+            keyboardType={'number-pad'}
+            selectTextOnFocus
+          />
+          {/* )} */}
           <Text style={styles.inlineOptionText}>UTC...</Text>
         </View>
         <View style={[styles.switchContainer, { marginLeft: 10 }]}>
@@ -795,42 +800,54 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
         <FullLengthButton
           icon={{ name: 'garage-alert' }}
           text="Open Garage Device Set-up"
-          subText={conInput}
+          subText={'Connection method, device key'}
           onPress={() => navigation.navigate('IPSettings')}
         />
         <FullLengthButton
           icon={{ name: 'settings' }}
           text="Basic Device Settings"
-          subText={'Configure basic settings'}
+          subText={'Site name, sensor, alarm, log size'}
           onPress={() => navigation.navigate('BasicSettings')}
         />
         <FullLengthButton
           icon={{ name: 'arrow-decision' }}
           text="Integration Settings"
-          subText={'Configure integration settings'}
+          subText={'OTC, IFTTT, MQTT, notifications'}
           onPress={() => navigation.navigate('IntegrationSettings')}
         />
         <FullLengthButton
           icon={{ name: 'cogs' }}
           text="Advanced Settings"
-          subText={'Configure advanced settings'}
+          subText={'HTTP port, static IP, change device key'}
           onPress={() => navigation.navigate('AdvancedSettings')}
         />
         <FullLengthButton
           icon={{ name: 'script-outline' }}
           text="Clear Logs"
           subText={'Clear the logs collected by your device'}
-          onPress={() => Alert.alert('Confirm Clear Logs', 'Are you sure you want to clear the logs?',
-            [{ text: 'Cancel' }, { text: 'Reset Logs', onPress: () => { issueCommand('clearlog') } }]
-          )}
+          onPress={() => {
+            if (Platform.OS === 'web') {
+              let res = window.confirm('Are you sure you want to clear the logs?')
+              if (res) issueCommand('clearlog')
+            }
+            Alert.alert('Confirm Clear Logs', 'Are you sure you want to clear the logs?',
+              [{ text: 'Cancel' }, { text: 'Reset Logs', onPress: () => { issueCommand('clearlog') } }]
+            )
+          }}
         />
         <FullLengthButton
           icon={{ name: 'restart' }}
           text="Reboot Device"
           subText={'Reboot the OpenGarage Controller'}
-          onPress={() => Alert.alert('Confirm Reboot Device', 'Are you sure you want to reboot the controller?',
-            [{ text: 'Cancel' }, { text: 'Reboot Device', onPress: () => { issueCommand('reboot') } }]
-          )}
+          onPress={() => {
+            if (Platform.OS === 'web') {
+              let res = window.confirm('Are you sure you want to reboot the controller?')
+              if (res) issueCommand('reboot')
+            }
+            Alert.alert('Confirm Reboot Device', 'Are you sure you want to reboot the controller?',
+              [{ text: 'Cancel' }, { text: 'Reboot Device', onPress: () => { issueCommand('reboot') } }]
+            )
+          }}
         />
         <FullLengthButton
           icon={{ name: 'book-open-variant' }}
