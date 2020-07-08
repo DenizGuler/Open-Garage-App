@@ -1,17 +1,30 @@
 import React, { useState, useEffect, FC } from 'react';
-import { StyleSheet, View, Alert, TouchableOpacity, Platform, Image, Dimensions } from 'react-native';
+import { StyleSheet, View, Alert, TouchableOpacity, Platform, Dimensions, ViewStyle } from 'react-native';
 import 'react-native-gesture-handler';
 import { Notifications } from 'expo';
 import * as Permissions from 'expo-permissions';
 import Constants from 'expo-constants';
-import { getDevKey, getURL, BaseText as Text, BottomDraggable } from './utils';
+import { getDevKey, getURL, BaseText as Text } from './utils';
 import { AppNavigationProp } from '../App';
-import { ScreenHeader } from '../components';
+import { ScreenHeader, BottomDraggable } from '../components';
 
 export default HomeScreen;
 
+type ControllerVars = {
+  dist: number,
+  door: number,
+  vehicle: number,
+  rcnt: number,
+  fwv: number,
+  name: string,
+  mac: string,
+  cid: number,
+  rssi: number,
+}
+
 type InfoWindowProps = {
-  vars: any
+  vars: ControllerVars,
+  style?: ViewStyle,
 }
 
 const InfoWindow: FC<InfoWindowProps> = (props) => {
@@ -62,11 +75,12 @@ const InfoWindow: FC<InfoWindowProps> = (props) => {
     titleText: {
       fontSize: 30,
       // padding: 10,
-      marginBottom: 50,
+      marginBottom: 20,
       // borderBottomWidth: 1,
     },
 
     row: {
+      marginVertical: 2,
       display: 'flex',
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -86,7 +100,7 @@ const InfoWindow: FC<InfoWindowProps> = (props) => {
 
   // if (!props.visible) return null;
   return (
-    <View style={windowStyles.cardContainer}>
+    <View style={[windowStyles.cardContainer, props.style]}>
       {/* <Icon containerStyle={windowStyles.closeButton} name='close' size={28}/> */}
       <Text style={windowStyles.titleText}>More Information</Text>
       <View style={windowStyles.row}>
@@ -106,8 +120,8 @@ const InfoWindow: FC<InfoWindowProps> = (props) => {
         <Text style={windowStyles.rowText} selectable>{props.vars.mac}</Text>
       </View>
       <View style={windowStyles.row}>
-        <Text style={windowStyles.rowText}>Firmware Version</Text>
-        <Text style={windowStyles.rowText} selectable>{props.vars.fwv}</Text>
+        <Text style={windowStyles.rowText}>Firmware Version:</Text>
+        <Text style={windowStyles.rowText} selectable>{~~(props.vars.fwv / 100) + '.' + ~~(props.vars.fwv / 10 % 10) + '.' + ~~(props.vars.fwv % 10)}</Text>
       </View>
       {/* {image && <Image source={{ uri: image.uri }} style={{ width: 400, height: image.height / image.width * 400, alignSelf: 'center', borderRadius: 5 }} />} */}
     </View>
@@ -152,40 +166,42 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
   // grab info every 5 seconds while focused on the Home screen
   let pollInterval: number;
   useEffect(() => {
-    const unsubFocus = navigation.addListener('focus', () => {
+    const unsub = navigation.addListener('focus', () => {
       grabInfo();
       clearInterval(pollInterval);
       pollInterval = setInterval(grabInfo, 5000);
     });
-    return unsubFocus;
+    return unsub;
   }, [navigation]);
 
   useEffect(() => {
-    const unsubBlur = navigation.addListener('blur', () => {
+    const unsub = navigation.addListener('blur', () => {
       clearInterval(pollInterval);
     })
-    return unsubBlur;
+    return unsub;
   }, [navigation]);
 
   // state for grabInfo
-  const [controlVars, setControlVars] = useState({
+  const [controlVars, setControlVars] = useState<ControllerVars>({
     dist: 0,
     door: 0,
     vehicle: 0,
     rcnt: 0,
     fwv: 0,
     name: 'No Device Found',
-    mac: '',
+    mac: 'No Device Found',
     cid: 0,
     rssi: 0,
   })
 
-  const grabInfo = function () {
+  const grabInfo = () => {
     getURL()
       .then((url) => {
         return fetch(url + '/jc')
       })
-      .then((response) => response.json())
+      .then((response) => {
+        return response.json()
+      })
       .then((json) => {
         if (json) {
           setControlVars(json);
@@ -230,7 +246,7 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
       })
   }
 
-  const [infoVisible, setInfoVisible] = useState(false);
+  // const [infoVisible, setInfoVisible] = useState(false);
 
   return (
     <View style={styles.container}>
@@ -238,8 +254,8 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
       <ScreenHeader
         text={controlVars.name}
         left={'hamburger'}
-        right={'info'}
-        onInfo={() => { setInfoVisible(!infoVisible) }}
+        // right={'info'}
+        // onInfo={() => { setInfoVisible(!infoVisible) }}
       />
       <View style={styles.center}>
         <TouchableOpacity
@@ -249,7 +265,7 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
         >
           <Text style={styles.buttonText}>{controlVars.door ? 'Close' : 'Open'}</Text>
         </TouchableOpacity>
-        <View>
+        <View style={{width: '90%', maxWidth: 550}}>
           <View style={styles.row}>
             <Text style={styles.largeText}>Door Status  </Text>
             <Text style={[styles.largeText, controlVars.door ? styles.redText : styles.greenText]}>{controlVars.door ? 'Opened' : 'Closed'}</Text>
@@ -266,9 +282,12 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
         thresholdGive={.25}
         maxHeight={2 * Dimensions.get('window').height / 5}
         minHeight={Dimensions.get('window').height / 6}
-      >
-        <InfoWindow vars={controlVars} />
-      </BottomDraggable>}
+        maximizedComponent={(props) => <InfoWindow vars={controlVars} {...props} />}
+        minimizedComponent={(props) => (
+          <Text style={{ fontSize: 26 }} {...props}>More Information</Text>
+        )
+        }
+      />}
       {Platform.OS === 'web' && <View style={{
         // position: 'absolute',
         // zIndex: 2,
@@ -278,7 +297,7 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
         width: '100%',
         maxWidth: 600
       }}>
-        <InfoWindow vars={controlVars}/>
+        <InfoWindow vars={controlVars} />
       </View>}
     </View >
   );
@@ -337,6 +356,6 @@ const styles = StyleSheet.create({
   },
 
   largeText: {
-    fontSize: 34,
+    fontSize: 30,
   },
 });
