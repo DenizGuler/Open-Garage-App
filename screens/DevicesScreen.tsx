@@ -5,6 +5,7 @@ import { StyleSheet, View, Alert, Vibration, BackHandler } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { AppNavigationProp } from '../App';
 import { FullLengthButton, ScreenHeader } from '../components';
+import { Icon } from 'react-native-elements';
 
 export default function DevicesScreen({ navigation }: { navigation: AppNavigationProp<'Sites'> }) {
   const [deleteMode, setDeleteMode] = useState<boolean>(false);
@@ -176,6 +177,20 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
           )
         }}
       />
+      <View style={{ position: 'absolute', bottom: '5%', right: '7%' }}>
+        <Icon
+          name={deleteMode ? 'close' : 'delete'}
+          reverse
+          color="#444"
+          raised
+          size={30}
+          onPress={() => {
+            Vibration.vibrate(100)
+            setDevsToDel([]);
+            setDeleteMode(!deleteMode)
+          }}
+        />
+      </View>
     </View>
 
   );
@@ -187,7 +202,7 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
 const styles = StyleSheet.create({
   container: {
     height: '100%',
-    marginBottom: 10,
+    // marginBottom: 10,
     width: '100%',
     backgroundColor: '#fff',
 
