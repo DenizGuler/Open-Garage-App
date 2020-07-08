@@ -11,6 +11,10 @@ interface Props {
   text: string,
   subText?: string,
   backgroundColor?: string,
+  style?: {
+    height?: number | string,
+    fontSize: number,
+  },
 }
 
 /**
@@ -19,8 +23,8 @@ interface Props {
 const FullLengthButton: FC<Props> = (props) => {
   const styles = StyleSheet.create({
     button: {
-      backgroundColor: props.backgroundColor? props.backgroundColor : 'transparent',
-      minHeight: 65,
+      backgroundColor: props.backgroundColor ? props.backgroundColor : 'transparent',
+      minHeight: props.style?.height ? props.style?.height : 65,
       paddingHorizontal: 15,
       borderBottomWidth: 1,
       borderBottomColor: '#e5e5e5',
@@ -31,7 +35,7 @@ const FullLengthButton: FC<Props> = (props) => {
     },
 
     text: {
-      fontSize: 20,
+      fontSize: props.style?.fontSize ? props.style?.fontSize : 20,
       color: '#444'
     },
 
@@ -52,9 +56,9 @@ const FullLengthButton: FC<Props> = (props) => {
       >
         <View style={styles.button}>
           {props.icon && <Icon style={{ paddingRight: 15 }} name={props.icon.name} type={'material-community'} color={"#444"} />}
-          <View style={{ flex: 1 }} >
+          <View style={{ flex: 1 }}>
             <Text style={styles.text}>{props.text}</Text>
-            <Text style={styles.subText}>{props.subText ? props.subText : ''}</Text>
+            {props.subText !== undefined && <Text style={styles.subText}>{props.subText}</Text>}
           </View>
         </View>
       </TouchableNativeFeedback>
@@ -63,7 +67,7 @@ const FullLengthButton: FC<Props> = (props) => {
   return (
     <TouchableHighlight
       onPress={props.onPress}
-      underlayColor={'#adacac'}
+      underlayColor={'#adacac55'}
       activeOpacity={.75}
     >
       <View style={styles.button}>
