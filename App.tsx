@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import 'react-native-gesture-handler';
 import { NavigationContainer, CompositeNavigationProp } from '@react-navigation/native';
 import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
-import { createStackNavigator, StackNavigationProp } from '@react-navigation/stack';
+import { createStackNavigator, StackNavigationProp, StackScreenProps } from '@react-navigation/stack';
 import { HomeScreen, LogScreen, SettingsScreen, DevicesScreen } from './screens';
 import * as Settings from './screens/SettingsScreen';
 import { StatusBar, Dimensions } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { GarageDrawerComponent } from './components';
+import { getDevices } from './screens/utils';
 // import EventEmitter from 'events';
 
 // Main drawer where all 'main' screens are held (i.e.: Home, Settings, etc.)
@@ -18,6 +19,7 @@ export type MainDrawerParams = {
   Settings: undefined,
   Sites: undefined,
 }
+
 // The 'root' stack used to have all 'pop-up/modal' screens show up on top of any main screens
 const RootStack = createStackNavigator();
 export type RootStackParams = {
@@ -29,11 +31,22 @@ export type RootStackParams = {
 }
 
 export type AppNavigationProp<A extends keyof MainDrawerParams> = CompositeNavigationProp<
-    DrawerNavigationProp<MainDrawerParams, A>,
-    StackNavigationProp<RootStackParams>
-  >
+  DrawerNavigationProp<MainDrawerParams, A>,
+  StackNavigationProp<RootStackParams>
+>
 
-function MainDrawerScreen() {
+function MainDrawerScreen({ navigation }: StackScreenProps<RootStackParams, 'Main'>) {
+
+  useEffect(() => {
+    getDevices()
+      .then((value) => {
+        const [currIdx, devices] = value;
+        if (devices.length === 0) {
+          navigation.navigate('IPSettings')
+        }
+      })
+  }, [])
+
   return (
     <MainDrawer.Navigator
       initialRouteName='Home'
