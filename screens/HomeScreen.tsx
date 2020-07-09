@@ -194,25 +194,20 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
     rssi: 0,
   })
 
-  const grabInfo = () => {
-    getURL()
-      .then((url) => {
-        return fetch(url + '/jc')
-      })
-      .then((response) => {
-        return response.json()
-      })
-      .then((json) => {
-        if (json) {
-          setControlVars(json);
-        }
-      })
-      .catch((err) => {
-        clearInterval(pollInterval);
-        Alert.alert('No Device Found', 'No device was found at the entered address',
-          [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
-        console.log(err);
-      })
+  const grabInfo = async () => {
+    try {
+      let url = await getURL();
+      if (url === 'no devices') return;
+      const response = await fetch(url + '/jc');
+      const json = await response.json();
+      if (json.message !== undefined) throw Error(json.message)
+      if (json) setControlVars(json);
+    } catch (err) {
+      clearInterval(pollInterval);
+      Alert.alert('No Device Found', 'No device was found at the entered address',
+        [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
+      console.log(err);
+    }
   }
 
   const toggleDoor = function () {
@@ -254,8 +249,8 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
       <ScreenHeader
         text={controlVars.name}
         left={'hamburger'}
-        // right={'info'}
-        // onInfo={() => { setInfoVisible(!infoVisible) }}
+      // right={'info'}
+      // onInfo={() => { setInfoVisible(!infoVisible) }}
       />
       <View style={styles.center}>
         <TouchableOpacity
@@ -265,7 +260,7 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
         >
           <Text style={styles.buttonText}>{controlVars.door ? 'Close' : 'Open'}</Text>
         </TouchableOpacity>
-        <View style={{width: '90%', maxWidth: 550}}>
+        <View style={{ width: '90%', maxWidth: 550 }}>
           <View style={styles.row}>
             <Text style={styles.largeText}>Door Status  </Text>
             <Text style={[styles.largeText, controlVars.door ? styles.redText : styles.greenText]}>{controlVars.door ? 'Opened' : 'Closed'}</Text>
