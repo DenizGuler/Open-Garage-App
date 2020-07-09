@@ -1,6 +1,6 @@
 import React from 'react';
 import Animated, { Easing } from "react-native-reanimated";
-import { State, PanGestureHandler, TouchableWithoutFeedback } from 'react-native-gesture-handler';
+import { State, PanGestureHandler } from 'react-native-gesture-handler';
 import { View, StyleSheet } from 'react-native';
 
 const {
@@ -188,22 +188,22 @@ class BottomDraggable extends React.Component<BottomDraggableProps>{
       )
     ]);
 
-    const rot = new Value();
-    this.handleRotation = cond(eq(this.snapped, 1), [
-      debug('rot', rot),
-      set(
-        rot,
-        cond(defined(rot), runTiming(clock, rot, 0), 0)
-      ),
-      new Value(0)
-    ], [
+    // const rot = new Value();
+    // this.handleRotation = cond(eq(this.snapped, 1), [
+    //   debug('rot', rot),
+    //   set(
+    //     rot,
+    //     cond(defined(rot), runTiming(clock, rot, 0), 0)
+    //   ),
+    //   new Value(0)
+    // ], [
       
-      set(
-        rot,
-        cond(defined(rot), runTiming(clock, rot, 15), 15)
-      ),
-      new Value(15)
-    ])
+    //   set(
+    //     rot,
+    //     cond(defined(rot), runTiming(clock, rot, 15), 15)
+    //   ),
+    //   new Value(15)
+    // ])
 
     // this.toggleDraggable = () => {
     //   console.log('wtf')
