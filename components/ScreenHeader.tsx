@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { StyleSheet, Platform } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { AppNavigationProp } from '../App';
 import { Icon, Header } from 'react-native-elements';
@@ -50,7 +50,7 @@ const ScreenHeader: FC<Props> = (props) => {
     let comp = undefined;
     switch (type) {
       case 'hamburger':
-        if (Platform.OS !== 'web') {
+        if (Dimensions.get('window').width < 600) {
           comp = <Icon name='menu' onPress={() => navigation.toggleDrawer()} />;
         }
         break;
