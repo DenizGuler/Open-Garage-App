@@ -167,6 +167,9 @@ export const getURL = async (index?: number) => {
     let url;
     const [currIdx, devices] = await getDevices();
     index = (index === undefined) ? currIdx : index
+    if (devices.length === 0) {
+      return 'no devices';
+    }
     let device = devices[index]
 
     switch (device.conMethod) {
@@ -177,7 +180,7 @@ export const getURL = async (index?: number) => {
         url = 'https://cloud.test.openthings.io/forward/v1/' + device.conInput
         break;
       case undefined:
-        url = 'no device';
+        url = '';
         break;
       default:
         url = ''
