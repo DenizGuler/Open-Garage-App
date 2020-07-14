@@ -1,11 +1,13 @@
 import React, { useState, useCallback } from 'react';
 import { FlatList } from 'react-native-gesture-handler';
-import { getDevices, setCurrIndex, removeDev, getURL, BaseText as Text, Device } from './utils';
+import { getDevices, setCurrIndex, removeDev, BaseText as Text } from '../utils/utils';
 import { StyleSheet, View, Alert, Vibration, BackHandler } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { AppNavigationProp } from '../App';
 import { FullLengthButton, ScreenHeader } from '../components';
 import { Icon } from 'react-native-elements';
+import { getControllerVars } from '../utils/APIUtils';
+import { Device } from '../utils/types';
 
 export default function DevicesScreen({ navigation }: { navigation: AppNavigationProp<'Sites'> }) {
   const [deleteMode, setDeleteMode] = useState<boolean>(false);
@@ -33,10 +35,7 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
     let newDevState = devs.slice();
     for (let i = 0; i < devs.length; ++i) {
       try {
-        let url = await getURL(i);
-        let response = await fetch(url + '/jc');
-        let json = await response.json();
-        // console.log(json)
+        let json = await getControllerVars(i);
         newDevState[i].name = json.name;
       }
       catch (err) {
@@ -112,7 +111,7 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
       bgColor = '#ffd8d8'
     }
     else if (index === currState) {
-      bgColor = '#d8ffd8'
+      bgColor = '#a0c9e660'
     }
 
     return bgColor
@@ -149,7 +148,7 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
         data={devState}
         keyExtractor={(item, index) => index.toString()}
         ListFooterComponent={
-          <Text style={{ alignSelf: 'center', fontSize: 14, color: '#aaa' }}>Hold down on a device to toggle deletion mode.</Text>
+          <Text style={{ alignSelf: 'center', fontSize: 14, color: '#aaa' }}>Hold down on a device to enter deletion mode.</Text>
         }
         renderItem={({ item, index }) => {
           return (

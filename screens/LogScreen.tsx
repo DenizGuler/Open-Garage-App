@@ -2,10 +2,11 @@ import React, { useState, useCallback, FC } from 'react';
 import { StyleSheet, View, FlatList } from 'react-native';
 import 'react-native-gesture-handler';
 import { Icon } from 'react-native-elements';
-import { getURL, BaseText as Text } from './utils';
+import { BaseText as Text } from '../utils/utils';
 import { useFocusEffect } from '@react-navigation/native';
 import { AppNavigationProp } from '../App';
 import { ScreenHeader } from '../components';
+import { getLogData } from '../utils/APIUtils';
 
 export default LogScreen;
 
@@ -75,14 +76,12 @@ function LogScreen({ navigation }: { navigation: AppNavigationProp<'Logs'> }) {
   // fetch the logs from https://OGIP/jl
   const grabLogs = async () => {
     setLoading(true);
-    let url = await getURL();
-    if (url === '') {
-      setLogs([]);
-      return;
-    }
-    fetch(url + '/jl')
-      .then((response) => response.json())
-      .then((json) => setLogs(json.logs))
+    getLogData()
+      .then((json) => {
+        if (json.message !== undefined) throw Error(json.message)
+        setLogs(json.logs)
+      }
+        )
       .catch((err) => {
         setLogs([]);
         console.log(err);

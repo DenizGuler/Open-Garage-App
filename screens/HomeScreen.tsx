@@ -4,7 +4,7 @@ import 'react-native-gesture-handler';
 import { Notifications } from 'expo';
 import * as Permissions from 'expo-permissions';
 import Constants from 'expo-constants';
-import { getDevKey, getURL, BaseText as Text } from './utils';
+import { getDevKey, getURL, BaseText as Text } from '../utils/utils';
 import { AppNavigationProp } from '../App';
 import { ScreenHeader, BottomDraggable } from '../components';
 
@@ -214,9 +214,9 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
     let req = ''
     getURL()
       .then((url) => {
-        req += url
+        req += url;
         let devKey = getDevKey();
-        return devKey
+        return devKey;
       })
       .then((devKey) => {
         req += '/cc?dkey=' + devKey
