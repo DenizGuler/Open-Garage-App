@@ -1,28 +1,30 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, Linking, ScrollView, AsyncStorage, Alert, Picker, Switch, Platform, Image, TouchableNativeFeedback } from 'react-native';
+import { StyleSheet, View, Linking, ScrollView, AsyncStorage, Alert, Picker, Switch, Platform, Image } from 'react-native';
+import RNPickerSelect from 'react-native-picker-select';
 import 'react-native-gesture-handler';
 import { TextInput, TouchableOpacity } from 'react-native-gesture-handler';
-import { getDevKey, getDevices, setDevices, getURL, getConInput, BaseText as Text, Device, Params } from './utils'
-import { ButtonGroup, Icon } from 'react-native-elements';
+import { getDevKey, getDevices, getURL, getConInput, BaseText as Text, setDeviceParam } from '../utils/utils'
+import { ButtonGroup, Icon, Divider } from 'react-native-elements';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
 import { StackScreenProps } from '@react-navigation/stack';
+import { RadioButton, Checkbox } from 'react-native-paper';
 import { RootStackParams, AppNavigationProp } from '../App';
 import { FullLengthButton, ScreenHeader } from '../components';
+import { getControllerOptions, changeControllerOptions } from '../utils/APIUtils';
+import { Device, ControllerOptions } from '../utils/types';
 
 export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IPSettings'>) {
-  const CON_METHODS = ['IP', 'OTF']
-
-  const [device, setDevice] = useState<Device>({
+  const [deviceState, setDeviceState] = useState<Device>({
     conMethod: 'IP',
     conInput: '',
     // devKey: '',
     // image: undefined,
   });
-  const setDeviceParam = (param: Device) => {
-    setDevice({
-      ...device,
+  const setDeviceStateParam = (param: Device) => {
+    setDeviceState({
+      ...deviceState,
       ...param,
     });
   }
@@ -31,7 +33,7 @@ export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IP
     getDevices().then((tuple) => {
       const [currIdx, devs] = tuple
       if (devs !== null && devs[currIdx] !== undefined)
-        return setDevice(devs[currIdx])
+        return setDeviceState(devs[currIdx])
     })
   }, [])
 
@@ -50,62 +52,17 @@ export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IP
     })
 
     if (!result.cancelled) {
-      setDeviceParam({ image: result });
-    }
-  }
-
-  // Updates the device (or given param) in async storage 
-  // updateDevice(param?: string): void
-  const updateDeivce = async (param?: 'conMethod' | 'conInput' | 'devKey' | 'image') => {
-
-    if ((param === undefined || param === 'conMethod') && device.conInput !== undefined) {
-      // regex for an IP address (can probably be improved)
-      if (/^(?!0)(?!.*\.$)((1?\d?\d|25[0-5]|2[0-4]\d)(\.|$)){4}$/.test(device.conInput)) {
-        setDeviceParam({ conMethod: 'IP' })
-        device.conMethod = 'IP'
-      } else {
-        setDeviceParam({ conMethod: 'OTF' })
-        device.conMethod = 'OTF'
-      }
-    }
-
-    let newDevs;
-    try {
-      const [currDev, devices] = await getDevices();
-      // copy the array to change it
-      if (devices === null) {
-        newDevs = [{}];
-      } else {
-        newDevs = devices.slice()
-      }
-      if (newDevs[currDev] === undefined) {
-        newDevs[currDev] = {};
-      }
-      if (param === undefined) {
-        newDevs[currDev] = {
-          ...newDevs[currDev],
-          ...device
-        }
-      } else {
-        newDevs[currDev] = {
-          ...newDevs[currDev],
-          [param]: device[param]
-        }
-      }
-      await setDevices(newDevs);
-      // await setDevice(device);
-    } catch (error) {
-      console.log(error);
+      setDeviceStateParam({ image: result });
     }
   }
 
   const updateParams = async () => {
-    return await updateDeivce().catch((err) => console.log(err))
+    return await setDeviceParam(deviceState).catch((err) => console.log(err))
   }
 
   return (
     <ScrollView
-      contentContainerStyle={{ flexGrow: 1 }}
+      contentContainerStyle={{ flexGrow: 1, backgroundColor: '#fff' }}
       keyboardShouldPersistTaps={"handled"}
       stickyHeaderIndices={[0]}
     >
@@ -120,23 +77,15 @@ export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IP
         }}
       />
       <View style={styles.fsModal}>
-        <Text style={styles.optionTitle}>Connection Method:</Text>
-        <ButtonGroup
-          onPress={(idx) => setDeviceParam({ conMethod: idx === 0 ? 'IP' : 'OTF' })}
-          selectedIndex={device.conMethod === undefined ? 0 : CON_METHODS.indexOf(device.conMethod)}
-          buttons={CON_METHODS}
-          containerStyle={{ width: '85%', alignSelf: 'center' }}
-          disabled
-        />
-        <Text style={styles.optionTitle}>IP or OTF Token:</Text>
+        <Text style={styles.optionTitle}>IP or OTF Token: {deviceState.conMethod}</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setDeviceParam({ conInput: text })}
-          value={device.conInput}
+          onChangeText={(text) => setDeviceStateParam({ conInput: text })}
+          value={deviceState.conInput}
           placeholder={'e.g.: 127.0.0.1 or [token]currDev'}
           onSubmitEditing={() => {
-            updateDeivce('conInput')
-              .then(() => updateDeivce('conMethod'))
+            setDeviceParam({ conInput: deviceState.conInput })
+              .then(() => setDeviceParam({ conMethod: deviceState.conMethod }))
           }}
           autoCapitalize={"none"}
           selectTextOnFocus
@@ -144,24 +93,22 @@ export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IP
         <Text style={styles.optionTitle}>Device Key:</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setDeviceParam({ devKey: text })}
-          value={device.devKey}
-          onSubmitEditing={() => updateDeivce('devKey')}
+          onChangeText={(text) => setDeviceStateParam({ devKey: text })}
+          value={deviceState.devKey}
+          onSubmitEditing={() => setDeviceParam({ devKey: deviceState.devKey })}
           secureTextEntry
           selectTextOnFocus
         />
-        {/* <Text>{JSON.stringify(device)}</Text> */}
-        <Text selectable>6bfcd666b6a8d948f1f5090b0e5d900e</Text>
         <Text style={styles.optionTitle}>Site Image:</Text>
         <TouchableOpacity
           onPress={pickImage}
         >
           <View style={[styles.optionInput, { flex: 1, flexDirection: 'row', alignItems: 'center' }]}>
-            {device.image !== undefined ?
-              <Image source={{ uri: device.image.uri }}
+            {deviceState.image !== undefined ?
+              <Image source={{ uri: deviceState.image.uri }}
                 style={{
                   width: 200,
-                  height: Platform.OS === 'web' ? 180 : device.image.height / device.image.width * 200
+                  height: Platform.OS === 'web' ? 180 : deviceState.image.height / deviceState.image.width * 200
                 }} /> :
               <Icon name='image' type='material-community' />
             }
@@ -174,7 +121,7 @@ export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IP
 }
 
 export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 'BasicSettings'>) {
-  const [currParams, setCurrParams] = useState<Params>({});
+  const [currParams, setCurrParams] = useState<ControllerOptions>({});
   const setParam = (param: string, val: any) => {
     setCurrParams({
       ...currParams,
@@ -183,10 +130,14 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
   }
 
   const grabCurrParams = () => {
-    getURL()
-      .then((url) => fetch(url + '/jo'))
-      .then((response) => response.json())
+    getControllerOptions()
       .then((json) => {
+        if (json.message !== undefined) {
+          throw Error(json.message);
+        }
+        if (json.result === 17) {
+
+        }
         setCurrParams(json);
       })
       .catch((err) => {
@@ -197,24 +148,11 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
   }
 
   const updateSettings = () => {
-    Promise.all([getURL(), getDevKey()])
-      .then((values) => {
-        const [url, devKey] = values;
-        return url + '/co?dkey=' + devKey;
-      })
-      .then((req) => {
-        Object.keys(currParams).forEach((key: string) => {
-          let param = currParams[key]
-          if (param !== undefined) {
-            req += '&' + key + '=' + encodeURIComponent(param);
-          }
-        })
-        return req;
-      })
-      .then((req) => fetch(req))
-      .then((response) => response.json())
+    changeControllerOptions(currParams)
       .then((json) => {
-        if (json.result === 1) {
+        if (json.message !== undefined) {
+          throw Error(json.message)
+        } else if (json.result === 1) {
           navigation.goBack();
         } else if (json.result === 2) {
           Alert.alert('Invalid Device Key', 'The entered device key was rejected',
@@ -235,7 +173,7 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
 
   return (
     <ScrollView
-      contentContainerStyle={{ flexGrow: 1 }}
+      contentContainerStyle={styles.container}
       keyboardShouldPersistTaps={'handled'}
       stickyHeaderIndices={[0]}
     >
@@ -253,20 +191,18 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
           value={currParams.name}
           selectTextOnFocus
         />
-        <Text style={styles.optionTitle}>Door Sensor:</Text>
-        <View style={{ backgroundColor: '#fff', paddingVertical: 5 }}>
-          <Picker
-            style={styles.optionPicker}
-            // itemStyle={styles.optionInput}
-            selectedValue={currParams.mnt}
-            onValueChange={(type) => setParam('mnt', type)}
-          >
-            <Picker.Item label='Ceiling Mount' value={0} />
-            <Picker.Item label='Side Mount' value={1} />
-            {/* <Picker.Item label='Norm Closed Switch on GO4' value='' /> */}
-            {/* <Picker.Item label='Norm Open Switch on GO4' value='' /> */}
-          </Picker>
-        </View>
+        <Text style={styles.radioTitle}>Door Sensor:</Text>
+        <Divider />
+        <RadioButton.Group
+          onValueChange={(value) => setParam('mnt', Number(value))}
+          value={'' + currParams.mnt}
+        >
+          <RadioButton.Item label='Ceiling Mount' value='0' />
+          <RadioButton.Item label='Side Mount' value='1' />
+          <RadioButton.Item label='Norm Closed Switch on GO4' value='2' />
+          <RadioButton.Item label='Norm Open Switch on GO4' value='3' />
+        </RadioButton.Group>
+        <Divider />
         <Text style={styles.optionTitle}>Door Threshold (cm):</Text>
         <TextInput
           style={styles.optionInput}
@@ -284,7 +220,7 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
           keyboardType={"number-pad"}
           selectTextOnFocus
         />
-        <Text style={styles.optionSubText}>set to 0 to disable  </Text>
+        <Text style={styles.optionHelperText}>set to 0 to disable  </Text>
         <Text style={styles.optionTitle}>Read Interval (s):</Text>
         <TextInput
           style={styles.optionInput}
@@ -309,59 +245,55 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
           keyboardType={"number-pad"}
           selectTextOnFocus
         />
-        <Text style={styles.optionTitle}>Sensor Timeout:</Text>
-        <ButtonGroup
-          onPress={(idx) => setParam('sto', idx)}
-          selectedIndex={currParams.sto}
-          buttons={['Ignore', 'Cap']}
-          containerStyle={{ width: '85%', alignSelf: 'center' }}
-        />
-        <Text style={styles.optionTitle}>Sound Alarm:</Text>
+        <Text style={styles.radioTitle}>Sensor Timeout:</Text>
+        <Divider />
+        <RadioButton.Group
+          value={'' + currParams.sto}
+          onValueChange={(value) => setParam('sto', Number(value))}
+        >
+          <RadioButton.Item label='Ignore' value='0' />
+          <RadioButton.Item label='Cap' value='1' />
+        </RadioButton.Group>
+        <Divider />
+        <Text style={styles.radioTitle}>Sound Alarm:</Text>
+        <Divider />
         <View style={{ backgroundColor: '#fff', paddingVertical: 5 }}>
-          <Picker
-            style={styles.optionPicker}
-            selectedValue={currParams.alm}
-            onValueChange={(type) => setParam('alm', type)}
+          <RadioButton.Group
+            value={'' + currParams.alm}
+            onValueChange={(type) => setParam('alm', Number(type))}
           >
-            <Picker.Item label="Disabled" value={0} />
-            <Picker.Item label="5 seconds" value={1} />
-            <Picker.Item label="10 seconds" value={2} />
-          </Picker>
+            <RadioButton.Item label="Disabled" value='0' />
+            <RadioButton.Item label="5 seconds" value='1' />
+            <RadioButton.Item label="10 seconds" value='2' />
+          </RadioButton.Group>
         </View>
-        {/* <View style={{flex: 1, flexDirection:'row' , justifyContent: 'space-between'}}>
-          <Text style={styles.optionTitle}>Disable Alarm:</Text>
-          <CheckBox 
-            checked={}
-          />
-        </View> */}
-        <Text style={styles.optionTitle}>Log Size:</Text>
-        <View style={{ backgroundColor: '#fff', paddingVertical: 5 }}>
-          <Picker
-            style={styles.optionPicker}
-            selectedValue={currParams.lsz}
-            onValueChange={(type) => setParam('lsz', type)}
-          >
-            <Picker.Item label="20" value={20} />
-            <Picker.Item label="50" value={50} />
-            <Picker.Item label="100" value={100} />
-            <Picker.Item label="200" value={200} />
-            <Picker.Item label="400" value={400} />
-          </Picker>
-        </View>
-        <Text style={styles.optionTitle}>T/H Sensor:</Text>
-        <View style={{ backgroundColor: '#fff', paddingVertical: 5 }}>
-          <Picker
-            style={styles.optionPicker}
-            selectedValue={currParams.tsn}
-            onValueChange={(type) => setParam('tsn', type)}
-          >
-            <Picker.Item label="(none)" value={0} />
-            <Picker.Item label="AM2320 (I2C)" value={1} />
-            <Picker.Item label="DHT11 on G05" value={2} />
-            <Picker.Item label="DHT22 on G05" value={3} />
-            <Picker.Item label="DS18B20 on G05" value={4} />
-          </Picker>
-        </View>
+        <Divider />
+        <Text style={styles.radioTitle}>Log Size:</Text>
+        <Divider />
+        <RadioButton.Group
+          value={'' + currParams.lsz}
+          onValueChange={(type) => setParam('lsz', type)}
+        >
+          <RadioButton.Item label="20" value='20' />
+          <RadioButton.Item label="50" value='50' />
+          <RadioButton.Item label="100" value='100' />
+          <RadioButton.Item label="200" value='200' />
+          <RadioButton.Item label="400" value='400' />
+        </RadioButton.Group>
+        <Divider />
+        <Text style={styles.radioTitle}>T/H Sensor:</Text>
+        <Divider />
+        <RadioButton.Group
+          value={'' + currParams.tsn}
+          onValueChange={(type) => setParam('tsn', Number(type))}
+        >
+          <RadioButton.Item label="(none)" value='0' />
+          <RadioButton.Item label="AM2320 (I2C)" value='1' />
+          <RadioButton.Item label="DHT11 on G05" value='2' />
+          <RadioButton.Item label="DHT22 on G05" value='3' />
+          <RadioButton.Item label="DS18B20 on G05" value='4' />
+        </RadioButton.Group>
+        {/* <Divider /> */}
       </View>
 
     </ScrollView>
@@ -370,7 +302,7 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
 
 export function IntegrationSettings({ navigation }: StackScreenProps<RootStackParams, 'IntegrationSettings'>) {
   const [showTimePicker, setShowTimePicker] = useState<boolean>(false)
-  const [currParams, setCurrParams] = useState<Params>({});
+  const [currParams, setCurrParams] = useState<ControllerOptions>({});
   const setParam = (param: string, val: string | number) => {
     setCurrParams({
       ...currParams,
@@ -379,10 +311,11 @@ export function IntegrationSettings({ navigation }: StackScreenProps<RootStackPa
   }
 
   const grabCurrParams = () => {
-    getURL()
-      .then((url) => fetch(url + '/jo'))
-      .then((response) => response.json())
+    getControllerOptions()
       .then((json) => {
+        if (json.message !== undefined) {
+          throw Error(json.message);
+        }
         setCurrParams(json);
       })
       .catch((err) => {
@@ -393,24 +326,11 @@ export function IntegrationSettings({ navigation }: StackScreenProps<RootStackPa
   }
 
   const updateSettings = () => {
-    Promise.all([getURL(), getDevKey()])
-      .then((values) => {
-        const [url, devKey] = values;
-        return url + '/co?dkey=' + devKey;
-      })
-      .then((req) => {
-        Object.keys(currParams).forEach((key: string) => {
-          let param = currParams[key]
-          if (param !== undefined) {
-            req += '&' + key + '=' + encodeURIComponent(param);
-          }
-        })
-        return req;
-      })
-      .then((req) => fetch(req))
-      .then((response) => response.json())
+    changeControllerOptions(currParams)
       .then((json) => {
-        if (json.result === 1) {
+        if (json.message !== undefined) {
+          throw Error(json.message)
+        } else if (json.result === 1) {
           navigation.goBack();
         } else if (json.result === 2) {
           Alert.alert('Invalid Device Key', 'The entered device key was rejected',
@@ -425,12 +345,16 @@ export function IntegrationSettings({ navigation }: StackScreenProps<RootStackPa
       });
   }
 
+
   useEffect(() => {
     grabCurrParams();
   }, [])
 
   return (
-    <ScrollView stickyHeaderIndices={[0]}>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      stickyHeaderIndices={[0]}
+    >
       <ScreenHeader
         text={'Integration Settings'}
         left={'back'}
@@ -498,28 +422,27 @@ export function IntegrationSettings({ navigation }: StackScreenProps<RootStackPa
           selectTextOnFocus
           secureTextEntry
         />
-        <Text style={styles.optionTitle}>Notify me...</Text>
-        <View style={[styles.switchContainer, { marginLeft: 10 }]}>
-          <Text style={styles.optionText}>On Door Open:</Text>
-          <Switch
-            value={currParams.noto ? Boolean(currParams.noto & 1) : false}
-            onValueChange={(val) => {
-              if (currParams.noto === undefined) currParams.noto = 0
-              setParam('noto', Number(val) | currParams.noto & 2)
-            }}
-          />
-        </View>
-        <View style={[styles.switchContainer, { marginLeft: 10 }]}>
-          <Text style={styles.optionText}>On Door Close:</Text>
-          <Switch
-            value={currParams.noto ? Boolean((currParams.noto >> 1) & 1) : false}
-            onValueChange={(val) => {
-              if (currParams.noto === undefined) currParams.noto = 0
-              setParam('noto', (Number(val) << 1) | currParams.noto & 1)
-            }}
-          />
-        </View>
-        <Text style={styles.optionTitle}>Automation:</Text>
+        <Text style={styles.radioTitle}>Notify me...</Text>
+        <Divider />
+        <Checkbox.Item
+          label='On Door Open'
+          status={currParams.noto !== undefined ? (Boolean(currParams.noto & 1) ? 'checked' : 'unchecked') : 'indeterminate'}
+          onPress={() => {
+            if (currParams.noto === undefined) currParams.noto = 0
+            setParam('noto', currParams.noto ^ 1)
+          }}
+        />
+        <Checkbox.Item
+          label='On Door Close'
+          status={currParams.noto !== undefined ? Boolean((currParams.noto >> 1) & 1) ? 'checked' : 'unchecked' : 'indeterminate'}
+          onPress={() => {
+            if (currParams.noto === undefined) currParams.noto = 0
+            setParam('noto', currParams.noto ^ 2)
+          }}
+        />
+        <Divider />
+        <Text style={styles.radioTitle}>Automation:</Text>
+        <Divider />
         <View style={styles.inlineContainer}>
           <Text style={styles.inlineOptionText}>If open for longer than</Text>
           <TextInput
@@ -531,29 +454,28 @@ export function IntegrationSettings({ navigation }: StackScreenProps<RootStackPa
           />
           <Text style={styles.inlineOptionText}>minutes...</Text>
         </View>
-        <View style={[styles.switchContainer, { marginLeft: 10 }]}>
-          <Text style={styles.optionText}>Notify me</Text>
-          <Switch
-            value={currParams.ato ? Boolean(currParams.ato & 1) : false}
-            onValueChange={(val) => {
-              if (currParams.ato === undefined) currParams.ato = 0
-              setParam('ato', Number(val) | currParams.ato & 2)
-            }}
-          />
-        </View>
-        <View style={[styles.switchContainer, { marginLeft: 10 }]}>
-          <Text style={styles.optionText}>Auto-close</Text>
-          <Switch
-            value={currParams.ato ? Boolean((currParams.ato >> 1) & 1) : false}
-            onValueChange={(val) => {
-              if (currParams.ato === undefined) currParams.ato = 0
-              setParam('ato', (Number(val) << 1) | currParams.ato & 1)
-            }}
-          />
-        </View>
+        <Divider />
+        <Checkbox.Item
+          label='Notify me'
+          status={currParams.ato !== undefined ? Boolean(currParams.ato & 1) ? 'checked' : 'unchecked' : 'indeterminate'}
+          onPress={() => {
+            if (currParams.ato === undefined) currParams.ato = 0
+            setParam('ato', currParams.ato ^ 1)
+          }}
+        />
+        <Checkbox.Item
+          label='Auto-close'
+          status={currParams.ato !== undefined ? Boolean((currParams.ato >> 1) & 1) ? 'checked' : 'unchecked' : 'indeterminate'}
+          onPress={() => {
+            if (currParams.ato === undefined) currParams.ato = 0
+            setParam('ato', currParams.ato ^ 2)
+          }}
+        />
+        <Divider />
+
         <View style={styles.inlineContainer}>
           <Text style={styles.inlineOptionText}>If open after</Text>
-          {showTimePicker && (<DateTimePicker
+          {/* {showTimePicker && (<DateTimePicker
             value={new Date(new Date(Date.now()).setUTCHours((currParams.atib ? currParams.atib : 0), 0, 0, 0))}
             mode={'time'}
             display="default"
@@ -563,7 +485,7 @@ export function IntegrationSettings({ navigation }: StackScreenProps<RootStackPa
               setShowTimePicker(false);
             }}
           />)}
-          {/* {Platform.OS !== 'web' &&
+          {Platform.OS !== 'web' &&
             (<TouchableOpacity
               style={[styles.inlineInput, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}
               onPress={() => setShowTimePicker(true)}
@@ -581,26 +503,23 @@ export function IntegrationSettings({ navigation }: StackScreenProps<RootStackPa
           {/* )} */}
           <Text style={styles.inlineOptionText}>UTC...</Text>
         </View>
-        <View style={[styles.switchContainer, { marginLeft: 10 }]}>
-          <Text style={styles.optionText}>Notify me</Text>
-          <Switch
-            value={currParams.atob ? Boolean(currParams.atob & 1) : false}
-            onValueChange={(val) => {
-              if (currParams.atob === undefined) currParams.atob = 0
-              setParam('atob', Number(val) | currParams.atob & 2)
-            }}
-          />
-        </View>
-        <View style={[styles.switchContainer, { marginLeft: 10 }]}>
-          <Text style={styles.optionText}>Auto-close</Text>
-          <Switch
-            value={currParams.atob ? Boolean((currParams.atob >> 1) & 1) : false}
-            onValueChange={(val) => {
-              if (currParams.atob === undefined) currParams.atob = 0
-              setParam('atob', (Number(val) << 1) | currParams.atob & 1)
-            }}
-          />
-        </View>
+        <Divider />
+        <Checkbox.Item
+          label='Notify Me'
+          status={currParams.atob !== undefined ? Boolean(currParams.atob & 1) ? 'checked' : 'unchecked' : 'indeterminate'}
+          onPress={() => {
+            if (currParams.atob === undefined) currParams.atob = 0
+            setParam('atob', currParams.atob ^ 1)
+          }}
+        />
+        <Checkbox.Item
+          label='Auto-close'
+          status={currParams.atob !== undefined ? Boolean(currParams.atob & 2) ? 'checked' : 'unchecked' : 'indeterminate'}
+          onPress={() => {
+            if (currParams.atob === undefined) currParams.atob = 0
+            setParam('atob', currParams.atob ^ 2)
+          }}
+        />
       </View>
     </ScrollView>
   )
@@ -608,7 +527,7 @@ export function IntegrationSettings({ navigation }: StackScreenProps<RootStackPa
 
 export function AdvancedSettings({ navigation }: StackScreenProps<RootStackParams, 'AdvancedSettings'>) {
   const [changingKey, setChangingKey] = useState(false);
-  const [currParams, setCurrParams] = useState<Params>({});
+  const [currParams, setCurrParams] = useState<ControllerOptions>({});
   const setParam = (param: string, val: number | string) => {
     setCurrParams({
       ...currParams,
@@ -617,10 +536,11 @@ export function AdvancedSettings({ navigation }: StackScreenProps<RootStackParam
   }
 
   const grabCurrParams = () => {
-    getURL()
-      .then((url) => fetch(url + '/jo'))
-      .then((response) => response.json())
+    getControllerOptions()
       .then((json) => {
+        if (json.message !== undefined) {
+          throw Error(json.message);
+        }
         setCurrParams(json);
       })
       .catch((err) => {
@@ -631,24 +551,11 @@ export function AdvancedSettings({ navigation }: StackScreenProps<RootStackParam
   }
 
   const updateSettings = () => {
-    Promise.all([getURL(), getDevKey()])
-      .then((values) => {
-        const [url, devKey] = values;
-        return url + '/co?dkey=' + devKey;
-      })
-      .then((req) => {
-        Object.keys(currParams).forEach((key: string) => {
-          let param = currParams[key]
-          if (param !== undefined) {
-            req += '&' + key + '=' + encodeURIComponent(param);
-          }
-        })
-        return req;
-      })
-      .then((req) => fetch(req))
-      .then((response) => response.json())
+    changeControllerOptions(currParams)
       .then((json) => {
-        if (json.result === 1) {
+        if (json.message !== undefined) {
+          throw Error(json.message)
+        } else if (json.result === 1) {
           navigation.goBack();
         } else if (json.result === 2) {
           Alert.alert('Invalid Device Key', 'The entered device key was rejected',
@@ -662,12 +569,16 @@ export function AdvancedSettings({ navigation }: StackScreenProps<RootStackParam
         Alert.alert('Invalid Device IP', 'Was not able to establish a connection with the entered device IP. Are you sure the IP is correct and the device is on?', [{ text: 'OK' }])
       });
   }
+
   useEffect(() => {
     grabCurrParams();
   }, [])
 
   return (
-    <ScrollView stickyHeaderIndices={[0]}>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      stickyHeaderIndices={[0]}
+    >
       <ScreenHeader
         text={'Advanced Settings'}
         left={'back'}
@@ -683,59 +594,61 @@ export function AdvancedSettings({ navigation }: StackScreenProps<RootStackParam
           keyboardType={'number-pad'}
           selectTextOnFocus
         />
-        <View style={styles.switchContainer}>
-          <Text style={styles.optionTitle}>Use Static IP</Text>
-          <Switch
-            value={Boolean(currParams.usi)}
-            onValueChange={(val) => setParam('usi', Number(val))}
-          />
-        </View>
-        <Text style={styles.optionTitle}>Device IP:</Text>
+        <Checkbox.Item
+          label='Use Static IP'
+          status={currParams.usi ? 'checked' : 'unchecked'}
+          onPress={() => {
+            if (currParams.usi === undefined) currParams.usi = 0
+            setParam('usi', currParams.usi ^ 1)
+          }}
+        />
+        <Divider />
+        <Text style={[styles.optionTitle, !currParams.usi ? styles.optionTitleDisabled : {}]}>Device IP:</Text>
         <TextInput
-          style={currParams.usi ? styles.optionInput : styles.optionInputDisabled}
+          style={[styles.optionInput, !currParams.usi ? styles.optionInputDisabled : {}]}
           onChangeText={(text) => setParam('dvip', text)}
           value={currParams.dvip}
           keyboardType={'url'}
           selectTextOnFocus
           editable={Boolean(currParams.usi)}
         />
-        <Text style={styles.optionTitle}>Gateway IP:</Text>
+        <Text style={[styles.optionTitle, !currParams.usi ? styles.optionTitleDisabled : {}]}>Gateway IP:</Text>
         <TextInput
-          style={currParams.usi ? styles.optionInput : styles.optionInputDisabled}
+          style={[styles.optionInput, !currParams.usi ? styles.optionInputDisabled : {}]}
           onChangeText={(text) => setParam('gwip', text)}
           value={currParams.gwip}
           keyboardType={'url'}
           selectTextOnFocus
           editable={Boolean(currParams.usi)}
         />
-        <Text style={styles.optionTitle}>Subnet:</Text>
+        <Text style={[styles.optionTitle, !currParams.usi ? styles.optionTitleDisabled : {}]}>Subnet:</Text>
         <TextInput
-          style={currParams.usi ? styles.optionInput : styles.optionInputDisabled}
+          style={[styles.optionInput, !currParams.usi ? styles.optionInputDisabled : {}]}
           onChangeText={(text) => setParam('subn', text)}
           value={currParams.subn}
           keyboardType={'url'}
           selectTextOnFocus
           editable={Boolean(currParams.usi)}
         />
-        <View style={styles.switchContainer}>
-          <Text style={styles.optionTitle}>Change Device Key</Text>
-          <Switch
-            value={changingKey}
-            onValueChange={(val) => setChangingKey(val)}
-          />
-        </View>
-        <Text style={styles.optionTitle}>New Key:</Text>
+        {/* <Divider /> */}
+        <Checkbox.Item
+          label='Change Device Key'
+          status={changingKey ? 'checked' : 'unchecked'}
+          onPress={() => { setChangingKey(!changingKey) }}
+        />
+        <Divider />
+        <Text style={[styles.optionTitle, !changingKey ? styles.optionTitleDisabled : {}]}>New Key:</Text>
         <TextInput
-          style={changingKey ? styles.optionInput : styles.optionInputDisabled}
+          style={[styles.optionInput, !changingKey ? styles.optionInputDisabled : {}]}
           onChangeText={(text) => setParam('nkey', text)}
           value={currParams.nkey}
           keyboardType={'url'}
           selectTextOnFocus
           editable={changingKey}
         />
-        <Text style={styles.optionTitle}>Confirm New Key:</Text>
+        <Text style={[styles.optionTitle, !changingKey ? styles.optionTitleDisabled : {}]}>Confirm New Key:</Text>
         <TextInput
-          style={changingKey ? styles.optionInput : styles.optionInputDisabled}
+          style={[styles.optionInput, !changingKey ? styles.optionInputDisabled : {}]}
           onChangeText={(text) => setParam('ckey', text)}
           value={currParams.ckey}
           keyboardType={'url'}
@@ -824,7 +737,7 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
         <FullLengthButton
           icon={{ name: 'script-outline' }}
           text="Clear Logs"
-          subText={'Clear the logs collected by your device'}
+          subText={'Clear log data'}
           onPress={() => {
             if (Platform.OS === 'web') {
               let res = window.confirm('Are you sure you want to clear the logs?')
@@ -838,7 +751,7 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
         <FullLengthButton
           icon={{ name: 'restart' }}
           text="Reboot Device"
-          subText={'Reboot the OpenGarage Controller'}
+          subText={'Reboot the OpenGarage controller'}
           onPress={() => {
             if (Platform.OS === 'web') {
               let res = window.confirm('Are you sure you want to reboot the controller?')
@@ -852,7 +765,7 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
         <FullLengthButton
           icon={{ name: 'book-open-variant' }}
           text="User Manual"
-          subText={"Links you out of this app"}
+          subText={"OpenGarage user manual"}
           onPress={() => {
             Linking.canOpenURL(docs).then(supported => {
               if (supported) {
@@ -871,7 +784,7 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
             AsyncStorage.clear()
           }}
         />
-        <Text style={{ alignSelf: 'center' }}>App Version 0</Text>
+        <Text style={{ alignSelf: 'center' }}>App Version 1</Text>
       </ScrollView>
     </View>
   );
@@ -879,32 +792,41 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
 
 const styles = StyleSheet.create({
   container: {
-    height: '100%',
+    minHeight: '100%',
     width: '100%',
-    // maxWidth: 600,
     backgroundColor: '#fff',
   },
 
   inlineContainer: {
-    marginLeft: 10,
+    padding: 10,
     flex: 1,
     flexDirection: 'row',
+    alignItems: 'center'
+  },
+
+  inlineOptionTitle: {
+    fontSize: 16,
+    padding: 4,
+    marginLeft: 20,
   },
 
   inlineOptionText: {
-    fontSize: 20,
-    padding: 8,
+    fontSize: 16,
+    padding: 6,
+    // height: '100%',
   },
 
   inlineInput: {
     // flexGrow: 1,
-    fontSize: 20,
+    fontSize: 16,
     backgroundColor: '#fff',
     width: 60,
     height: 43,
     textAlign: 'center',
-    // padding: 0,
-    borderBottomWidth: 2,
+    color: '#000000',
+    borderColor: '#00000020',
+    borderWidth: 2,
+    borderRadius: 6,
   },
 
   list: {
@@ -915,65 +837,67 @@ const styles = StyleSheet.create({
   },
 
   optionTitle: {
-    fontSize: 26,
-    // width: '100%',
-    // borderBottomWidth: 1,
-    // borderColor: '#aaa',
-    padding: 8,
-    flexGrow: 1,
+    fontSize: 16,
+    position: 'relative',
+    alignSelf: 'flex-start',
+    top: 14,
+    left: 22,
+    backgroundColor: '#fff',
+    color: '#000000c0',
+    zIndex: 1,
+    padding: 4,
+  },
+
+  optionTitleDisabled: {
+    color: '#00000030'
   },
 
   optionText: {
     fontSize: 20,
     padding: 8,
+    // paddingLeft: 10,
     flexGrow: 1,
   },
 
-  optionSubText: {
+  optionHelperText: {
     alignSelf: 'flex-start',
+    marginLeft: 26,
     fontSize: 16,
     color: '#aaa',
   },
 
   optionInput: {
-    width: '100%',
-    fontSize: 20,
-    color: '#000',
-    backgroundColor: '#fff',
+    // width: '100%',
+    marginHorizontal: 10,
     padding: 10,
+    paddingLeft: 16,
+    // alignSelf: 'center',
+    fontSize: 20,
+    color: '#000000',
+    backgroundColor: '#fff',
+    borderColor: '#00000020',
+    borderRadius: 6,
+    borderWidth: 2,
   },
 
   optionInputDisabled: {
-    width: '100%',
-    fontSize: 20,
-    color: '#999',
-    backgroundColor: '#f8f8f8',
-    padding: 10,
+    color: '#00000040',
+    borderColor: '#e5e5e5'
   },
 
-  optionPicker: {
-    alignSelf: 'center',
-    width: '84%',
-    height: 40,
-    transform: [
-      { scaleX: 1.18 },
-      { scaleY: 1.18 },
-    ],
-    // backgroundColor: '#fff',
-    padding: 10,
-  },
-
-  switchContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
+  radioTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000000c0',
+    padding: 16,
   },
 
   fsModal: {
     width: '100%',
+    // height: '100%',
     maxWidth: 600,
     alignSelf: 'center',
+    backgroundColor: '#fff',
     marginBottom: 10,
   },
 });
