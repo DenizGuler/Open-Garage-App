@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { StyleSheet, Platform, TouchableNativeFeedback, View } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { BaseText as Text } from '../screens/utils'
+import { BaseText as Text } from '../utils/utils'
 import { TouchableHighlight } from 'react-native-gesture-handler';
 
 interface Props {

@@ -1,6 +1,6 @@
 import { useIsDrawerOpen, DrawerContentOptions } from "@react-navigation/drawer";
 import React, { FC, useEffect, useState } from "react";
-import { getImage } from "../screens/utils";
+import { getImage } from "../utils/utils";
 import { ImageInfo } from "expo-image-picker/build/ImagePicker.types";
 import { DrawerDescriptorMap, DrawerNavigationHelpers } from "@react-navigation/drawer/lib/typescript/src/types";
 import { DrawerNavigationState } from "@react-navigation/native";
@@ -53,13 +53,20 @@ const GarageDrawerComponent: FC<DrawerContentOptions & {
   const [image, setImage] = useState<ImageInfo>();
 
   useEffect(() => {
-    // addEventListener('image', (img) => {})
-    // removeEventListener('image', () => {})
     getImage().then((img) => {
       if (img !== undefined)
         setImage(img)
     })
-  }, [isDrawerOpen])
+  }, [isDrawerOpen]);
+
+  // useEffect(() => {
+  //   addEventListener('image-update', () => {
+  //     getImage().then((img) => {
+  //       if (img !== undefined)
+  //         setImage(img)
+  //     });
+  //   });
+  // }, []);
 
   // console.log(props.state)
 

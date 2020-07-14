@@ -3,7 +3,7 @@ import { StyleSheet, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { AppNavigationProp } from '../App';
 import { Icon, Header } from 'react-native-elements';
-import { FONT } from '../screens/utils';
+import { FONT } from '../utils/utils';
 
 /*
   'hamburger': menu hamburger; opens the navigation drawer 
