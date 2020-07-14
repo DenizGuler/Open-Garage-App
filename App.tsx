@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import 'react-native-gesture-handler';
-import { NavigationContainer, CompositeNavigationProp } from '@react-navigation/native';
+import { NavigationContainer, CompositeNavigationProp, DefaultTheme as DefaultNavTheme } from '@react-navigation/native';
 import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
 import { createStackNavigator, StackNavigationProp, StackScreenProps } from '@react-navigation/stack';
 import { HomeScreen, LogScreen, SettingsScreen, DevicesScreen } from './screens';
@@ -8,8 +8,19 @@ import * as Settings from './screens/SettingsScreen';
 import { StatusBar, Dimensions } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { GarageDrawerComponent } from './components';
-import { getDevices } from './screens/utils';
-// import EventEmitter from 'events';
+import { getDevices } from './utils/utils';
+import { Provider, DefaultTheme as DefaultPaperTheme } from 'react-native-paper';
+
+const theme = {
+  ...DefaultNavTheme,
+  ...DefaultPaperTheme,
+  colors: {
+    ...DefaultNavTheme.colors,
+    ...DefaultPaperTheme.colors,
+    primary: '#000',
+    accent: '#a0c9e6'
+  }
+}
 
 // Main drawer where all 'main' screens are held (i.e.: Home, Settings, etc.)
 const MainDrawer = createDrawerNavigator();
@@ -79,18 +90,20 @@ function MainDrawerScreen({ navigation }: StackScreenProps<RootStackParams, 'Mai
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <StatusBar backgroundColor="white" barStyle="dark-content" />
-      <RootStack.Navigator
-        screenOptions={{ headerShown: false }}
-        initialRouteName='Main'
-      >
-        <RootStack.Screen name='Main' component={MainDrawerScreen} />
-        <RootStack.Screen name='IPSettings' component={Settings.IPSettings} />
-        <RootStack.Screen name='BasicSettings' component={Settings.BasicSettings} />
-        <RootStack.Screen name='IntegrationSettings' component={Settings.IntegrationSettings} />
-        <RootStack.Screen name='AdvancedSettings' component={Settings.AdvancedSettings} />
-      </RootStack.Navigator>
-    </NavigationContainer>
+    <Provider theme={theme}>
+      <NavigationContainer theme={theme}>
+        <StatusBar backgroundColor="white" barStyle="dark-content" />
+        <RootStack.Navigator
+          screenOptions={{ headerShown: false }}
+          initialRouteName='Main'
+        >
+          <RootStack.Screen name='Main' component={MainDrawerScreen} />
+          <RootStack.Screen name='IPSettings' component={Settings.IPSettings} />
+          <RootStack.Screen name='BasicSettings' component={Settings.BasicSettings} />
+          <RootStack.Screen name='IntegrationSettings' component={Settings.IntegrationSettings} />
+          <RootStack.Screen name='AdvancedSettings' component={Settings.AdvancedSettings} />
+        </RootStack.Navigator>
+      </NavigationContainer>
+    </Provider>
   );
 }
