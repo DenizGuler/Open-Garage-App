@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { AsyncStorage, Platform, Text, TextProps } from "react-native";
+import { AsyncStorage, Platform, Text, TextProps, Alert } from "react-native";
 import { Device } from './types';
 
 export const FONT = Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif'
@@ -29,7 +29,7 @@ export const setCurrIndex = async (index: number) => {
 }
 
 /**
- * set the current device with the provided param and value
+ * Set the current device with the provided param and value
  */
 export const setDeviceParam = async (params: Device) => {
 
@@ -104,8 +104,9 @@ export const getDevKey = async (index?: number): Promise<string> => {
   }
 }
 
-// Get the inputted value for connectivity 
-// getConInput(): string
+/** 
+ * Get the inputted value for connectivity 
+ */
 export const getConInput = async (index?: number): Promise<string | undefined> => {
   try {
     const [currIdx, devices] = await getDevices();
@@ -177,6 +178,35 @@ export const removeDev = async (index: number): Promise<Device | undefined> => {
     return deleted[0];
   } catch (err) {
     console.log(err)
+  }
+}
+
+/**
+ * Creates an alert box that works on both mobile and web;
+ * on web this function is blocking
+ * @param title title of alert box (does not work as expected on web)
+ * @param message (optional) message of alert box
+ * @param buttons (optional) buttons 
+ */
+export const createAlert = (title: string, message?: string, buttons?: {text: string, onPress?: () => void}[]) => {
+  if (buttons === undefined) {
+    if (Platform.OS === 'web') {
+      window.alert(message !== undefined ? message : title)
+    } else {
+      Alert.alert(title, message)
+    }
+  } else if (buttons.length === 2) {
+    if (Platform.OS === 'web') {
+      let res = window.confirm(message)
+      if (!res && buttons[0].onPress !== undefined) {
+        buttons[0].onPress()
+      }
+      if (res && buttons[1].onPress !== undefined) {
+        buttons[1].onPress()
+      }
+    } else {
+      Alert.alert(title, message, buttons)
+    }
   }
 }
 
