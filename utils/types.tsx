@@ -63,3 +63,15 @@ export type ControllerOptions = {
   ckey?: string,
   [key: string]: string | number | undefined,
 }
+
+export type ResultJSON = {
+  result?: number,
+  item?: string,
+  message?: string,
+}
+
+export type LogJSON = {
+  name: string,
+  time: number,
+  logs: [number, number, number][]
+  }
