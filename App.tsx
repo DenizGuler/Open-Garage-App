@@ -17,8 +17,9 @@ const theme = {
   colors: {
     ...DefaultNavTheme.colors,
     ...DefaultPaperTheme.colors,
-    primary: '#000',
-    accent: '#a0c9e6'
+    primary: '#000000',
+    accent: '#a0c9e6',
+    // text: '#444444'
   }
 }
 
