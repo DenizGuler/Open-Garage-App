@@ -1,25 +1,22 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Linking, ScrollView, AsyncStorage, Alert, Platform, Image } from 'react-native';
 import 'react-native-gesture-handler';
 import { TextInput, TouchableOpacity } from 'react-native-gesture-handler';
-import { getDevKey, getDevices, getURL, getConInput, BaseText as Text, setDeviceParam, createAlert } from '../utils/utils'
+import { getDevices, BaseText as Text, setDeviceParam, createAlert } from '../utils/utils'
 import { Icon, Divider } from 'react-native-elements';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
-import { useFocusEffect } from '@react-navigation/native';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RadioButton, Checkbox } from 'react-native-paper';
 import { RootStackParams, AppNavigationProp } from '../App';
 import { FullLengthButton, ScreenHeader } from '../components';
-import { getControllerOptions, changeControllerOptions, interpResult } from '../utils/APIUtils';
+import { getControllerOptions, changeControllerOptions, interpResult, issueCommand } from '../utils/APIUtils';
 import { Device, ControllerOptions } from '../utils/types';
 
 export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IPSettings'>) {
   const [deviceState, setDeviceState] = useState<Device>({
     conMethod: 'IP',
     conInput: '',
-    // devKey: '',
-    // image: undefined,
   });
   const setDeviceStateParam = (param: Device) => {
     setDeviceState({
@@ -81,7 +78,7 @@ export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IP
           style={styles.optionInput}
           onChangeText={(text) => setDeviceStateParam({ conInput: text })}
           value={deviceState.conInput}
-          placeholder={'e.g.: 127.0.0.1 or [token]currDev'}
+          placeholder={'e.g.: 127.0.0.1 or [token]'}
           onSubmitEditing={() => {
             setDeviceParam({ conInput: deviceState.conInput })
               .then(() => setDeviceParam({ conMethod: deviceState.conMethod }))
@@ -139,24 +136,15 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
     }
   }
 
-  const updateSettings = () => {
-    changeControllerOptions(currParams)
-      .then((json) => {
-        if (json.message !== undefined) {
-          throw Error(json.message)
-        } else if (json.result === 1) {
-          navigation.goBack();
-        } else if (json.result === 2) {
-          Alert.alert('Invalid Device Key', 'The entered device key was rejected',
-            [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
-        } else {
-          console.log('ERROR CODE: ' + json.result)
-        }
-      })
-      .catch((err) => {
-        console.log(err)
-        Alert.alert('Invalid Device IP', 'Was not able to establish a connection with the entered device IP. Are you sure the IP is correct and the device is on?', [{ text: 'OK' }])
-      });
+  const updateSettings = async () => {
+    try {
+      const json = await changeControllerOptions(currParams)
+      return interpResult(json, navigation);
+    } catch (err) {
+      createAlert('No Device Found', 'No device was found at the entered address',
+        [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
+      console.log(err)
+    }
   }
 
   useEffect(() => {
@@ -173,7 +161,11 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
         text={'Basic Settings'}
         left={'back'}
         right={'check'}
-        onCheck={updateSettings}
+        onCheck={async () => {
+          if (await updateSettings()) {
+            navigation.goBack();
+          }
+        }}
       />
       <View style={styles.fsModal}>
         <Text style={styles.optionTitle}>Device Name:</Text>
@@ -208,7 +200,6 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
           style={styles.optionInput}
           onChangeText={(text) => setParam('vth', Number(text))}
           value={'' + currParams.vth}
-          // defaultValue={'' + currParams.vth}
           keyboardType={"number-pad"}
           selectTextOnFocus
         />
@@ -285,7 +276,6 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
           <RadioButton.Item label="DHT22 on G05" value='3' />
           <RadioButton.Item label="DS18B20 on G05" value='4' />
         </RadioButton.Group>
-        {/* <Divider /> */}
       </View>
 
     </ScrollView>
@@ -293,7 +283,7 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
 }
 
 export function IntegrationSettings({ navigation }: StackScreenProps<RootStackParams, 'IntegrationSettings'>) {
-  const [showTimePicker, setShowTimePicker] = useState<boolean>(false)
+  // const [showTimePicker, setShowTimePicker] = useState<boolean>(false)
   const [currParams, setCurrParams] = useState<ControllerOptions>({});
   const setParam = (param: string, val: string | number) => {
     setCurrParams({
@@ -313,26 +303,16 @@ export function IntegrationSettings({ navigation }: StackScreenProps<RootStackPa
     }
   }
 
-  const updateSettings = () => {
-    changeControllerOptions(currParams)
-      .then((json) => {
-        if (json.message !== undefined) {
-          throw Error(json.message)
-        } else if (json.result === 1) {
-          navigation.goBack();
-        } else if (json.result === 2) {
-          Alert.alert('Invalid Device Key', 'The entered device key was rejected',
-            [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
-        } else {
-          console.log('ERROR CODE: ' + json.result)
-        }
-      })
-      .catch((err) => {
-        console.log(err)
-        Alert.alert('Invalid Device IP', 'Was not able to establish a connection with the entered device IP. Are you sure the IP is correct and the device is on?', [{ text: 'OK' }])
-      });
+  const updateSettings = async () => {
+    try {
+      const json = await changeControllerOptions(currParams)
+      return interpResult(json, navigation);
+    } catch (err) {
+      createAlert('No Device Found', 'No device was found at the entered address',
+        [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
+      console.log(err)
+    }
   }
-
 
   useEffect(() => {
     grabCurrParams();
@@ -347,7 +327,11 @@ export function IntegrationSettings({ navigation }: StackScreenProps<RootStackPa
         text={'Integration Settings'}
         left={'back'}
         right={'check'}
-        onCheck={updateSettings}
+        onCheck={async () => {
+          if (await updateSettings()) {
+            navigation.goBack();
+          }
+        }}
       />
       <View style={styles.fsModal}>
         <Text style={styles.optionTitle}>OTC Token:</Text>
@@ -534,24 +518,15 @@ export function AdvancedSettings({ navigation }: StackScreenProps<RootStackParam
     }
   }
 
-  const updateSettings = () => {
-    changeControllerOptions(currParams)
-      .then((json) => {
-        if (json.message !== undefined) {
-          throw Error(json.message)
-        } else if (json.result === 1) {
-          navigation.goBack();
-        } else if (json.result === 2) {
-          Alert.alert('Invalid Device Key', 'The entered device key was rejected',
-            [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
-        } else {
-          console.log('ERROR CODE: ' + json.result)
-        }
-      })
-      .catch((err) => {
-        console.log(err)
-        Alert.alert('Invalid Device IP', 'Was not able to establish a connection with the entered device IP. Are you sure the IP is correct and the device is on?', [{ text: 'OK' }])
-      });
+  const updateSettings = async () => {
+    try {
+      const json = await changeControllerOptions(currParams)
+      return interpResult(json, navigation);
+    } catch (err) {
+      createAlert('No Device Found', 'No device was found at the entered address',
+        [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
+      console.log(err)
+    }
   }
 
   useEffect(() => {
@@ -567,7 +542,11 @@ export function AdvancedSettings({ navigation }: StackScreenProps<RootStackParam
         text={'Advanced Settings'}
         left={'back'}
         right={'check'}
-        onCheck={updateSettings}
+        onCheck={async () => {
+          if (await updateSettings()) {
+            navigation.goBack();
+          }
+        }}
       />
       <View style={styles.fsModal}>
         <Text style={styles.optionTitle}>HTTP Port:</Text>
@@ -646,46 +625,7 @@ export function AdvancedSettings({ navigation }: StackScreenProps<RootStackParam
 }
 
 export default function SettingsScreen({ navigation }: { navigation: AppNavigationProp<'Settings'> }) {
-  const [conInput, setConInput] = useState('');
-
   const docs = 'https://nbviewer.jupyter.org/github/OpenGarage/OpenGarage-Firmware/blob/master/docs/OGManual.pdf';
-
-  const issueCommand = (command: 'clearlog' | 'reboot' | 'apmode') => {
-    Promise.all([getURL(), getDevKey()])
-      .then((values) => {
-        const [url, devKey] = values;
-        let req = url
-        switch (command) {
-          case 'clearlog':
-            req += '/clearlog?dkey=' + devKey;
-            break;
-          case 'reboot':
-            req += '/cc?dkey=' + devKey + '&reboot=1';
-            break;
-          case 'apmode':
-            req += '/cc?dkey=' + devKey + '&apmode=1';
-            break;
-        }
-        if (req === undefined) req = ''
-        return fetch(req);
-      })
-      .then((response) => response.json())
-      .then((json) => {
-        if (json.result === 1) {
-          Alert.alert('Command Issued Successfully')
-        } else if (json.result === 2) {
-          Alert.alert('Invalid Device Key', 'The entered device key was rejected',
-            [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
-        }
-      })
-      .catch((err) => console.log(err));
-  }
-
-  useFocusEffect(
-    useCallback(() => {
-      getConInput().then((conInput) => setConInput(conInput ? conInput : ''));
-    }, [])
-  )
 
   return (
     <View style={styles.container}>
@@ -725,7 +665,20 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
           subText={'Clear log data'}
           onPress={() => {
             createAlert('Confirm Clear Logs', 'Are you sure you want to clear the logs?',
-              [{ text: 'Cancel' }, { text: 'Reset Logs', onPress: () => { issueCommand('clearlog') } }]
+              [{ text: 'Cancel' }, {
+                text: 'Reset Logs',
+                onPress: async () => {
+                  try {
+                    if (interpResult(await issueCommand('clearlog'), navigation)) {
+                      createAlert('Command Issued Successfully')
+                    }
+                  } catch (err) {
+                    createAlert('No Device Found', 'No device was found at the entered address',
+                      [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
+                    console.log(err)
+                  }
+                }
+              }]
             )
           }}
         />
@@ -735,7 +688,43 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
           subText={'Reboot the OpenGarage controller'}
           onPress={() => {
             createAlert('Confirm Reboot Device', 'Are you sure you want to reboot the controller?',
-              [{ text: 'Cancel' }, { text: 'Reboot Device', onPress: () => { issueCommand('reboot') } }]
+              [{ text: 'Cancel' }, {
+                text: 'Reboot Device',
+                onPress: async () => {
+                  try {
+                    if (interpResult(await issueCommand('reboot'), navigation)) {
+                      createAlert('Command Issued Successfully')
+                    }
+                  } catch (err) {
+                    createAlert('No Device Found', 'No device was found at the entered address',
+                      [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
+                    console.log(err)
+                  }
+                }
+              }]
+            )
+          }}
+        />
+        <FullLengthButton
+          icon={{ name: 'access-point' }}
+          text="Reset WiFi"
+          subText={'Reset the OpenGarage controller into AP mode'}
+          onPress={() => {
+            createAlert('Confirm Reset WiFi', 'Are you sure you want to reset the controller into AP mode?',
+              [{ text: 'Cancel' }, {
+                text: 'Reset WiFi',
+                onPress: async () => {
+                  try {
+                    if (interpResult(await issueCommand('apmode'), navigation)) {
+                      createAlert('Command Issued Successfully')
+                    }
+                  } catch (err) {
+                    createAlert('No Device Found', 'No device was found at the entered address',
+                      [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
+                    console.log(err)
+                  }
+                }
+              }]
             )
           }}
         />
@@ -753,15 +742,21 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
             });
           }}
         />
-        <FullLengthButton
+        {/* <FullLengthButton
           icon={{ name: 'delete' }}
           text="Clear AsyncStorage"
-          subText="DEBUG"
+          subText="For debugging purposes"
           onPress={() => {
-            AsyncStorage.clear()
+            createAlert('Warning!', 'This will clear all of the data that is stored on this app, only use if nothing else works!',
+            [{text: 'Cancel'}, {
+              text: 'Clear AsyncStorage',
+              onPress: async () => {
+                await AsyncStorage.clear()
+              }
+            }])
           }}
-        />
-        <Text style={{ alignSelf: 'center' }}>App Version 1</Text>
+        /> */}
+        <Text style={{ alignSelf: 'center' }}>App Version 1b</Text>
       </ScrollView>
     </View>
   );
@@ -790,11 +785,9 @@ const styles = StyleSheet.create({
   inlineOptionText: {
     fontSize: 16,
     padding: 6,
-    // height: '100%',
   },
 
   inlineInput: {
-    // flexGrow: 1,
     fontSize: 16,
     backgroundColor: '#fff',
     width: 60,
@@ -814,11 +807,10 @@ const styles = StyleSheet.create({
   },
 
   optionTitle: {
-    marginBottom: -24,
+    marginBottom: -22,
     fontSize: 16,
     position: 'relative',
     alignSelf: 'flex-start',
-    // top: 14,
     left: 22,
     backgroundColor: '#fff',
     color: '#000000c0',
@@ -833,7 +825,6 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: 20,
     padding: 8,
-    // paddingLeft: 10,
     flexGrow: 1,
   },
 
@@ -845,11 +836,9 @@ const styles = StyleSheet.create({
   },
 
   optionInput: {
-    // width: '100%',
     marginHorizontal: 10,
     padding: 10,
     paddingLeft: 16,
-    // alignSelf: 'center',
     fontSize: 20,
     color: '#000000',
     backgroundColor: '#fff',
@@ -873,7 +862,6 @@ const styles = StyleSheet.create({
 
   fsModal: {
     width: '100%',
-    // height: '100%',
     maxWidth: 600,
     alignSelf: 'center',
     backgroundColor: '#fff',
