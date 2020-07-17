@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useRef, useEffect } from 'react';
 import { AsyncStorage, Platform, Text, TextProps, Alert } from "react-native";
 import { Device } from './types';
 
@@ -208,6 +208,27 @@ export const createAlert = (title: string, message?: string, buttons?: {text: st
       Alert.alert(title, message, buttons)
     }
   }
+}
+
+// HOOKS
+
+export const useInterval = (callback: () => any, delay: number) => {
+  const savedCallback = useRef<() => any>(() => {});
+  // remember the latest callback
+  useEffect(() => {
+    savedCallback.current = callback;
+  }, [callback]);
+
+  // set up the interval
+  useEffect(() => {
+    const tick = () => savedCallback.current();
+    if (delay !== null) {
+      const handle = setInterval(tick, delay);
+      return () => {
+        clearInterval(handle)
+      }
+    }
+  }, [callback, delay])
 }
 
 // COMPONENTS
