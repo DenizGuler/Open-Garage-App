@@ -1,6 +1,7 @@
-import React, { FC, useRef, useEffect } from 'react';
+import React, { FC, useRef, useEffect, useCallback } from 'react';
 import { AsyncStorage, Platform, Text, TextProps, Alert } from "react-native";
 import { Device } from './types';
+import { useFocusEffect } from '@react-navigation/native';
 
 export const FONT = Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif'
 
@@ -188,7 +189,7 @@ export const removeDev = async (index: number): Promise<Device | undefined> => {
  * @param message (optional) message of alert box
  * @param buttons (optional) buttons 
  */
-export const createAlert = (title: string, message?: string, buttons?: {text: string, onPress?: () => void}[]) => {
+export const createAlert = (title: string, message?: string, buttons?: { text: string, onPress?: () => void }[]) => {
   if (buttons === undefined) {
     if (Platform.OS === 'web') {
       window.alert(message !== undefined ? message : title)
@@ -213,22 +214,26 @@ export const createAlert = (title: string, message?: string, buttons?: {text: st
 // HOOKS
 
 export const useInterval = (callback: () => any, delay: number) => {
-  const savedCallback = useRef<() => any>(() => {});
+  const savedCallback = useRef<() => any>(() => { });
   // remember the latest callback
-  useEffect(() => {
-    savedCallback.current = callback;
-  }, [callback]);
+  useFocusEffect(
+    useCallback(() => {
+      savedCallback.current = callback;
+    }, [callback])
+  );
 
   // set up the interval
-  useEffect(() => {
-    const tick = () => savedCallback.current();
-    if (delay !== null) {
-      const handle = setInterval(tick, delay);
-      return () => {
-        clearInterval(handle)
+  useFocusEffect(
+    useCallback(() => {
+      const tick = () => savedCallback.current();
+      if (delay !== null) {
+        const handle = setInterval(tick, delay);
+        return () => {
+          clearInterval(handle)
+        }
       }
-    }
-  }, [callback, delay])
+    }, [callback, delay])
+  )
 }
 
 // COMPONENTS
