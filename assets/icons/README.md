@@ -1,0 +1,1 @@
+This folder contains OpenGarage UI icons (courtesy of Jeff Lawrence).
