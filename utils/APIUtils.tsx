@@ -125,6 +125,31 @@ export const closeDoor = async (index?: number): Promise<ResultJSON> => {
   return json;
 }
 
+export const issueCommand = async (command: 'clearlog' | 'reboot' | 'apmode', index?: number): Promise<ResultJSON> => {
+  const url = await getURL(index);
+  const dkey = await getDevKey(index);
+  let req = url
+  switch (command) {
+    case 'clearlog':
+      req += '/clearlog?dkey=' + dkey;
+      break;
+    case 'reboot':
+      req += '/cc?dkey=' + dkey + '&reboot=1';
+      break;
+    case 'apmode':
+      req += '/cc?dkey=' + dkey + '&apmode=1';
+      break;
+    default:
+      req = ''
+      break;
+  }
+  // this looks redundant
+  if (req === undefined) req = ''
+  const response = await fetch(req)
+  const json = await response.json();
+  return json
+}
+
 
 /**
  * interprets the result value of the passed JSON 
