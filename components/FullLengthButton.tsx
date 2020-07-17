@@ -3,6 +3,7 @@ import { StyleSheet, Platform, TouchableNativeFeedback, View } from 'react-nativ
 import { Icon } from 'react-native-elements';
 import { BaseText as Text } from '../utils/utils'
 import { TouchableHighlight } from 'react-native-gesture-handler';
+import { withTheme, Theme } from 'react-native-paper';
 
 interface Props {
   onPress: () => void,
@@ -15,12 +16,14 @@ interface Props {
     height?: number | string,
     fontSize: number,
   },
+  theme: Theme
 }
 
 /**
  * Full screen length button component
  */
 const FullLengthButton: FC<Props> = (props) => {
+  const { colors } = props.theme
   const styles = StyleSheet.create({
     button: {
       backgroundColor: props.backgroundColor ? props.backgroundColor : 'transparent',
@@ -36,13 +39,13 @@ const FullLengthButton: FC<Props> = (props) => {
 
     text: {
       fontSize: props.style?.fontSize ? props.style?.fontSize : 20,
-      color: '#444'
+      color: colors.text
     },
 
     subText: {
       alignSelf: 'flex-start',
       fontSize: 16,
-      color: '#aaa',
+      color: colors.text + '89',
     },
   })
 
@@ -55,7 +58,7 @@ const FullLengthButton: FC<Props> = (props) => {
         background={TouchableNativeFeedback.Ripple('#adacac', false)}
       >
         <View style={styles.button}>
-          {props.icon && <Icon style={{ paddingRight: 15 }} name={props.icon.name} type={'material-community'} color={"#444"} />}
+          {props.icon && <Icon style={{ paddingRight: 15 }} name={props.icon.name} type={'material-community'} color={colors.text} />}
           <View style={{ flex: 1 }}>
             <Text style={styles.text}>{props.text}</Text>
             {props.subText !== undefined && <Text style={styles.subText}>{props.subText}</Text>}
@@ -82,4 +85,4 @@ const FullLengthButton: FC<Props> = (props) => {
 };
 
 export { FullLengthButton };
-export default FullLengthButton;
+export default withTheme(FullLengthButton);
