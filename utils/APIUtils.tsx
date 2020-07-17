@@ -6,7 +6,7 @@ import { NavigationProp, NavigationState } from "@react-navigation/native";
  * Sends a '/jc' call to the controller and returns the resulting JSON
  * @param index (optional) index of the device to pull variables from
  */
-export const getControllerVars = async (index?: number) => {
+export const getControllerVars = async (index?: number): Promise<ControllerVars> => {
   const url = await getURL(index);
   const response = await fetch(url + '/jc');
   const json = await response.json();

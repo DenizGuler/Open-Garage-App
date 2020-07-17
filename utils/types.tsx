@@ -15,6 +15,15 @@ export type Device = {
  * Type used to make controller variable calls
  */
 export type ControllerVars = {
+  dist: number,
+  door: number,
+  vehicle: number,
+  rcnt: number,
+  fwv: number,
+  name: string,
+  mac: string,
+  cid: number,
+  rssi: number,
   click?: number,
   close?: number,
   open?: number,
