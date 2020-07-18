@@ -264,4 +264,4 @@ export const useInterval = (callback: () => any, delay: number) => {
  * 'Base Text' component for the Open Garage App 
  * @param props same props as the Text component
  */
-export const BaseText: FC<TextProps> = (props) => <Text style={[{ fontFamily: FONT }]} {...props}>{props.children}</Text>
+export const BaseText: FC<TextProps> = (props) => <Text /* style={[{ fontFamily: FONT }]} */ {...props}>{props.children}</Text>

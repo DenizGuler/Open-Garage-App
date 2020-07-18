@@ -1,4 +1,4 @@
-import React, { useState, useEffect, FC } from 'react';
+import React, { useState, useEffect, FC, useCallback } from 'react';
 import { StyleSheet, View, TouchableOpacity, Platform, Dimensions, ViewStyle, Image, StyleProp, ImageStyle } from 'react-native';
 import 'react-native-gesture-handler';
 import { Notifications } from 'expo';
@@ -8,20 +8,10 @@ import { BaseText as Text, createAlert, useInterval, getDevices } from '../utils
 import { AppNavigationProp } from '../App';
 import { ScreenHeader, BottomDraggable } from '../components';
 import { closeDoor, openDoor, interpResult, getControllerVars } from '../utils/APIUtils';
+import { ControllerVars } from '../utils/types';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default HomeScreen;
-
-type ControllerVars = {
-  dist: number,
-  door: number,
-  vehicle: number,
-  rcnt: number,
-  fwv: number,
-  name: string,
-  mac: string,
-  cid: number,
-  rssi: number,
-}
 
 type InfoWindowProps = {
   vars: ControllerVars,
@@ -135,11 +125,14 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
 
   // call registerForPushNotifAsync as soon as loaded (unless on web)
   useEffect(() => {
-    grabInfo();
     if (Platform.OS !== 'web') {
       registerForPushNotifAsync();
     }
   }, [])
+
+  useFocusEffect(useCallback(() => {
+    grabInfo();
+  }, [navigation]))
 
   // grab info every 3 seconds while focused on the Home screen
   useInterval(async () => {
@@ -150,8 +143,8 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
   // state for grabInfo
   const [controlVars, setControlVars] = useState<ControllerVars>({
     dist: 0,
-    door: 0,
-    vehicle: 0,
+    door: 2,
+    vehicle: 2,
     rcnt: 0,
     fwv: 0,
     name: 'No Device Found',
@@ -160,17 +153,27 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
     rssi: 0,
   })
 
-  const grabInfo = async (handle?: number) => {
-    console.log('grabbing info')
+  const grabInfo = async () => {
     try {
       const json = await getControllerVars();
       setControlVars(json);
     } catch (err) {
-      const [currIdx, devices] = await getDevices();
-      if (devices.length !== 0) {
-        createAlert('No Device Found', 'No device was found at the entered address',
-          [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
-      }
+      setControlVars({
+        dist: 0,
+        door: 2,
+        vehicle: 2,
+        rcnt: 0,
+        fwv: 0,
+        name: 'No Device Found',
+        mac: 'No Device Found',
+        cid: 0,
+        rssi: 0,
+      })
+      // const [currIdx, devices] = await getDevices();
+      // if (devices.length !== 0) {
+      //   createAlert('No Device Found', 'No device was found at the entered address',
+      //     [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
+      // }
       console.log(err);
     }
   }
@@ -180,6 +183,10 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
    * Closes door if door is open and opens door if door is closed
    */
   const toggleDoor = async () => {
+    if (controlVars.door === 2) {
+      navigation.navigate('IPSettings');
+      return;
+    }
     setButtonDisabled(true)
     setTimeout(() => setButtonDisabled(false), 5000)
     try {
@@ -214,24 +221,50 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
       />
       <View style={styles.center}>
         <TouchableOpacity
-          style={[styles.bigButtonContainer, buttonDisabled ? styles.grey : controlVars.door ? styles.green : styles.red]}
+          style={[styles.bigButtonContainer,
+          buttonDisabled || controlVars.door === 2 ?
+            styles.grey : controlVars.door === 1 ?
+              styles.green : styles.red
+          ]}
           onPress={toggleDoor}
           activeOpacity={0.5}
           disabled={buttonDisabled}
         >
-          <Text style={styles.buttonText}>{buttonDisabled ? 'Working' : controlVars.door ? 'Press to Close' : 'Press to Open'}</Text>
+          <Text style={styles.buttonText}>{
+            buttonDisabled ?
+              'Working' : controlVars.door === 1 ?
+                'Press to Close' : controlVars.door === 0 ?
+                  'Press to Open' : 'Press to Open Settings'
+          }</Text>
         </TouchableOpacity>
         <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', width: '100%', maxWidth: 500 }}>
           <DoorIcon style={styles.doorIcon} />
           <View style={{ maxWidth: 550, alignSelf: 'center' }}>
             <View style={styles.row}>
-              <Text style={styles.largeText}>Door </Text>
-              <Text style={[styles.largeText, controlVars.door ? styles.redText : styles.greenText]}>{controlVars.door ? 'Opened' : 'Closed'}</Text>
+              <Text style={styles.largeText}>Door   </Text>
+              <Text style={[styles.largeText,
+              buttonDisabled || controlVars.door === 2 ?
+                styles.greyText : controlVars.door === 1 ?
+                  styles.greenText : styles.redText
+              ]}>{
+                  controlVars.door === 1 ?
+                    'Opened' : controlVars.door === 0 ?
+                      'Closed' : 'Unknown'
+                }</Text>
             </View>
-            <View style={styles.row}>
-              <Text style={styles.largeText}>Vehicle   </Text>
-              <Text style={[styles.largeText, controlVars.vehicle ? styles.greenText : styles.redText]}>{controlVars.vehicle ? 'Present' : 'Absent'}</Text>
-            </View>
+            {controlVars.vehicle < 3 &&
+              <View style={styles.row}>
+                <Text style={styles.largeText}>Vehicle   </Text>
+                <Text style={[styles.largeText,
+                controlVars.vehicle === 1 ?
+                  styles.greenText : controlVars.vehicle === 2 ?
+                    styles.greyText : styles.redText
+                ]}>{
+                    controlVars.vehicle === 1 ?
+                      'Present' : controlVars.vehicle === 2 ?
+                        'Unknown' : 'Absent'
+                  }</Text>
+              </View>}
           </View>
         </View>
       </View>
@@ -305,6 +338,11 @@ const styles = StyleSheet.create({
   redText: {
     alignSelf: 'flex-end',
     color: '#a22'
+  },
+
+  greyText: {
+    alignSelf: 'flex-end',
+    color: '#999',
   },
 
   buttonText: {

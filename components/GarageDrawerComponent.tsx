@@ -39,7 +39,7 @@ const GarageDrawerItem: FC<GarageDrawerItemProps> = (props) => {
       text={props.label}
       icon={{ name: icon }}
       onPress={props.onPress}
-      style={{height: 50, fontSize: 16}}
+      style={{ height: 50, fontSize: 16 }}
       backgroundColor={props.active ? '#e5e5e5' : undefined}
     />)
 }
@@ -50,25 +50,13 @@ const GarageDrawerComponent: FC<DrawerContentOptions & {
   descriptors: DrawerDescriptorMap;
 }> = (props) => {
   const isDrawerOpen = useIsDrawerOpen();
-  const [image, setImage] = useState<ImageInfo>();
+  const [image, setImage] = useState<ImageInfo | undefined>();
 
   useEffect(() => {
     getImage().then((img) => {
-      if (img !== undefined)
-        setImage(img)
+      setImage(img)
     })
   }, [isDrawerOpen]);
-
-  // useEffect(() => {
-  //   addEventListener('image-update', () => {
-  //     getImage().then((img) => {
-  //       if (img !== undefined)
-  //         setImage(img)
-  //     });
-  //   });
-  // }, []);
-
-  // console.log(props.state)
 
   return (
     <SafeAreaView {...props}>
@@ -83,10 +71,10 @@ const GarageDrawerComponent: FC<DrawerContentOptions & {
         data={props.state.routes}
         keyExtractor={(item) => item.key}
         renderItem={({ item }) => (
-          <GarageDrawerItem 
+          <GarageDrawerItem
             active={(props.state.routeNames[props.state.index]) === item.name}
-            label={item.name} 
-            onPress={() => { props.navigation.navigate(item.name) }} 
+            label={item.name}
+            onPress={() => { props.navigation.navigate(item.name) }}
           />
         )}
       />

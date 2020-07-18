@@ -178,8 +178,8 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
         <Text style={styles.radioTitle}>Door Sensor:</Text>
         <Divider />
         <RadioButton.Group
-          onValueChange={(value) => setParam('mnt', Number(value))}
-          value={'' + currParams.mnt}
+          onValueChange={(value) => setParam('mnt', value)}
+          value={String(currParams.mnt)}
         >
           <RadioButton.Item label='Ceiling Mount' value='0' />
           <RadioButton.Item label='Side Mount' value='1' />
@@ -190,16 +190,16 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
         <Text style={styles.optionTitle}>Door Threshold (cm):</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setParam('dth', Number(text))}
-          value={'' + currParams.dth}
+          onChangeText={(text) => setParam('dth', text)}
+          value={String(currParams.dth)}
           keyboardType={"number-pad"}
           selectTextOnFocus
         />
         <Text style={styles.optionTitle}>Car Threshold (cm):</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setParam('vth', Number(text))}
-          value={'' + currParams.vth}
+          onChangeText={(text) => setParam('vth', text)}
+          value={String(currParams.vth)}
           keyboardType={"number-pad"}
           selectTextOnFocus
         />
@@ -207,32 +207,32 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
         <Text style={styles.optionTitle}>Read Interval (s):</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setParam('riv', Number(text))}
-          value={'' + currParams.riv}
+          onChangeText={(text) => setParam('riv', text)}
+          value={String(currParams.riv)}
           keyboardType={"number-pad"}
           selectTextOnFocus
         />
         <Text style={styles.optionTitle}>Click Time (ms):</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setParam('cdt', Number(text))}
-          value={'' + currParams.cdt}
+          onChangeText={(text) => setParam('cdt', text)}
+          value={String(currParams.cdt)}
           keyboardType={"number-pad"}
           selectTextOnFocus
         />
         <Text style={styles.optionTitle}>Distance Read (ms):</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setParam('dri', Number(text))}
-          value={'' + currParams.dri}
+          onChangeText={(text) => setParam('dri', text)}
+          value={String(currParams.dri)}
           keyboardType={"number-pad"}
           selectTextOnFocus
         />
         <Text style={styles.radioTitle}>Sensor Timeout:</Text>
         <Divider />
         <RadioButton.Group
-          value={'' + currParams.sto}
-          onValueChange={(value) => setParam('sto', Number(value))}
+          value={String(currParams.sto)}
+          onValueChange={(value) => setParam('sto', value)}
         >
           <RadioButton.Item label='Ignore' value='0' />
           <RadioButton.Item label='Cap' value='1' />
@@ -242,8 +242,8 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
         <Divider />
         <View style={{ backgroundColor: '#fff', paddingVertical: 5 }}>
           <RadioButton.Group
-            value={'' + currParams.alm}
-            onValueChange={(type) => setParam('alm', Number(type))}
+            value={String(currParams.alm)}
+            onValueChange={(type) => setParam('alm', type)}
           >
             <RadioButton.Item label="Disabled" value='0' />
             <RadioButton.Item label="5 seconds" value='1' />
@@ -254,7 +254,7 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
         <Text style={styles.radioTitle}>Log Size:</Text>
         <Divider />
         <RadioButton.Group
-          value={'' + currParams.lsz}
+          value={String(currParams.lsz)}
           onValueChange={(type) => setParam('lsz', type)}
         >
           <RadioButton.Item label="20" value='20' />
@@ -267,8 +267,8 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
         <Text style={styles.radioTitle}>T/H Sensor:</Text>
         <Divider />
         <RadioButton.Group
-          value={'' + currParams.tsn}
-          onValueChange={(type) => setParam('tsn', Number(type))}
+          value={String(currParams.tsn)}
+          onValueChange={(type) => setParam('tsn', type)}
         >
           <RadioButton.Item label="(none)" value='0' />
           <RadioButton.Item label="AM2320 (I2C)" value='1' />
@@ -352,8 +352,8 @@ export function IntegrationSettings({ navigation }: StackScreenProps<RootStackPa
         <Text style={styles.optionTitle}>OTC Port:</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setParam('bprt', Number(text))}
-          value={'' + currParams.bprt}
+          onChangeText={(text) => setParam('bprt', text)}
+          value={String(currParams.bprt)}
           keyboardType={'number-pad'}
           selectTextOnFocus
         />
@@ -376,7 +376,7 @@ export function IntegrationSettings({ navigation }: StackScreenProps<RootStackPa
         <TextInput
           style={styles.optionInput}
           onChangeText={(text) => setParam('mqpt', text)}
-          value={'' + currParams.mqpt}
+          value={String(currParams.mqpt)}
           selectTextOnFocus
         />
         <Text style={styles.optionTitle}>MQTT Username:</Text>
@@ -419,8 +419,8 @@ export function IntegrationSettings({ navigation }: StackScreenProps<RootStackPa
           <Text style={styles.inlineOptionText}>If open for longer than</Text>
           <TextInput
             style={styles.inlineInput}
-            onChangeText={(text) => setParam('ati', Number(text))}
-            value={'' + currParams.ati}
+            onChangeText={(text) => setParam('ati', text)}
+            value={String(currParams.ati)}
             keyboardType={'number-pad'}
             selectTextOnFocus
           />
@@ -467,8 +467,8 @@ export function IntegrationSettings({ navigation }: StackScreenProps<RootStackPa
           {/* {Platform.OS === 'web' && ( */}
           <TextInput
             style={styles.inlineInput}
-            onChangeText={(text) => setParam('atib', Number(text))}
-            value={'' + currParams.atib}
+            onChangeText={(text) => setParam('atib', text)}
+            value={String(currParams.atib)}
             keyboardType={'number-pad'}
             selectTextOnFocus
           />
@@ -552,12 +552,11 @@ export function AdvancedSettings({ navigation }: StackScreenProps<RootStackParam
         <Text style={styles.optionTitle}>HTTP Port:</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setParam('htp', Number(text))}
-          value={'' + currParams.htp}
+          onChangeText={(text) => setParam('htp', text)}
+          value={String(currParams.htp)}
           keyboardType={'number-pad'}
           selectTextOnFocus
         />
-        <Divider />
         <Checkbox.Item
           label='Use Static IP'
           status={currParams.usi ? 'checked' : 'unchecked'}
@@ -594,7 +593,6 @@ export function AdvancedSettings({ navigation }: StackScreenProps<RootStackParam
           selectTextOnFocus
           editable={Boolean(currParams.usi)}
         />
-        <Divider />
         <Checkbox.Item
           label='Change Device Key'
           status={changingKey ? 'checked' : 'unchecked'}
@@ -807,6 +805,7 @@ const styles = StyleSheet.create({
   },
 
   optionTitle: {
+    marginTop: 10,
     marginBottom: -22,
     fontSize: 16,
     position: 'relative',
@@ -845,7 +844,7 @@ const styles = StyleSheet.create({
     borderColor: '#00000020',
     borderRadius: 6,
     borderWidth: 2,
-    marginVertical: 10,
+    marginTop: 10,
   },
 
   optionInputDisabled: {

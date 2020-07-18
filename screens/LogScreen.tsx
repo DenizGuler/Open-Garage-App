@@ -75,20 +75,21 @@ function LogScreen({ navigation }: { navigation: AppNavigationProp<'Logs'> }) {
 
   const grabLogs = async () => {
     setLoading(true);
-    getLogData()
-      .then((json) => {
-        if (json.message !== undefined) throw Error(json.message)
-        setLogs(json.logs)
-      }
-        )
-      .catch((err) => {
+    try {
+      const json = await getLogData();
+      if (json.message !== undefined) {
         setLogs([]);
-        console.log(err);
-      })
-      .finally(() => {
-        setLoading(false);
-        setRefreshing(false);
-      });
+      } else {
+        setLogs(json.logs);
+      }
+      setLoading(false);
+      setRefreshing(false);
+    } catch (err) {
+      setLogs([])
+      setLoading(false);
+      setRefreshing(false);
+      console.log(err)
+    }
   };
 
   // grab the logs as soon as possible
