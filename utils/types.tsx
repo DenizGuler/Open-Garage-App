@@ -83,4 +83,5 @@ export type LogJSON = {
   name: string,
   time: number,
   logs: [number, number, number][]
+  message?: string,
   }

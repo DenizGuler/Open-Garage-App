@@ -73,7 +73,6 @@ function LogScreen({ navigation }: { navigation: AppNavigationProp<'Logs'> }) {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [logs, setLogs] = useState<number[][]>([]);
 
-  // fetch the logs from https://OGIP/jl
   const grabLogs = async () => {
     setLoading(true);
     getLogData()

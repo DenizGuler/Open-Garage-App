@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Linking, ScrollView, AsyncStorage, Alert, Platform, Image } from 'react-native';
+import { StyleSheet, View, Linking, ScrollView, Alert, Platform, Image } from 'react-native';
 import 'react-native-gesture-handler';
 import { TextInput, TouchableOpacity } from 'react-native-gesture-handler';
 import { getDevices, BaseText as Text, setDeviceParam, createAlert } from '../utils/utils'
