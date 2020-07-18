@@ -1,4 +1,4 @@
-import React, { FC, useRef, useEffect, useCallback } from 'react';
+import React, { FC, useRef, useCallback } from 'react';
 import { AsyncStorage, Platform, Text, TextProps, Alert } from "react-native";
 import { Device } from './types';
 import { useFocusEffect } from '@react-navigation/native';
@@ -12,9 +12,12 @@ export const FONT = Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif'
  */
 export const setDevices = async (devArr: Device[]) => {
   try {
-    await AsyncStorage.setItem('devices', JSON.stringify(devArr))
+    await AsyncStorage.setItem('devices', JSON.stringify(devArr));
+    return true;
   } catch (err) {
-    console.log(err)
+    console.log(err);
+    createAlert('Error Saving Data', 'There was an error saving data')
+    return false;
   }
 }
 
@@ -24,8 +27,11 @@ export const setDevices = async (devArr: Device[]) => {
 export const setCurrIndex = async (index: number) => {
   try {
     await AsyncStorage.setItem('currIndex', JSON.stringify(index))
+    return true;
   } catch (err) {
     console.log(err)
+    createAlert('Error Saving Data', 'There was an error saving data')
+    return false;
   }
 }
 
@@ -62,8 +68,11 @@ export const setDeviceParam = async (params: Device) => {
       ...params,
     }
     await setDevices(newDevs);
+    return true;
   } catch (err) {
-    console.log(err)
+    console.log(err);
+    createAlert('Error Saving Data', 'There was an error saving data')
+    return false;
   }
 }
 
@@ -84,8 +93,9 @@ export const getDevices = async (): Promise<[number, Device[]]> => {
     return [JSON.parse(currIndex), JSON.parse(devices)];
   } catch (err) {
     console.log(err);
+    createAlert('Error Reading Data', 'There was an error reading data');
+    return [0, []];
   }
-  return [0, []];
 }
 
 /**
@@ -101,6 +111,7 @@ export const getDevKey = async (index?: number): Promise<string> => {
     return ''
   } catch (err) {
     console.log(err);
+    createAlert('Error Reading Data', 'There was an error reading data');
     return '';
   }
 }
@@ -115,6 +126,8 @@ export const getConInput = async (index?: number): Promise<string | undefined> =
     return devices[index].conInput;
   } catch (err) {
     console.log(err);
+    createAlert('Error Reading Data', 'There was an error reading data');
+    return '';
   }
 }
 
@@ -147,12 +160,15 @@ export const getURL = async (index?: number) => {
     return url;
   } catch (err) {
     console.log(err)
+    createAlert('Error Reading Data', 'There was an error reading data');
+    return '';
   }
 }
 
-// Get the image attached to the device at the given index/current device
-// Returns undefined if no image exists
-// getImage(index?: number): image
+/**
+ * Get the image attached to the device at the given index/current device if one exists 
+ * @param index (optional) index of target device
+ */
 export const getImage = async (index?: number) => {
   try {
     const [currIdx, devices] = await getDevices();
@@ -161,13 +177,17 @@ export const getImage = async (index?: number) => {
     return device.image
   } catch (err) {
     console.log(err)
+    createAlert('Error Reading Data', 'There was an error reading data');
+    return undefined;
   }
 }
 
 // HELPER METHODS
 
-// Remove the device at the given index. Returns the deleted devices
-// removeDev(index: number): device
+/**
+ * Remove the device at the given index. Returns the deleted devices
+ * @param index index of target device
+ */
 export const removeDev = async (index: number): Promise<Device | undefined> => {
   try {
     const [currIdx, devices] = await getDevices();
@@ -179,6 +199,8 @@ export const removeDev = async (index: number): Promise<Device | undefined> => {
     return deleted[0];
   } catch (err) {
     console.log(err)
+    createAlert('Error Removing Data', 'There was an error removing data');
+    return undefined
   }
 }
 

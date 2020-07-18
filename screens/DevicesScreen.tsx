@@ -17,16 +17,11 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
 
   // function that grabs all the devices and their names and stores them in devState
   // startUp(): void
-  const startUp = () => {
-    getDevices()
-      .then((tuple) => {
-        const [curr, devs] = tuple
-        setCurrState(curr);
-        setDevState(devs);
-        return devs;
-      })
-      .then((devs) => getNames(devs))
-      .catch((err) => console.log(err));
+  const startUp = async () => {
+    const [currIdx, devs] = await getDevices();
+    setCurrState(currIdx);
+    setDevState(devs);
+    await getNames(devs);
   }
 
   // function that grabs all the names of a given array of devices
@@ -76,15 +71,19 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
     }, [deleteMode])
   )
 
-  // Function that handles adding a new device by incrementing the device number and sending the user to the IPSettings to set it up
-  // onAdd():void
-  const onAdd = () => {
-    setCurrIndex(devState?.length ? devState.length : 0)
-      .then(() => navigation.navigate('IPSettings'))
+  /**
+   *  Function that handles adding a new device by incrementing the device number and sending the user to the IPSettings to set it up
+   */
+  const onAdd = async () => {
+    if (await setCurrIndex(devState.length)) {
+      navigation.navigate('IPSettings')
+    }
   }
 
-  // Function that handles marking devices for deletion
-  // toggleDel(index: number): void
+  /**
+   * Function that handles marking devices for deletion
+   * @param index target device's index
+   */
   const toggleDel = (index: number) => {
     let newDevsToDel = devsToDel.slice();
     if (devsToDel.indexOf(index) >= 0) {
@@ -99,7 +98,10 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
    * Function that handles deleting the marked devices and refreshes the device list
    */
   const deleteDevs = () => {
-    devsToDel.forEach((index) => { removeDev(index).then(() => startUp()) })
+    devsToDel.forEach(async (index) => {
+      await removeDev(index);
+    })
+    startUp();
   }
 
   /** 

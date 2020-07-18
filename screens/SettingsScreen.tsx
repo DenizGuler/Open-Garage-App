@@ -66,10 +66,10 @@ export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IP
         text={'Set Device IP'}
         left={'back'}
         right={'check'}
-        onCheck={() => {
-          updateParams().then(() => {
+        onCheck={async () => {
+          if (await updateParams()) {
             navigation.goBack();
-          });
+          }
         }}
       />
       <View style={styles.fsModal}>
