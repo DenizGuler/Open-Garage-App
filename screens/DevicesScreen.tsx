@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { FlatList } from 'react-native-gesture-handler';
-import { getDevices, setCurrIndex, removeDev, BaseText as Text } from '../utils/utils';
+import { getDevices, setCurrIndex, removeDev, BaseText as Text, createAlert } from '../utils/utils';
 import { StyleSheet, View, Alert, Vibration, BackHandler } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { AppNavigationProp } from '../App';
@@ -19,6 +19,7 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
   // startUp(): void
   const startUp = async () => {
     const [currIdx, devs] = await getDevices();
+    // console.log(devs);
     setCurrState(currIdx);
     setDevState(devs);
     await getNames(devs);
@@ -35,7 +36,7 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
       }
       catch (err) {
         newDevState[i].name = 'No Device Found';
-        console.log(err);
+        // console.log(err);
       }
     }
     setDevState(newDevState);
@@ -97,11 +98,13 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
   /**
    * Function that handles deleting the marked devices and refreshes the device list
    */
-  const deleteDevs = () => {
-    devsToDel.forEach(async (index) => {
-      await removeDev(index);
-    })
-    startUp();
+  const deleteDevs = async () => {
+    for (let i = 0;  i < devsToDel.length; ++i) {
+      // console.log('deleting device: ' + devsToDel[i])
+      await removeDev(devsToDel[i]);
+    }
+    await startUp();
+    setDevsToDel([]);
   }
 
   /** 
@@ -131,7 +134,7 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
           setDeleteMode(false);
         }}
         onCheck={() => {
-          Alert.alert("ARE YOU SURE ABOUT THAT?", "", [{
+          createAlert("Confirm Deletion", "Are you sure you want to delete the highlighted devices?", [{
             text: 'Cancel', onPress: () => {
               setDevsToDel([]);
               setDeleteMode(false);
