@@ -73,7 +73,7 @@ export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IP
         }}
       />
       <View style={styles.fsModal}>
-        <Text style={styles.optionTitle}>IP or OTF Token: {deviceState.conMethod}</Text>
+        <Text style={styles.optionTitle}>IP or OTF Token:</Text>
         <TextInput
           style={styles.optionInput}
           onChangeText={(text) => setDeviceStateParam({ conInput: text })}
