@@ -9,7 +9,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RadioButton, Checkbox } from 'react-native-paper';
 import { RootStackParams, AppNavigationProp } from '../App';
-import { FullLengthButton, ScreenHeader } from '../components';
+import { FullLengthButton, ScreenHeader, Slider } from '../components';
 import { getControllerOptions, changeControllerOptions, interpResult, issueCommand } from '../utils/APIUtils';
 import { Device, ControllerOptions } from '../utils/types';
 
@@ -250,19 +250,20 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
             <RadioButton.Item label="10 seconds" value='2' />
           </RadioButton.Group>
         </View>
+        { currParams.lsz !== undefined && 
+        <>
         <Divider />
         <Text style={styles.radioTitle}>Log Size:</Text>
         <Divider />
-        <RadioButton.Group
-          value={String(currParams.lsz)}
-          onValueChange={(type) => setParam('lsz', type)}
-        >
-          <RadioButton.Item label="20" value='20' />
-          <RadioButton.Item label="50" value='50' />
-          <RadioButton.Item label="100" value='100' />
-          <RadioButton.Item label="200" value='200' />
-          <RadioButton.Item label="400" value='400' />
-        </RadioButton.Group>
+        <Slider
+          minimumValue={20}
+          maximumValue={400}
+          step={10}
+          value={Number(currParams.lsz)}
+          onSlidingComplete={(value) => setParam('lsz', String(value))}
+          withFeedBack
+        />
+        </>}
         <Divider />
         <Text style={styles.radioTitle}>T/H Sensor:</Text>
         <Divider />
