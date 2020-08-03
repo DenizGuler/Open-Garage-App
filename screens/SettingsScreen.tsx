@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, Linking, ScrollView, Alert, Platform, Image } from 'react-native';
 import 'react-native-gesture-handler';
 import { TextInput, TouchableOpacity } from 'react-native-gesture-handler';
-import { getDevices, BaseText as Text, setDeviceParam, createAlert } from '../utils/utils'
+import { getDevices, BaseText as Text, setDeviceParam, createAlert, getURL } from '../utils/utils'
 import { Icon, Divider, ButtonGroup } from 'react-native-elements';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-community/picker'
@@ -13,6 +13,7 @@ import { RootStackParams, AppNavigationProp } from '../App';
 import { FullLengthButton, ScreenHeader, Slider } from '../components';
 import { getControllerOptions, changeControllerOptions, interpResult, issueCommand } from '../utils/APIUtils';
 import { Device, ControllerOptions } from '../utils/types';
+import { useFocusEffect } from '@react-navigation/native';
 
 export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IPSettings'>) {
   const [deviceState, setDeviceState] = useState<Device>({
@@ -229,10 +230,10 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
           keyboardType={"number-pad"}
           selectTextOnFocus
         />
-        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text style={styles.radioTitle}>Sensor Timeout:  </Text>
           <ButtonGroup
-            containerStyle={{flexGrow: 1}}
+            containerStyle={{ flexGrow: 1 }}
             buttons={['Ignore', 'Cap']}
             selectedIndex={currParams.sto}
             onPress={(index) => setParam('sto', index)}
@@ -645,6 +646,10 @@ export function AdvancedSettings({ navigation }: StackScreenProps<RootStackParam
 
 export default function SettingsScreen({ navigation }: { navigation: AppNavigationProp<'Settings'> }) {
   const docs = 'https://nbviewer.jupyter.org/github/OpenGarage/OpenGarage-Firmware/blob/master/docs/OGManual.pdf';
+  let update = '';
+  useFocusEffect(useCallback(() => {
+    getURL().then((url) => update = url + "/update")
+  }, []))
 
   return (
     <View style={styles.container}>
@@ -745,6 +750,20 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
                 }
               }]
             )
+          }}
+        />
+        <FullLengthButton
+          icon={{ name: 'update' }}
+          text="Update Firmware"
+          subText={"Update OpenGarage firmware"}
+          onPress={() => {
+            Linking.canOpenURL(update).then(supported => {
+              if (supported) {
+                Linking.openURL(update);
+              } else {
+                console.log('could not open update');
+              }
+            });
           }}
         />
         <FullLengthButton
