@@ -1,7 +1,8 @@
 import React, { FC, useRef, useCallback } from 'react';
-import { AsyncStorage, Platform, Text, TextProps, Alert } from "react-native";
+import { Platform, Text, TextProps, Alert } from "react-native";
 import { Device } from './types';
 import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-community/async-storage'
 
 export const FONT = Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif'
 
