@@ -3,8 +3,9 @@ import { StyleSheet, View, Linking, ScrollView, Alert, Platform, Image } from 'r
 import 'react-native-gesture-handler';
 import { TextInput, TouchableOpacity } from 'react-native-gesture-handler';
 import { getDevices, BaseText as Text, setDeviceParam, createAlert } from '../utils/utils'
-import { Icon, Divider } from 'react-native-elements';
+import { Icon, Divider, ButtonGroup } from 'react-native-elements';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { Picker } from '@react-native-community/picker'
 import * as ImagePicker from 'expo-image-picker';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RadioButton, Checkbox } from 'react-native-paper';
@@ -228,15 +229,16 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
           keyboardType={"number-pad"}
           selectTextOnFocus
         />
-        <Text style={styles.radioTitle}>Sensor Timeout:</Text>
-        <Divider />
-        <RadioButton.Group
-          value={String(currParams.sto)}
-          onValueChange={(value) => setParam('sto', value)}
-        >
-          <RadioButton.Item label='Ignore' value='0' />
-          <RadioButton.Item label='Cap' value='1' />
-        </RadioButton.Group>
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          <Text style={styles.radioTitle}>Sensor Timeout:  </Text>
+          <ButtonGroup
+            containerStyle={{flexGrow: 1}}
+            buttons={['Ignore', 'Cap']}
+            selectedIndex={currParams.sto}
+            onPress={(index) => setParam('sto', index)}
+            selectedButtonStyle={{ backgroundColor: '#a0c9e6' }}
+          />
+        </View>
         <Divider />
         <Text style={styles.radioTitle}>Sound Alarm:</Text>
         <Divider />
@@ -249,25 +251,43 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
             <RadioButton.Item label="5 seconds" value='1' />
             <RadioButton.Item label="10 seconds" value='2' />
           </RadioButton.Group>
+          {currParams.aoo !== undefined && <Checkbox.Item
+            label="Disable Alarm on Door Open"
+            status={currParams.aoo ? 'checked' : 'unchecked'}
+            onPress={() => { setParam('aoo', !currParams.aoo) }}
+          />}
         </View>
-        { currParams.lsz !== undefined && 
-        <>
+        {currParams.lsz !== undefined &&
+          <>
+            <Divider />
+            <Text style={styles.radioTitle}>Log Size:</Text>
+            <Divider />
+            <Slider
+              minimumValue={20}
+              maximumValue={400}
+              step={10}
+              value={Number(currParams.lsz)}
+              onSlidingComplete={(value) => setParam('lsz', String(value))}
+              withFeedBack
+            />
+          </>}
         <Divider />
-        <Text style={styles.radioTitle}>Log Size:</Text>
-        <Divider />
-        <Slider
-          minimumValue={20}
-          maximumValue={400}
-          step={10}
-          value={Number(currParams.lsz)}
-          onSlidingComplete={(value) => setParam('lsz', String(value))}
-          withFeedBack
-        />
-        </>}
-        <Divider />
-        <Text style={styles.radioTitle}>T/H Sensor:</Text>
-        <Divider />
-        <RadioButton.Group
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={styles.radioTitle}>T/H Sensor: </Text>
+          {/* <Divider /> */}
+          <Picker
+            style={styles.optionPicker}
+            selectedValue={String(currParams.tsn)}
+            onValueChange={(type) => setParam('tsn', type)}
+          >
+            <Picker.Item label="(none)" value='0' />
+            <Picker.Item label="AM2320 (I2C)" value='1' />
+            <Picker.Item label="DHT11 on G05" value='2' />
+            <Picker.Item label="DHT22 on G05" value='3' />
+            <Picker.Item label="DS18B20 on G05" value='4' />
+          </Picker>
+        </View>
+        {/* <RadioButton.Group
           value={String(currParams.tsn)}
           onValueChange={(type) => setParam('tsn', type)}
         >
@@ -276,7 +296,7 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
           <RadioButton.Item label="DHT11 on G05" value='2' />
           <RadioButton.Item label="DHT22 on G05" value='3' />
           <RadioButton.Item label="DS18B20 on G05" value='4' />
-        </RadioButton.Group>
+        </RadioButton.Group> */}
       </View>
 
     </ScrollView>
@@ -853,11 +873,19 @@ const styles = StyleSheet.create({
     borderColor: '#e5e5e5'
   },
 
+  optionPicker: {
+    // marginHorizontal: 8,
+    // width: '100%',
+    flexGrow: 2,
+  },
+
   radioTitle: {
+    // alignSelf: 'flex-start',
     fontSize: 16,
     fontWeight: 'bold',
     color: '#000000c0',
     padding: 16,
+    // flexGrow: 0,
   },
 
   fsModal: {
