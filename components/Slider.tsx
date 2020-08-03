@@ -3,7 +3,7 @@ import { Theme, withTheme } from 'react-native-paper';
 import SliderBase, { SliderProps } from '@react-native-community/slider';
 import { View, TextInput } from 'react-native';
 
-const Slider: FC<SliderProps & {theme: Theme, withFeedBack?: boolean }> = (props) => {
+const Slider: FC<SliderProps & { theme: Theme, withFeedBack?: boolean }> = (props) => {
   const [value, setValue] = useState(props.value);
   const [textValue, setTextValue] = useState(String(props.value))
   return (
@@ -42,7 +42,11 @@ const Slider: FC<SliderProps & {theme: Theme, withFeedBack?: boolean }> = (props
           borderRadius: 6,
         }}
         value={textValue}
-        onChangeText={(text) => setTextValue(text)}
+        onChangeText={(text) => {
+          setTextValue(text)
+          isNaN(Number(text)) ? undefined :  setValue(Number(text))
+        }}
+        onSubmitEditing={(text) => props.onSlidingComplete ? props.onSlidingComplete(Number(text)) : undefined}
         // onEndEditing={(e) => {
         //   props.onSlidingComplete? props.onSlidingComplete(Number(textValue)) : undefined
         // }}
