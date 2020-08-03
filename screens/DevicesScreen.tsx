@@ -99,8 +99,9 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
    * Function that handles deleting the marked devices and refreshes the device list
    */
   const deleteDevs = async () => {
+    setDevsToDel(devsToDel.sort((a, b) => b - a))
     for (let i = 0;  i < devsToDel.length; ++i) {
-      // console.log('deleting device: ' + devsToDel[i])
+      console.log('deleting device: ' + devsToDel[i])
       await removeDev(devsToDel[i]);
     }
     await startUp();
