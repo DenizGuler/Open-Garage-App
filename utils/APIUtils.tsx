@@ -58,9 +58,14 @@ export const changeControllerOptions = async (options: ControllerOptions, index?
   Object.keys(options).forEach((key: string) => {
     let param = options[key]
     if (param !== undefined) {
-      req += '&' + key + '=' + encodeURIComponent(param)
+      if (typeof(param) === "object") {
+        req += '&' + key + '=' + encodeURIComponent(JSON.stringify(param))
+      } else {
+        req += '&' + key + '=' + encodeURIComponent(param)
+      }
     }
   });
+  console.log(req);
   const response = await fetch(req);
   const json = await response.json();
   return json
