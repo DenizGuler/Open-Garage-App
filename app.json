@@ -23,10 +23,10 @@
       "**/*"
     ],
     "ios": {
-      "bundleIdentifier": "com.openthings.opengarage"
+      "bundleIdentifier": "com.albahra.opengarage"
     },
     "android": {
-      "package": "com.openthings.opengarage",
+      "package": "com.albahra.opengarage",
       "versionCode": 1
     }
   }
