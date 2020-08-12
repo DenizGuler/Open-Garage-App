@@ -57,29 +57,21 @@ export type ControllerOptions = {
   noto?: number,
   usi?: number,
   ssid?: string,
-  otf?: {
-    domain: string,
-    port: string,
-    token: string,
-  },
+  auth?: string,
+  bdmn?: string,
+  bprt?: string,
   name?: string,
-  iftt?: {
-    token: string,
-    trigger: string,
-  },
-  mqtt?: {
-    dmin: string,
-    port: string,
-    name: string,
-    pass: string,
-    topic: string,
-  },
+  iftt?: string,
+  mqtt?: string,
+  mqpt?: string,
+  mqun?: string,
+  mqpw?: string,
   dvip?: string,
   gwip?: string,
   subn?: string,
   nkey?: string,
   ckey?: string,
-  [key: string]: string | number | object | undefined,
+  [key: string]: string | number | undefined,
 }
 
 export type ResultJSON = {

@@ -8,13 +8,12 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-community/picker'
 import * as ImagePicker from 'expo-image-picker';
 import { StackScreenProps } from '@react-navigation/stack';
-import { RadioButton, Checkbox, ActivityIndicator } from 'react-native-paper';
+import { RadioButton, Checkbox } from 'react-native-paper';
 import { RootStackParams, AppNavigationProp } from '../App';
 import { FullLengthButton, ScreenHeader, Slider } from '../components';
 import { getControllerOptions, changeControllerOptions, interpResult, issueCommand } from '../utils/APIUtils';
 import { Device, ControllerOptions } from '../utils/types';
 import { useFocusEffect } from '@react-navigation/native';
-import { set } from 'react-native-reanimated';
 
 export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IPSettings'>) {
   const [deviceState, setDeviceState] = useState<Device>({
@@ -308,7 +307,7 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
 export function IntegrationSettings({ navigation }: StackScreenProps<RootStackParams, 'IntegrationSettings'>) {
   // const [showTimePicker, setShowTimePicker] = useState<boolean>(false)
   const [currParams, setCurrParams] = useState<ControllerOptions>({});
-  const setParam = (param: string, val: string | number | object) => {
+  const setParam = (param: string, val: string | number) => {
     setCurrParams({
       ...currParams,
       [param]: val
@@ -319,7 +318,6 @@ export function IntegrationSettings({ navigation }: StackScreenProps<RootStackPa
     try {
       let json = await getControllerOptions()
       setCurrParams(json);
-      setIsLoading(false)
     } catch (err) {
       createAlert('No Device Found', 'No device was found at the entered address',
         [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
@@ -328,10 +326,8 @@ export function IntegrationSettings({ navigation }: StackScreenProps<RootStackPa
   }
 
   const updateSettings = async () => {
-    setIsLoading(true);
     try {
-      const json = await changeControllerOptions(currParams);
-      setIsLoading(false);
+      const json = await changeControllerOptions(currParams)
       return interpResult(json, navigation);
     } catch (err) {
       createAlert('No Device Found', 'No device was found at the entered address',
@@ -339,8 +335,6 @@ export function IntegrationSettings({ navigation }: StackScreenProps<RootStackPa
       console.log(err)
     }
   }
-
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     grabCurrParams();
@@ -365,74 +359,60 @@ export function IntegrationSettings({ navigation }: StackScreenProps<RootStackPa
         <Text style={styles.optionTitle}>OTC Token:</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setParam('otf', { ...currParams.otf, token: text })}
-          value={currParams.otf?.token}
+          onChangeText={(text) => setParam('auth', text)}
+          value={currParams.auth}
           selectTextOnFocus
         />
         <Text style={styles.optionTitle}>OTC Domain:</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setParam('otf', { ...currParams.otf, dmin: text })}
-          value={currParams.otf?.dmin}
+          onChangeText={(text) => setParam('bdmn', text)}
+          value={currParams.bdmn}
           keyboardType={'url'}
           selectTextOnFocus
         />
         <Text style={styles.optionTitle}>OTC Port:</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setParam('otf', { ...currParams.otf, port: text })}
-          value={String(currParams.otf?.port)}
+          onChangeText={(text) => setParam('bprt', text)}
+          value={String(currParams.bprt)}
           keyboardType={'number-pad'}
           selectTextOnFocus
         />
         <Text style={styles.optionTitle}>IFTTT Key:</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setParam('iftt', { ...currParams.iftt, token: text })}
-          value={currParams.iftt?.token}
-          selectTextOnFocus
-        />
-        <Text style={styles.optionTitle}>IFTTT Trigger:</Text>
-        <TextInput
-          style={styles.optionInput}
-          onChangeText={(text) => setParam('iftt', { ...currParams.iftt, trigger: text })}
-          value={currParams.iftt?.trigger}
+          onChangeText={(text) => setParam('iftt', text)}
+          value={currParams.iftt}
           selectTextOnFocus
         />
         <Text style={styles.optionTitle}>MQTT Server:</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setParam('mqtt', { ...currParams.mqtt, dmin: text })}
-          value={currParams.mqtt?.dmin}
+          onChangeText={(text) => setParam('mqtt', text)}
+          value={currParams.mqtt}
+          keyboardType={'numbers-and-punctuation'}
           selectTextOnFocus
         />
         <Text style={styles.optionTitle}>MQTT Port:</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setParam('mqtt', { ...currParams.mqtt, port: text })}
-          value={String(currParams.mqtt?.port)}
-          keyboardType={'number-pad'}
-          selectTextOnFocus
-        />
-        <Text style={styles.optionTitle}>MQTT Root Topic:</Text>
-        <TextInput
-          style={styles.optionInput}
-          onChangeText={(text) => setParam('mqtt', { ...currParams.mqtt, topic: text })}
-          value={currParams.mqtt?.topic}
+          onChangeText={(text) => setParam('mqpt', text)}
+          value={String(currParams.mqpt)}
           selectTextOnFocus
         />
         <Text style={styles.optionTitle}>MQTT Username:</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setParam('mqtt', { ...currParams.mqtt, name: text })}
-          value={currParams.mqtt?.name}
+          onChangeText={(text) => setParam('mqun', text)}
+          value={currParams.mqun}
           selectTextOnFocus
         />
         <Text style={styles.optionTitle}>MQTT Password:</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setParam('mqtt', { ...currParams.mqtt, pass: text })}
-          value={currParams.mqtt?.pass}
+          onChangeText={(text) => setParam('mqpw', text)}
+          value={currParams.mqpw}
           selectTextOnFocus
           secureTextEntry
         />
