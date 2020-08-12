@@ -58,7 +58,7 @@ export type ControllerOptions = {
   usi?: number,
   ssid?: string,
   otf?: {
-    domain: string,
+    dmin: string,
     port: string,
     token: string,
   },

@@ -289,16 +289,6 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
             <Picker.Item label="DS18B20 on G05" value='4' />
           </Picker>
         </View>
-        {/* <RadioButton.Group
-          value={String(currParams.tsn)}
-          onValueChange={(type) => setParam('tsn', type)}
-        >
-          <RadioButton.Item label="(none)" value='0' />
-          <RadioButton.Item label="AM2320 (I2C)" value='1' />
-          <RadioButton.Item label="DHT11 on G05" value='2' />
-          <RadioButton.Item label="DHT22 on G05" value='3' />
-          <RadioButton.Item label="DS18B20 on G05" value='4' />
-        </RadioButton.Group> */}
       </View>
 
     </ScrollView>
