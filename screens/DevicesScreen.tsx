@@ -141,8 +141,8 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
               setDeleteMode(false);
             }
           }, {
-            text: 'Confirm', onPress: () => {
-              deleteDevs();
+            text: 'Confirm', onPress: async () => {
+              await deleteDevs();
               setDeleteMode(false);
             }
           }])

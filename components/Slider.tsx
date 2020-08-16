@@ -19,13 +19,12 @@ const Slider: FC<SliderProps & { theme: Theme, withFeedBack?: boolean }> = (prop
     >
       <SliderBase
         thumbTintColor={props.theme.colors.accent}
-        maximumTrackTintColor={props.theme.colors.onBackground}
+        maximumTrackTintColor={'#00000040'}
         minimumTrackTintColor={props.theme.colors.accent}
-        style={{ flexGrow: 2 }}
+        style={{ flexGrow: 2, marginRight: 10 }}
         {...props}
         value={value}
         onValueChange={(val) => {
-          setValue(val);
           setTextValue(String(val));
         }}
       />
@@ -43,13 +42,13 @@ const Slider: FC<SliderProps & { theme: Theme, withFeedBack?: boolean }> = (prop
         }}
         value={textValue}
         onChangeText={(text) => {
-          setTextValue(text)
-          isNaN(Number(text)) ? undefined :  setValue(Number(text))
+          setTextValue(text);
         }}
-        onSubmitEditing={(text) => props.onSlidingComplete ? props.onSlidingComplete(Number(text)) : undefined}
-        // onEndEditing={(e) => {
-        //   props.onSlidingComplete? props.onSlidingComplete(Number(textValue)) : undefined
-        // }}
+        onSubmitEditing={(e) => {
+          props.onSlidingComplete ? props.onSlidingComplete(Number(e.nativeEvent.text)) : undefined
+          isNaN(Number(e.nativeEvent.text)) ? undefined :  setValue(Number(e.nativeEvent.text));
+          // setTextValue(e.nativeEvent.text);
+        }}
         keyboardType={'number-pad'}
         selectTextOnFocus
       />}
