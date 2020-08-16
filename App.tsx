@@ -8,7 +8,7 @@ import * as Settings from './screens/SettingsScreen';
 import { StatusBar, Dimensions } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { GarageDrawerComponent } from './components';
-import { getDevices } from './utils/utils';
+import { getDevices, findOldSettings } from './utils/utils';
 import { Provider, DefaultTheme as DefaultPaperTheme } from 'react-native-paper';
 
 const theme = {
@@ -50,7 +50,8 @@ export type AppNavigationProp<A extends keyof MainDrawerParams> = CompositeNavig
 function MainDrawerScreen({ navigation }: StackScreenProps<RootStackParams, 'Main'>) {
 
   useEffect(() => {
-    getDevices()
+    findOldSettings()
+      .then(() => getDevices())
       .then((value) => {
         const [currIdx, devices] = value;
         if (devices.length === 0) {

@@ -1,4 +1,4 @@
-import { getURL, getDevKey, createAlert } from "./utils"
+import { getURL, getDevKey, createAlert, getConMethod } from "./utils"
 import { ControllerVars, ControllerOptions, ResultJSON, LogJSON } from "./types";
 import { NavigationProp, NavigationState } from "@react-navigation/native";
 
@@ -7,10 +7,34 @@ import { NavigationProp, NavigationState } from "@react-navigation/native";
  * @param index (optional) index of the device to pull variables from
  */
 export const getControllerVars = async (index?: number): Promise<ControllerVars> => {
+  const conMethod = await getConMethod(index);
   const url = await getURL(index);
-  const response = await fetch(url + '/jc');
-  const json = await response.json();
-  if (json.message !== undefined) throw Error(json.message)
+  let json: ControllerVars = {
+    dist: 0,
+    door: 2,
+    vehicle: 2,
+    rcnt: 0,
+    fwv: 0,
+    name: 'No Device Found',
+    mac: 'No Device Found',
+    cid: 0,
+    rssi: 0,
+  };
+  if (conMethod === 'BLYNK') {
+    const doorResponse = await fetch(url + '/get/V0');
+    json.door = JSON.parse((await doorResponse.json())[0]);
+    const distResponse = await fetch(url + '/get/V3');
+    json.dist = JSON.parse((await distResponse.json())[0]);
+    const carResponse = await fetch(url + '/get/V4');
+    json.vehicle = JSON.parse((await carResponse.json())[0]);
+    json.name = "Blynk Site"
+  } else {
+    const response = await fetch(url + '/jc');
+    json = await response.json(); 
+  }
+  if (json.message !== undefined) {
+    throw Error(json.message)
+  }
   return json;
 }
 
@@ -106,9 +130,17 @@ export const resetAll = async (index?: number): Promise<ResultJSON> => {
  * @param index (optional) index of target device
  */
 export const openDoor = async (index?: number): Promise<ResultJSON> => {
+  const conMethod = await getConMethod(index);
+  // handle blynk case
   const url = await getURL(index);
   const dkey = await getDevKey(index);
-  const response = await fetch(url + '/cc?dkey=' + dkey + '&open=1')
+  let response;
+  if (conMethod === 'BLYNK') {
+    response = await fetch(url + '/update/V0?value=1')
+    setTimeout(async () => { response = await fetch(url + '/update/V0?value=0') }, 1000)
+  } else {
+    response = await fetch(url + '/cc?dkey=' + dkey + '&open=1')
+  }
   const json = await response.json();
   return json;
 }
@@ -118,9 +150,16 @@ export const openDoor = async (index?: number): Promise<ResultJSON> => {
  * @param index (optional) index of target device
  */
 export const closeDoor = async (index?: number): Promise<ResultJSON> => {
+  const conMethod = await getConMethod(index);
   const url = await getURL(index);
   const dkey = await getDevKey(index);
-  const response = await fetch(url + '/cc?dkey=' + dkey + '&close=1')
+  let response;
+  if (conMethod === 'BLYNK') {
+    response = await fetch(url + '/update/V0?value=0')
+    setTimeout(async () => { response = await fetch(url + '/update/V0?value=1') }, 1000)
+  } else {
+    response = await fetch(url + '/cc?dkey=' + dkey + '&close=1')
+  }
   const json = await response.json();
   return json;
 }

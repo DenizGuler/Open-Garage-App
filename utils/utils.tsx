@@ -5,7 +5,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-community/async-storage'
 
 export const FONT = Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif'
-
+const TOKEN_PREFIX = 'OTC-'
 // SETTERS
 
 /** 
@@ -42,11 +42,7 @@ export const setCurrIndex = async (index: number) => {
 export const setDeviceParam = async (params: Device) => {
 
   if (params.conInput !== undefined) {
-    if (/^(?!0)(?!.*\.$)((1?\d?\d|25[0-5]|2[0-4]\d)(\.|$)){4}$/.test(params.conInput)) {
-      params.conMethod = 'IP'
-    } else {
-      params.conMethod = 'OTF'
-    }
+    params.conMethod = interpConMethod(params.conInput);
   }
 
   let newDevs;
@@ -123,8 +119,23 @@ export const getDevKey = async (index?: number): Promise<string> => {
 export const getConInput = async (index?: number): Promise<string | undefined> => {
   try {
     const [currIdx, devices] = await getDevices();
-    index = (index === undefined) ? currIdx : index
+    index = (index === undefined) ? currIdx : index;
     return devices[index].conInput;
+  } catch (err) {
+    console.log(err);
+    createAlert('Error Reading Data', 'There was an error reading data');
+    return '';
+  }
+}
+
+/**
+ * @param index (optional) index of target device
+ */
+export const getConMethod = async (index?: number) => {
+  try {
+    const [currIdx, devices] = await getDevices();
+    index = (index === undefined) ? currIdx : index;
+    return devices[index].conMethod;
   } catch (err) {
     console.log(err);
     createAlert('Error Reading Data', 'There was an error reading data');
@@ -143,13 +154,19 @@ export const getURL = async (index?: number) => {
       return 'no devices';
     }
     let device = devices[index]
+    if (device.conInput === undefined) {
+      return '';
+    }
 
     switch (device.conMethod) {
       case 'IP':
         url = 'http://' + device.conInput
         break;
-      case 'OTF':
-        url = 'https://cloud.test.openthings.io/forward/v1/' + device.conInput
+      case 'OTC':
+        url = 'https://cloud.test.openthings.io/forward/v1/' + device.conInput.substring(4);
+        break;
+      case 'BLYNK':
+        url = 'http://blynk-cloud.com/' + device.conInput;
         break;
       case undefined:
         url = '';
@@ -184,6 +201,72 @@ export const getImage = async (index?: number) => {
 }
 
 // HELPER METHODS
+
+/**
+ * Interpret connection method given an input string
+ * @param conInput - input string (eg. an IP or a Token) 
+ */
+export const interpConMethod = (conInput: string): 'IP' | 'OTC' | 'BLYNK' | 'none' => {
+  if (/^(?!0)(?!.*\.$)((1?\d?\d|25[0-5]|2[0-4]\d)(\.|$)){4}$/.test(conInput)) {
+    return 'IP';
+  } else { // not an IP so must be a token
+    if (/^OTC-\w{32}$/.test(conInput)) { // token prefix is "OTC-"
+      return 'OTC';
+    } else if (/^\w{32}$/) {
+      return 'BLYNK';
+    }
+  }
+  return 'none';
+}
+
+
+
+export const findOldSettings = async () => {
+  const keys = await AsyncStorage.getAllKeys();
+  if (keys.includes('controllers')) {
+    try {
+      const value = await AsyncStorage.getItem('controllers');
+      if (value === null) {
+        return;
+      }
+      createAlert("Old Settings Found", "Old settings were detected on your device would you like to use these old settings or delete them?",
+        [
+          {
+            text: 'Delete Old Settings', onPress: async () => {
+              await AsyncStorage.removeItem('controllers');
+              await AsyncStorage.removeItem('activeController');
+            }
+          },
+          {
+            text: 'Use Old settings', onPress: async () => {
+              const controllers: any[] = JSON.parse(value);
+              const [currIdx, devices] = await getDevices();
+              for (let i = 0; i < controllers.length; i++) {
+                let device: Device = {
+                  devKey: controllers[i].password,
+                  image: controllers[i].image,
+                }
+                if (controllers[i].auth) {
+                  device.conInput = controllers[i].auth;
+                  device.conMethod = 'BLYNK';
+                }
+                if (controllers[i].ip) {
+                  device.conInput = controllers[i].ip;
+                  device.conMethod = 'IP';
+                }
+                devices.push(device);
+              }
+              await setDevices(devices);
+              await AsyncStorage.removeItem('controllers');
+              await AsyncStorage.removeItem('activeController');
+            }
+          }
+        ])
+    } catch (err) {
+      console.log(err)
+    }
+  }
+}
 
 /**
  * Remove the device at the given index. Returns the deleted devices

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, Linking, ScrollView, Alert, Platform, Image } from 'react-native';
 import 'react-native-gesture-handler';
 import { TextInput, TouchableOpacity } from 'react-native-gesture-handler';
-import { getDevices, BaseText as Text, setDeviceParam, createAlert, getURL } from '../utils/utils'
+import { getDevices, BaseText as Text, setDeviceParam, createAlert, getURL, getConMethod } from '../utils/utils'
 import { Icon, Divider, ButtonGroup } from 'react-native-elements';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-community/picker'
@@ -14,6 +14,9 @@ import { FullLengthButton, ScreenHeader, Slider } from '../components';
 import { getControllerOptions, changeControllerOptions, interpResult, issueCommand } from '../utils/APIUtils';
 import { Device, ControllerOptions } from '../utils/types';
 import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-community/async-storage';
+
+const DEBUG = true;
 
 export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IPSettings'>) {
   const [deviceState, setDeviceState] = useState<Device>({
@@ -65,7 +68,7 @@ export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IP
       stickyHeaderIndices={[0]}
     >
       <ScreenHeader
-        text={'Set Device IP'}
+        text={'Set Up Device'}
         left={'back'}
         right={'check'}
         onCheck={async () => {
@@ -75,10 +78,12 @@ export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IP
         }}
       />
       <View style={styles.fsModal}>
-        <Text style={styles.optionTitle}>IP or OTF Token:</Text>
+        <Text style={styles.optionTitle}>IP or OTC Token:</Text>
         <TextInput
           style={styles.optionInput}
-          onChangeText={(text) => setDeviceStateParam({ conInput: text })}
+          onChangeText={(text) => {
+            setDeviceStateParam({ conInput: text })
+          }}
           value={deviceState.conInput}
           placeholder={'e.g.: 127.0.0.1 or [token]'}
           onSubmitEditing={() => {
@@ -288,16 +293,6 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
             <Picker.Item label="DS18B20 on G05" value='4' />
           </Picker>
         </View>
-        {/* <RadioButton.Group
-          value={String(currParams.tsn)}
-          onValueChange={(type) => setParam('tsn', type)}
-        >
-          <RadioButton.Item label="(none)" value='0' />
-          <RadioButton.Item label="AM2320 (I2C)" value='1' />
-          <RadioButton.Item label="DHT11 on G05" value='2' />
-          <RadioButton.Item label="DHT22 on G05" value='3' />
-          <RadioButton.Item label="DS18B20 on G05" value='4' />
-        </RadioButton.Group> */}
       </View>
 
     </ScrollView>
@@ -647,8 +642,13 @@ export function AdvancedSettings({ navigation }: StackScreenProps<RootStackParam
 export default function SettingsScreen({ navigation }: { navigation: AppNavigationProp<'Settings'> }) {
   const docs = 'https://nbviewer.jupyter.org/github/OpenGarage/OpenGarage-Firmware/blob/master/docs/OGManual.pdf';
   let update = '';
+  const [conMethod, setConMethod] = useState<string>();
   useFocusEffect(useCallback(() => {
-    getURL().then((url) => update = url + "/update")
+    getConMethod()
+      .then((method) => setConMethod(method))
+      .then(() =>
+        getURL().then((url) => update = url + "/update")
+      )
   }, []))
 
   return (
@@ -683,7 +683,7 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
           subText={'HTTP port, static IP, change device key'}
           onPress={() => navigation.navigate('AdvancedSettings')}
         />
-        <FullLengthButton
+        {conMethod !== 'BLYNK' && <FullLengthButton
           icon={{ name: 'script-outline' }}
           text="Clear Logs"
           subText={'Clear log data'}
@@ -705,8 +705,8 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
               }]
             )
           }}
-        />
-        <FullLengthButton
+        />}
+        {conMethod !== 'BLYNK' && <FullLengthButton
           icon={{ name: 'restart' }}
           text="Reboot Device"
           subText={'Reboot the OpenGarage controller'}
@@ -728,8 +728,8 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
               }]
             )
           }}
-        />
-        <FullLengthButton
+        />}
+        {conMethod !== 'BLYNK' && <FullLengthButton
           icon={{ name: 'access-point' }}
           text="Reset WiFi"
           subText={'Reset the OpenGarage controller into AP mode'}
@@ -751,9 +751,9 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
               }]
             )
           }}
-        />
-        <FullLengthButton
-          icon={{ name: 'update' }}
+        />}
+        {conMethod === 'IP' && <FullLengthButton
+          icon={{ name: 'upload' }}
           text="Update Firmware"
           subText={"Update OpenGarage firmware"}
           onPress={() => {
@@ -765,7 +765,7 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
               }
             });
           }}
-        />
+        />}
         <FullLengthButton
           icon={{ name: 'book-open-variant' }}
           text="User Manual"
@@ -780,21 +780,34 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
             });
           }}
         />
-        {/* <FullLengthButton
+        {DEBUG && <FullLengthButton
+          icon={{ name: 'upload' }}
+          text="Inject Old Settings"
+          subText="DEBUG"
+          onPress={async () => {
+            try {
+              let controllers = [{ ip: '192.168.1.205', password: 'opendoor' }, { auth: '6bfcd666b6a8d948f1f5090b0e5d900e', password: 'opendoor' }];
+              await AsyncStorage.setItem('controllers', JSON.stringify(controllers));
+            } catch (err) {
+              console.log(err);
+            }
+          }}
+        />}
+        {DEBUG && <FullLengthButton
           icon={{ name: 'delete' }}
           text="Clear AsyncStorage"
-          subText="For debugging purposes"
+          subText="DEBUG"
           onPress={() => {
             createAlert('Warning!', 'This will clear all of the data that is stored on this app, only use if nothing else works!',
-            [{text: 'Cancel'}, {
-              text: 'Clear AsyncStorage',
-              onPress: async () => {
-                await AsyncStorage.clear()
-              }
-            }])
+              [{ text: 'Cancel' }, {
+                text: 'Clear AsyncStorage',
+                onPress: async () => {
+                  await AsyncStorage.clear()
+                }
+              }])
           }}
-        /> */}
-        <Text style={{ alignSelf: 'center' }}>App Version 1b</Text>
+        />}
+        <Text style={{ alignSelf: 'center' }}>App Version 8-15.0</Text>
       </ScrollView>
     </View>
   );

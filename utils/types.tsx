@@ -4,7 +4,7 @@ import { ImageInfo } from "expo-image-picker/build/ImagePicker.types";
  * Type used to store device data on the app
  */
 export type Device = {
-  conMethod?: 'IP' | 'OTF',
+  conMethod?: 'IP' | 'OTC' | 'BLYNK' | 'none',
   conInput?: string,
   devKey?: string,
   image?: ImageInfo,
@@ -29,6 +29,7 @@ export type ControllerVars = {
   open?: number,
   reboot?: number,
   apmode?: number,
+  message?: string,
   [key: string]: string | number | undefined,
 }
 

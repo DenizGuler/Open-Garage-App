@@ -4,7 +4,7 @@ import 'react-native-gesture-handler';
 import { Notifications } from 'expo';
 import * as Permissions from 'expo-permissions';
 import Constants from 'expo-constants';
-import { BaseText as Text, createAlert, useInterval, getDevices } from '../utils/utils';
+import { BaseText as Text, createAlert, useInterval, getDevices, getConMethod } from '../utils/utils';
 import { AppNavigationProp } from '../App';
 import { ScreenHeader, BottomDraggable } from '../components';
 import { closeDoor, openDoor, interpResult, getControllerVars } from '../utils/APIUtils';
@@ -100,7 +100,7 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
   const [notification, setNotification] = useState({});
 
   // registers device for Expo push notifications ands sets the expoPushToken state to this device's
-  // expo push token, we can use this with FCM, APNS, OTF, or HTTP requests.
+  // expo push token, we can use this with FCM, APNS, OTC, or HTTP requests.
   const registerForPushNotifAsync = async () => {
     if (Constants.isDevice) {
       // check if notifications permissions already granted
@@ -153,9 +153,13 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
     rssi: 0,
   })
 
+  const [conMethod, setConMethod] = useState<string>();
+
   const grabInfo = async () => {
     try {
       const json = await getControllerVars();
+      const method = await getConMethod();
+      setConMethod(method);
       setControlVars(json);
     } catch (err) {
       setControlVars({
@@ -268,7 +272,7 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
           </View>
         </View>
       </View>
-      {Platform.OS !== 'web' && <BottomDraggable
+      {(Platform.OS !== 'web' && conMethod !== 'BLYNK') && <BottomDraggable
         threshold={17 * Dimensions.get('window').height / 60}
         thresholdGive={.25}
         maxHeight={2 * Dimensions.get('window').height / 5}
@@ -278,7 +282,7 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
           <Text style={{ fontSize: 26 }} {...props}>More Information</Text>
         )}
       />}
-      {Platform.OS === 'web' && <View style={{
+      {(Platform.OS === 'web' && conMethod !== 'BLYNK') && <View style={{
         alignSelf: "center",
         width: '100%',
         maxWidth: 600
@@ -353,7 +357,7 @@ const styles = StyleSheet.create({
   },
 
   largeText: {
-    fontSize: 30,
+    fontSize: 28,
   },
 
   doorIcon: {
