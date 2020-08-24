@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, Linking, ScrollView, Alert, Platform, Image } from 'react-native';
 import 'react-native-gesture-handler';
 import { TextInput, TouchableOpacity } from 'react-native-gesture-handler';
-import { getDevices, BaseText as Text, setDeviceParam, createAlert, getURL, getConMethod } from '../utils/utils'
+import { getDevices, BaseText as Text, setDeviceParam, createAlert, getURL, getConMethod, interpConMethod } from '../utils/utils'
 import { Icon, Divider, ButtonGroup } from 'react-native-elements';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-community/picker'
@@ -10,11 +10,12 @@ import * as ImagePicker from 'expo-image-picker';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RadioButton, Checkbox } from 'react-native-paper';
 import { RootStackParams, AppNavigationProp } from '../App';
-import { FullLengthButton, ScreenHeader, Slider } from '../components';
+import { FullLengthButton, ScreenHeader, Slider, Popup } from '../components';
 import { getControllerOptions, changeControllerOptions, interpResult, issueCommand } from '../utils/APIUtils';
 import { Device, ControllerOptions } from '../utils/types';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-community/async-storage';
+import { usePopup } from '../components/Popup';
 
 const DEBUG = true;
 
@@ -22,6 +23,10 @@ export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IP
   const [deviceState, setDeviceState] = useState<Device>({
     conMethod: 'IP',
     conInput: '',
+    otc: {
+      domain: 'cloud.test.openthings.io',
+      port: '80',
+    }
   });
   const setDeviceStateParam = (param: Device) => {
     setDeviceState({
@@ -61,6 +66,8 @@ export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IP
     return await setDeviceParam(deviceState).catch((err) => console.log(err))
   }
 
+  const [showOTCModal, setShowOTCModal] = useState(false);
+
   return (
     <ScrollView
       contentContainerStyle={{ flexGrow: 1, backgroundColor: '#fff' }}
@@ -72,8 +79,15 @@ export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IP
         left={'back'}
         right={'check'}
         onCheck={async () => {
-          if (await updateParams()) {
-            navigation.goBack();
+          if (deviceState.conInput !== undefined) {
+            let conMethod = interpConMethod(deviceState.conInput)
+            if (conMethod === 'OTC') {
+              setShowOTCModal(true);
+            } else {
+              if (await updateParams()) {
+                navigation.goBack();
+              }
+            }
           }
         }}
       />
@@ -119,6 +133,43 @@ export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IP
           </View>
         </TouchableOpacity>
       </View>
+      <Popup
+        visible={showOTCModal}
+        onDismiss={() => setShowOTCModal(false)}
+        title='Additional OTC Settings'
+        buttons={[
+          { text: 'Cancel', onPress: () => setShowOTCModal(false) },
+          {
+            text: 'OK', onPress: async () => {
+              if (await updateParams()) {
+                navigation.goBack();
+              }
+            }
+          }
+        ]}
+      >
+        <Text style={styles.optionTitle}>OTC Domain:</Text>
+        <TextInput
+          style={styles.optionInput}
+          onChangeText={(text) => setDeviceStateParam({ otc: { ...deviceState.otc, domain: text } })}
+          value={deviceState.otc?.domain}
+          onSubmitEditing={() => setDeviceParam({ otc: deviceState.otc })}
+          selectTextOnFocus
+          keyboardType={"url"}
+        />
+        <Text style={styles.optionHelperText}>optional</Text>
+        <Text style={styles.optionTitle}>OTC Port:</Text>
+        <TextInput
+          style={styles.optionInput}
+          onChangeText={(text) => setDeviceStateParam({ otc: { ...deviceState.otc, port: text } })}
+          value={deviceState.otc?.port}
+          onSubmitEditing={() => setDeviceParam({ otc: deviceState.otc })}
+          selectTextOnFocus
+          keyboardType={"number-pad"}
+        />
+        <Text style={styles.optionHelperText}>optional</Text>
+        <Text style={{ paddingVertical: 10, paddingHorizontal: 5, fontSize: 16, }}>These settings are optional</Text>
+      </Popup>
     </ScrollView>
   );
 }
@@ -131,13 +182,14 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
       [param]: val
     });
   }
+  const popup = usePopup();
 
   const grabCurrParams = async () => {
     try {
       let json = await getControllerOptions()
       setCurrParams(json);
     } catch (err) {
-      createAlert('No Device Found', 'No device was found at the entered address',
+      createAlert(popup, 'No Device Found', 'No device was found at the entered address',
         [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
       console.log(err)
     }
@@ -146,9 +198,13 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
   const updateSettings = async () => {
     try {
       const json = await changeControllerOptions(currParams)
-      return interpResult(json, navigation);
+      const result = interpResult(json);
+      if (!result.success) {
+        createAlert(popup, result.error, result.message)
+      }
+      return result.success
     } catch (err) {
-      createAlert('No Device Found', 'No device was found at the entered address',
+      createAlert(popup, 'No Device Found', 'No device was found at the entered address',
         [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
       console.log(err)
     }
@@ -308,13 +364,14 @@ export function IntegrationSettings({ navigation }: StackScreenProps<RootStackPa
       [param]: val
     });
   }
+  const popup = usePopup();
 
   const grabCurrParams = async () => {
     try {
       let json = await getControllerOptions()
       setCurrParams(json);
     } catch (err) {
-      createAlert('No Device Found', 'No device was found at the entered address',
+      createAlert(popup, 'No Device Found', 'No device was found at the entered address',
         [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
       console.log(err)
     }
@@ -323,9 +380,13 @@ export function IntegrationSettings({ navigation }: StackScreenProps<RootStackPa
   const updateSettings = async () => {
     try {
       const json = await changeControllerOptions(currParams)
-      return interpResult(json, navigation);
+      const result = interpResult(json);
+      if (!result.success) {
+        createAlert(popup, result.error, result.message)
+      }
+      return result.success
     } catch (err) {
-      createAlert('No Device Found', 'No device was found at the entered address',
+      createAlert(popup, 'No Device Found', 'No device was found at the entered address',
         [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
       console.log(err)
     }
@@ -523,13 +584,14 @@ export function AdvancedSettings({ navigation }: StackScreenProps<RootStackParam
       [param]: val
     });
   }
+  const popup = usePopup();
 
   const grabCurrParams = async () => {
     try {
       let json = await getControllerOptions()
       setCurrParams(json);
     } catch (err) {
-      createAlert('No Device Found', 'No device was found at the entered address',
+      createAlert(popup, 'No Device Found', 'No device was found at the entered address',
         [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
       console.log(err)
     }
@@ -538,9 +600,13 @@ export function AdvancedSettings({ navigation }: StackScreenProps<RootStackParam
   const updateSettings = async () => {
     try {
       const json = await changeControllerOptions(currParams)
-      return interpResult(json, navigation);
+      const result = interpResult(json);
+      if (!result.success) {
+        createAlert(popup, result.error, result.message)
+      }
+      return result.success
     } catch (err) {
-      createAlert('No Device Found', 'No device was found at the entered address',
+      createAlert(popup, 'No Device Found', 'No device was found at the entered address',
         [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
       console.log(err)
     }
@@ -650,6 +716,7 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
         getURL().then((url) => update = url + "/update")
       )
   }, []))
+  const popup = usePopup();
 
   return (
     <View style={styles.container}>
@@ -665,39 +732,42 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
           subText={'Connection method, device key'}
           onPress={() => navigation.navigate('IPSettings')}
         />
-        <FullLengthButton
+        {conMethod !== 'BLYNK' && <FullLengthButton
           icon={{ name: 'settings' }}
           text="Basic Device Settings"
           subText={'Site name, sensor, alarm, log size'}
           onPress={() => navigation.navigate('BasicSettings')}
-        />
-        <FullLengthButton
+        />}
+        {conMethod !== 'BLYNK' && <FullLengthButton
           icon={{ name: 'arrow-decision' }}
           text="Integration Settings"
           subText={'OTC, IFTTT, MQTT, notifications'}
           onPress={() => navigation.navigate('IntegrationSettings')}
-        />
-        <FullLengthButton
+        />}
+        {conMethod !== 'BLYNK' && <FullLengthButton
           icon={{ name: 'cogs' }}
           text="Advanced Settings"
           subText={'HTTP port, static IP, change device key'}
           onPress={() => navigation.navigate('AdvancedSettings')}
-        />
+        />}
         {conMethod !== 'BLYNK' && <FullLengthButton
           icon={{ name: 'script-outline' }}
           text="Clear Logs"
           subText={'Clear log data'}
           onPress={() => {
-            createAlert('Confirm Clear Logs', 'Are you sure you want to clear the logs?',
+            createAlert(popup, 'Confirm Clear Logs', 'Are you sure you want to clear the logs?',
               [{ text: 'Cancel' }, {
                 text: 'Reset Logs',
                 onPress: async () => {
                   try {
-                    if (interpResult(await issueCommand('clearlog'), navigation)) {
-                      createAlert('Command Issued Successfully')
+                    const result = interpResult(await issueCommand('clearlog'));
+                    if (result.success) {
+                      createAlert(popup, 'Command Issued Successfully')
+                    } else {
+                      createAlert(popup, result.error, result.message)
                     }
                   } catch (err) {
-                    createAlert('No Device Found', 'No device was found at the entered address',
+                    createAlert(popup, 'No Device Found', 'No device was found at the entered address',
                       [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
                     console.log(err)
                   }
@@ -711,16 +781,19 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
           text="Reboot Device"
           subText={'Reboot the OpenGarage controller'}
           onPress={() => {
-            createAlert('Confirm Reboot Device', 'Are you sure you want to reboot the controller?',
+            createAlert(popup, 'Confirm Reboot Device', 'Are you sure you want to reboot the controller?',
               [{ text: 'Cancel' }, {
                 text: 'Reboot Device',
                 onPress: async () => {
                   try {
-                    if (interpResult(await issueCommand('reboot'), navigation)) {
-                      createAlert('Command Issued Successfully')
+                    const result = interpResult(await issueCommand('reboot'));
+                    if (result.success) {
+                      createAlert(popup, 'Command Issued Successfully')
+                    } else {
+                      createAlert(popup, result.error, result.message)
                     }
                   } catch (err) {
-                    createAlert('No Device Found', 'No device was found at the entered address',
+                    createAlert(popup, 'No Device Found', 'No device was found at the entered address',
                       [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
                     console.log(err)
                   }
@@ -734,16 +807,19 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
           text="Reset WiFi"
           subText={'Reset the OpenGarage controller into AP mode'}
           onPress={() => {
-            createAlert('Confirm Reset WiFi', 'Are you sure you want to reset the controller into AP mode?',
+            createAlert(popup, 'Confirm Reset WiFi', 'Are you sure you want to reset the controller into AP mode?',
               [{ text: 'Cancel' }, {
                 text: 'Reset WiFi',
                 onPress: async () => {
                   try {
-                    if (interpResult(await issueCommand('apmode'), navigation)) {
-                      createAlert('Command Issued Successfully')
+                    const result = interpResult(await issueCommand('apmode'));
+                    if (result.success) {
+                      createAlert(popup, 'Command Issued Successfully')
+                    } else {
+                      createAlert(popup, result.error, result.message)
                     }
                   } catch (err) {
-                    createAlert('No Device Found', 'No device was found at the entered address',
+                    createAlert(popup, 'No Device Found', 'No device was found at the entered address',
                       [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
                     console.log(err)
                   }
@@ -798,7 +874,7 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
           text="Clear AsyncStorage"
           subText="DEBUG"
           onPress={() => {
-            createAlert('Warning!', 'This will clear all of the data that is stored on this app, only use if nothing else works!',
+            createAlert(popup, 'Warning!', 'This will clear all of the data that is stored on this app, only use if nothing else works!',
               [{ text: 'Cancel' }, {
                 text: 'Clear AsyncStorage',
                 onPress: async () => {

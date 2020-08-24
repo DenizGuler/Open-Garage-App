@@ -10,6 +10,7 @@ import { Icon } from 'react-native-elements';
 import { GarageDrawerComponent } from './components';
 import { getDevices, findOldSettings } from './utils/utils';
 import { Provider, DefaultTheme as DefaultPaperTheme } from 'react-native-paper';
+import { PopupServiceProvider, usePopup } from './components/Popup';
 
 const theme = {
   ...DefaultNavTheme,
@@ -48,9 +49,10 @@ export type AppNavigationProp<A extends keyof MainDrawerParams> = CompositeNavig
 >
 
 function MainDrawerScreen({ navigation }: StackScreenProps<RootStackParams, 'Main'>) {
+  const popup = usePopup();
 
   useEffect(() => {
-    findOldSettings()
+    findOldSettings(popup)
       .then(() => getDevices())
       .then((value) => {
         const [currIdx, devices] = value;
@@ -93,19 +95,21 @@ function MainDrawerScreen({ navigation }: StackScreenProps<RootStackParams, 'Mai
 export default function App() {
   return (
     <Provider theme={theme}>
-      <NavigationContainer theme={theme}>
-        <StatusBar backgroundColor="white" barStyle="dark-content" />
-        <RootStack.Navigator
-          screenOptions={{ headerShown: false }}
-          initialRouteName='Main'
-        >
-          <RootStack.Screen name='Main' component={MainDrawerScreen} />
-          <RootStack.Screen name='IPSettings' component={Settings.IPSettings} />
-          <RootStack.Screen name='BasicSettings' component={Settings.BasicSettings} />
-          <RootStack.Screen name='IntegrationSettings' component={Settings.IntegrationSettings} />
-          <RootStack.Screen name='AdvancedSettings' component={Settings.AdvancedSettings} />
-        </RootStack.Navigator>
-      </NavigationContainer>
+      <PopupServiceProvider>
+        <NavigationContainer theme={theme}>
+          <StatusBar backgroundColor="white" barStyle="dark-content" />
+          <RootStack.Navigator
+            screenOptions={{ headerShown: false }}
+            initialRouteName='Main'
+          >
+            <RootStack.Screen name='Main' component={MainDrawerScreen} />
+            <RootStack.Screen name='IPSettings' component={Settings.IPSettings} />
+            <RootStack.Screen name='BasicSettings' component={Settings.BasicSettings} />
+            <RootStack.Screen name='IntegrationSettings' component={Settings.IntegrationSettings} />
+            <RootStack.Screen name='AdvancedSettings' component={Settings.AdvancedSettings} />
+          </RootStack.Navigator>
+        </NavigationContainer>
+      </PopupServiceProvider>
     </Provider>
   );
 }
