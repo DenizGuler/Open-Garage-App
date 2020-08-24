@@ -16,11 +16,12 @@ type LogTableProps = {
   refreshing: boolean,
   onRefresh: () => void,
   header: React.ReactElement,
+  message: string,
 }
 
 const LogTable: FC<LogTableProps> = (props) => {
   if (props.loading) {
-    return <Text>Log Loading</Text>;
+    return <Text style={{ marginTop: 20 }}>Log Loading...</Text>;
   }
 
   if (props.logs.length === 0) {
@@ -31,8 +32,8 @@ const LogTable: FC<LogTableProps> = (props) => {
         // borderWidth: 2,
         alignItems: 'center',
       }}>
-        <Text>No Log Found tap to refresh</Text>
-        <Icon name='refresh' reverse onPress={props.onRefresh} />
+        <Text style={{ marginTop: 20 }}>{props.message}</Text>
+        {/* <Icon name='refresh' reverse onPress={props.onRefresh} /> */}
       </View>
     );
   }
@@ -72,15 +73,22 @@ function LogScreen({ navigation }: { navigation: AppNavigationProp<'Logs'> }) {
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [logs, setLogs] = useState<number[][]>([]);
+  const [message, setMessage] = useState('');
 
   const grabLogs = async () => {
     setLoading(true);
     try {
       const json = await getLogData();
-      if (json.message !== undefined) {
+      if (json === undefined) {
         setLogs([]);
+        setMessage('Logs are not supported via BLYNK token');
+      }
+      else if (json.message !== undefined) {
+        setLogs([]);
+        setMessage('Logs not found');
       } else {
         setLogs(json.logs);
+        setMessage('Logs successfully found');
       }
       setLoading(false);
       setRefreshing(false);
@@ -109,12 +117,14 @@ function LogScreen({ navigation }: { navigation: AppNavigationProp<'Logs'> }) {
       <ScreenHeader
         text={'Log'}
         left={'hamburger'}
-        right={'home'}
+        right={'refresh'}
+        onPressRight={refreshLogs}
       />
       <LogTable
         loading={loading}
         refreshing={refreshing}
         logs={logs}
+        message={message}
         onRefresh={refreshLogs}
         header={
           <View style={{ flex: 1, flexDirection: 'row', width: '100%' }}>

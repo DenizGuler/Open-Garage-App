@@ -1,16 +1,17 @@
 import React, { useState, useCallback } from 'react';
 import { FlatList } from 'react-native-gesture-handler';
-import { getDevices, setCurrIndex, removeDev, BaseText as Text, createAlert } from '../utils/utils';
+import { getDevices, setCurrIndex, removeDev, BaseText as Text, createAlert, setDevices, addDev } from '../utils/utils';
 import { StyleSheet, View, Alert, Vibration, BackHandler } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { AppNavigationProp } from '../App';
 import { FullLengthButton, ScreenHeader } from '../components';
-import { Icon } from 'react-native-elements';
+import { Icon, Divider } from 'react-native-elements';
 import { getControllerVars } from '../utils/APIUtils';
 import { Device } from '../utils/types';
+import { usePopup } from '../components/Popup';
+import { Snackbar } from 'react-native-paper';
 
 export default function DevicesScreen({ navigation }: { navigation: AppNavigationProp<'Sites'> }) {
-  const [deleteMode, setDeleteMode] = useState<boolean>(false);
   const [devsToDel, setDevsToDel] = useState<number[]>([]);
   const [devState, setDevState] = useState<Device[]>([]);
   const [currState, setCurrState] = useState<number>(0);
@@ -18,11 +19,14 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
   // function that grabs all the devices and their names and stores them in devState
   // startUp(): void
   const startUp = async () => {
+    setRefreshing(true);
     const [currIdx, devs] = await getDevices();
     // console.log(devs);
     setCurrState(currIdx);
     setDevState(devs);
+    setDevsToDel([]);
     await getNames(devs);
+    setRefreshing(false);
   }
 
   // function that grabs all the names of a given array of devices
@@ -39,6 +43,7 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
         // console.log(err);
       }
     }
+    await setDevices(newDevState);
     setDevState(newDevState);
   }
 
@@ -48,28 +53,6 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
     useCallback(() => {
       startUp();
     }, [])
-  )
-
-  /**
-   * Handle back button presses on Android
-   */
-  useFocusEffect(
-    useCallback(() => {
-      const onBackPress = () => {
-        if (deleteMode) {
-          setDevsToDel([])
-          setDeleteMode(!deleteMode)
-          return true;
-        } else {
-          return false;
-        }
-      };
-
-      BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
-      return () =>
-        BackHandler.removeEventListener('hardwareBackPress', onBackPress);
-    }, [deleteMode])
   )
 
   /**
@@ -87,7 +70,7 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
    */
   const toggleDel = (index: number) => {
     let newDevsToDel = devsToDel.slice();
-    if (devsToDel.indexOf(index) >= 0) {
+    if (isMarked(index)) {
       newDevsToDel.splice(devsToDel.indexOf(index), 1);
     } else {
       newDevsToDel.push(index);
@@ -95,17 +78,34 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
     setDevsToDel(newDevsToDel);
   }
 
+  const isMarked = (index: number) => {
+    return devsToDel.indexOf(index) >= 0;
+  }
+
+  const [refreshing, setRefreshing] = useState(false)
   /**
    * Function that handles deleting the marked devices and refreshes the device list
    */
   const deleteDevs = async () => {
+    setRefreshing(true);
     setDevsToDel(devsToDel.sort((a, b) => b - a))
-    for (let i = 0;  i < devsToDel.length; ++i) {
+    const removedDevs: Device[] = [];
+    for (let i = 0; i < devsToDel.length; ++i) {
       console.log('deleting device: ' + devsToDel[i])
-      await removeDev(devsToDel[i]);
+      const removedDev = await removeDev(devsToDel[i])
+      if (removedDev) removedDevs.push(removedDev);
+      devState.splice(devsToDel[i], 1)
     }
-    await startUp();
+    // await startUp();
+    devsToDel.length = 0;
     setDevsToDel([]);
+    return removedDevs
+  }
+
+  const undoDeletion = async (deletedDevs: Device[]) => {
+    await addDev(...deletedDevs);
+    await startUp();
+    showSnackbar(`Undid deletion of ${deletedDevs.length} ${deletedDevs.length === 1? 'device' : 'devices'}`)
   }
 
   /** 
@@ -113,7 +113,7 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
    */
   const backgroundStyle = (index: number) => {
     let bgColor = 'transparent';
-    if (deleteMode && devsToDel.indexOf(index) >= 0) {
+    if (isMarked(index)) {
       bgColor = '#ffd8d8'
     }
     else if (index === currState) {
@@ -123,79 +123,104 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
     return bgColor
   }
 
+  const popup = usePopup();
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarText, setSnackbarText] = useState('');
+  const [snackbarAction, setSnackbarAction] = useState<{ label: string; accessibilityLabel?: string; onPress: () => void; } | undefined>(undefined);
+
+  const showSnackbar = (text: string, action?: { label: string; accessibilityLabel?: string; onPress: () => void; }) => {
+    setSnackbarText(text);
+    setSnackbarAction(action);
+    setSnackbarVisible(true);
+  }
+
   return (
     <View style={styles.container}>
       <ScreenHeader
-        left={deleteMode ? "cancel" : "hamburger"}
+        left={"hamburger"}
         text="Devices"
-        right={deleteMode ? "check" : "add"}
+        right={"add"}
         onAdd={onAdd}
-        onCancel={() => {
-          setDevsToDel([]);
-          setDeleteMode(false);
-        }}
-        onCheck={() => {
-          createAlert("Confirm Deletion", "Are you sure you want to delete the highlighted devices?", [{
-            text: 'Cancel', onPress: () => {
-              setDevsToDel([]);
-              setDeleteMode(false);
-            }
-          }, {
-            text: 'Confirm', onPress: async () => {
-              await deleteDevs();
-              setDeleteMode(false);
-            }
-          }])
-        }}
       />
-
       <FlatList
         style={styles.list}
         data={devState}
+        refreshing={refreshing}
+        onRefresh={startUp}
         keyExtractor={(item, index) => index.toString()}
         ListFooterComponent={
-          <Text style={{ alignSelf: 'center', fontSize: 14, color: '#aaa' }}>Hold down on a device to enter deletion mode.</Text>
+          <Text style={{ alignSelf: 'center', fontSize: 14, color: '#aaa', width: '75%', textAlign: 'center' }}>Press the circle to the right of a device to mark it for deletion.</Text>
         }
         renderItem={({ item, index }) => {
           return (
-            <FullLengthButton
-              backgroundColor={backgroundStyle(index)}
-              onPress={() => {
-                if (!deleteMode) {
-                  setCurrIndex(index).then(() => setCurrState(index));
-                  // navigation.navigate('Home')
-                } else {
-                  toggleDel(index);
-                }
-              }}
-              onLongPress={
-                () => {
-                  Vibration.vibrate(100)
-                  setDeleteMode(true);
-                  toggleDel(index)
-                }
-              }
-              text={item.name ? item.name : ''}
-              subText={item.conInput}
-              icon={{ name: 'garage' }}
-            />
+            <View style={{
+              flexDirection: 'row',
+              borderBottomColor: '#e5e5e5',
+              borderBottomWidth: 1,
+              width: '100%',
+            }}>
+              <FullLengthButton
+                style={{
+                  borderWidth: 0,
+                }}
+                backgroundColor={backgroundStyle(index)}
+                onPress={() => {
+                  setCurrIndex(index)
+                    .then(() => setCurrState(index))
+                    .then(() => navigation.navigate('Home'));
+
+                }}
+                text={item.name ? item.name : ''}
+                subText={item.conInput}
+                icon={{ name: 'garage' }}
+              />
+              <View style={{
+                width: '20%',
+                alignContent: 'center',
+                justifyContent: 'center',
+                backgroundColor: backgroundStyle(index),
+              }}>
+                <Icon name={isMarked(index) ? 'minus-circle' : 'circle-outline'} type='material-community' size={30} color={isMarked(index) ? '#d00' : '#aaa'} onPress={() => toggleDel(index)} />
+              </View>
+            </View>
           )
         }}
       />
-      <View style={{ position: 'absolute', bottom: '5%', right: '7%' }}>
+      <View style={{ position: 'absolute', bottom: 60, right: '7%' }}>
         <Icon
-          name={deleteMode ? 'close' : 'delete'}
+          name={'delete'}
           reverse
           color="#444"
           raised
           size={30}
-          onPress={() => {
-            Vibration.vibrate(100)
-            setDevsToDel([]);
-            setDeleteMode(!deleteMode)
+          onPress={async () => {
+            if (devsToDel.length > 0) {
+              createAlert(popup, 'Confirm Deletion', 'Are you sure you want to delete the selected sites?', [{
+                text: 'Cancel', onPress: () => {
+                  setDevsToDel([]);
+                }
+              }, {
+                text: 'Confirm', onPress: async () => {
+                  const removedDevs = await deleteDevs();
+                  showSnackbar(`${removedDevs.length} ${removedDevs.length === 1 ? 'device' : 'devices'} removed`, {label: 'undo', onPress: async () => await undoDeletion(removedDevs)});
+                  await startUp();
+                }
+              }])
+            } else {
+              showSnackbar('No devices selected for deletion')
+            }
           }}
         />
       </View>
+      <Snackbar
+        visible={snackbarVisible}
+        onDismiss={() => setSnackbarVisible(false)}
+        duration={Snackbar.DURATION_MEDIUM}
+        accessibilityStates
+        action={snackbarAction}
+      >
+        {snackbarText}
+      </Snackbar>
     </View>
 
   );

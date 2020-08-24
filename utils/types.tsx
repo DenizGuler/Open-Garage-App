@@ -9,6 +9,10 @@ export type Device = {
   devKey?: string,
   image?: ImageInfo,
   name?: string,
+  otc?: {
+    domain?: string,
+    port?: string,
+  },
 }
 
 /**
