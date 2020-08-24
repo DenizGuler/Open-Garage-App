@@ -3,6 +3,7 @@ import { Platform, Text, TextProps, Alert } from "react-native";
 import { Device } from './types';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-community/async-storage'
+import { usePopup, PopupOptions } from '../components/Popup';
 
 export const FONT = Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif'
 const TOKEN_PREFIX = 'OTC-'
@@ -17,7 +18,7 @@ export const setDevices = async (devArr: Device[]) => {
     return true;
   } catch (err) {
     console.log(err);
-    createAlert('Error Saving Data', 'There was an error saving data')
+    // createAlert('Error Saving Data', 'There was an error saving data')
     return false;
   }
 }
@@ -31,7 +32,7 @@ export const setCurrIndex = async (index: number) => {
     return true;
   } catch (err) {
     console.log(err)
-    createAlert('Error Saving Data', 'There was an error saving data')
+    // createAlert('Error Saving Data', 'There was an error saving data')
     return false;
   }
 }
@@ -68,7 +69,7 @@ export const setDeviceParam = async (params: Device) => {
     return true;
   } catch (err) {
     console.log(err);
-    createAlert('Error Saving Data', 'There was an error saving data')
+    // createAlert('Error Saving Data', 'There was an error saving data')
     return false;
   }
 }
@@ -90,7 +91,7 @@ export const getDevices = async (): Promise<[number, Device[]]> => {
     return [JSON.parse(currIndex), JSON.parse(devices)];
   } catch (err) {
     console.log(err);
-    createAlert('Error Reading Data', 'There was an error reading data');
+    // createAlert('Error Reading Data', 'There was an error reading data');
     return [0, []];
   }
 }
@@ -101,14 +102,17 @@ export const getDevices = async (): Promise<[number, Device[]]> => {
 export const getDevKey = async (index?: number): Promise<string> => {
   try {
     const [currIdx, devices] = await getDevices();
-    index = (index === undefined) ? currIdx : index
-    const deviceKey = devices[index].devKey;
-    if (deviceKey !== undefined)
-      return deviceKey;
-    return ''
+    index = (index === undefined) ? currIdx : index;
+    if (devices[index] !== undefined) {
+      const deviceKey = devices[index].devKey;
+      if (deviceKey !== undefined) {
+        return deviceKey;
+      }
+    }
+    return '';
   } catch (err) {
     console.log(err);
-    createAlert('Error Reading Data', 'There was an error reading data');
+    // createAlert('Error Reading Data', 'There was an error reading data');
     return '';
   }
 }
@@ -120,10 +124,13 @@ export const getConInput = async (index?: number): Promise<string | undefined> =
   try {
     const [currIdx, devices] = await getDevices();
     index = (index === undefined) ? currIdx : index;
-    return devices[index].conInput;
+    if (devices[index] !== undefined) {
+      return devices[index].conInput;
+    }
+    return '';
   } catch (err) {
     console.log(err);
-    createAlert('Error Reading Data', 'There was an error reading data');
+    // createAlert('Error Reading Data', 'There was an error reading data');
     return '';
   }
 }
@@ -135,10 +142,13 @@ export const getConMethod = async (index?: number) => {
   try {
     const [currIdx, devices] = await getDevices();
     index = (index === undefined) ? currIdx : index;
-    return devices[index].conMethod;
+    if (devices[index] !== undefined) {
+      return devices[index].conMethod;
+    }
+    return '';
   } catch (err) {
     console.log(err);
-    createAlert('Error Reading Data', 'There was an error reading data');
+    // createAlert('Error Reading Data', 'There was an error reading data');
     return '';
   }
 }
@@ -163,7 +173,7 @@ export const getURL = async (index?: number) => {
         url = 'http://' + device.conInput
         break;
       case 'OTC':
-        url = 'https://cloud.test.openthings.io/forward/v1/' + device.conInput.substring(4);
+        url = `https://${device.otc?.domain}/forward/v1/${device.conInput.substring(4)}`;
         break;
       case 'BLYNK':
         url = 'http://blynk-cloud.com/' + device.conInput;
@@ -172,13 +182,13 @@ export const getURL = async (index?: number) => {
         url = '';
         break;
       default:
-        url = ''
+        url = '';
         break;
     }
     return url;
   } catch (err) {
     console.log(err)
-    createAlert('Error Reading Data', 'There was an error reading data');
+    // createAlert('Error Reading Data', 'There was an error reading data');
     return '';
   }
 }
@@ -191,11 +201,14 @@ export const getImage = async (index?: number) => {
   try {
     const [currIdx, devices] = await getDevices();
     if (index === undefined) index = currIdx;
-    let device = devices[index]
-    return device.image
+    let device = devices[index];
+    if (device !== undefined) {
+      return device.image
+    }
+    return undefined;
   } catch (err) {
     console.log(err)
-    createAlert('Error Reading Data', 'There was an error reading data');
+    // createAlert('Error Reading Data', 'There was an error reading data');
     return undefined;
   }
 }
@@ -221,7 +234,7 @@ export const interpConMethod = (conInput: string): 'IP' | 'OTC' | 'BLYNK' | 'non
 
 
 
-export const findOldSettings = async () => {
+export const findOldSettings = async (popup: (options: PopupOptions) => Promise<void>) => {
   const keys = await AsyncStorage.getAllKeys();
   if (keys.includes('controllers')) {
     try {
@@ -229,10 +242,10 @@ export const findOldSettings = async () => {
       if (value === null) {
         return;
       }
-      createAlert("Old Settings Found", "Old settings were detected on your device would you like to use these old settings or delete them?",
+      createAlert(popup, "Old Settings Found", "Old settings were detected on your device would you like to use these old settings or delete them?",
         [
           {
-            text: 'Delete Old Settings', onPress: async () => {
+            text: 'Delete', onPress: async () => {
               await AsyncStorage.removeItem('controllers');
               await AsyncStorage.removeItem('activeController');
             }
@@ -283,8 +296,19 @@ export const removeDev = async (index: number): Promise<Device | undefined> => {
     return deleted[0];
   } catch (err) {
     console.log(err)
-    createAlert('Error Removing Data', 'There was an error removing data');
+    // createAlert('Error Removing Data', 'There was an error removing data');
     return undefined
+  }
+}
+
+export const addDev = async (...toAdd: Device[]) => {
+  try {
+    const [currIdx, devices] = await getDevices();
+    devices.push(...toAdd);
+    return await setDevices(devices);
+  } catch (err) {
+    console.log(err);
+    return false;
   }
 }
 
@@ -295,25 +319,22 @@ export const removeDev = async (index: number): Promise<Device | undefined> => {
  * @param message (optional) message of alert box
  * @param buttons (optional) buttons 
  */
-export const createAlert = (title: string, message?: string, buttons?: { text: string, onPress?: () => void }[]) => {
+export const createAlert = (popup: (options: PopupOptions) => Promise<void>, title: string, message?: string, buttons?: { text: string, onPress?: () => void }[]) => {
+
+  // const popup = usePopup();
+
   if (buttons === undefined) {
-    if (Platform.OS === 'web') {
-      window.alert(message !== undefined ? message : title)
-    } else {
-      Alert.alert(title, message)
-    }
-  } else if (buttons.length === 2) {
-    if (Platform.OS === 'web') {
-      let res = window.confirm(message)
-      if (!res && buttons[0].onPress !== undefined) {
-        buttons[0].onPress()
-      }
-      if (res && buttons[1].onPress !== undefined) {
-        buttons[1].onPress()
-      }
-    } else {
-      Alert.alert(title, message, buttons)
-    }
+    return popup({
+      title: title,
+      text: message,
+      buttons: [{ text: 'OK' }]
+    });
+  } else {
+    return popup({
+      title: title,
+      text: message,
+      buttons: buttons,
+    })
   }
 }
 

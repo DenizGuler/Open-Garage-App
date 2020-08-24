@@ -1,4 +1,4 @@
-import { getURL, getDevKey, createAlert, getConMethod } from "./utils"
+import { getURL, getDevKey, createAlert, getConMethod, getConInput } from "./utils"
 import { ControllerVars, ControllerOptions, ResultJSON, LogJSON } from "./types";
 import { NavigationProp, NavigationState } from "@react-navigation/native";
 
@@ -27,10 +27,11 @@ export const getControllerVars = async (index?: number): Promise<ControllerVars>
     json.dist = JSON.parse((await distResponse.json())[0]);
     const carResponse = await fetch(url + '/get/V4');
     json.vehicle = JSON.parse((await carResponse.json())[0]);
-    json.name = "Blynk Site"
+    const projectResponse = await fetch(url + '/project');
+    json.name = (await projectResponse.json()).name;
   } else {
     const response = await fetch(url + '/jc');
-    json = await response.json(); 
+    json = await response.json();
   }
   if (json.message !== undefined) {
     throw Error(json.message)
@@ -94,7 +95,11 @@ export const changeControllerOptions = async (options: ControllerOptions, index?
  * Grabs log data with the '/jl' call
  * @param index (optional) index of target device
  */
-export const getLogData = async (index?: number): Promise<LogJSON> => {
+export const getLogData = async (index?: number): Promise<LogJSON | undefined> => {
+  const conMethod = await getConMethod(index);
+  if (conMethod === 'BLYNK') {
+    return undefined;
+  }
   const url = await getURL(index);
   const response = await fetch(url + '/jl')
   const json = await response.json();
@@ -136,8 +141,8 @@ export const openDoor = async (index?: number): Promise<ResultJSON> => {
   const dkey = await getDevKey(index);
   let response;
   if (conMethod === 'BLYNK') {
-    response = await fetch(url + '/update/V0?value=1')
-    setTimeout(async () => { response = await fetch(url + '/update/V0?value=0') }, 1000)
+    response = await fetch(url + '/update/V1?value=1')
+    setTimeout(async () => { response = await fetch(url + '/update/V1?value=0') }, 1000)
   } else {
     response = await fetch(url + '/cc?dkey=' + dkey + '&open=1')
   }
@@ -155,8 +160,8 @@ export const closeDoor = async (index?: number): Promise<ResultJSON> => {
   const dkey = await getDevKey(index);
   let response;
   if (conMethod === 'BLYNK') {
-    response = await fetch(url + '/update/V0?value=0')
-    setTimeout(async () => { response = await fetch(url + '/update/V0?value=1') }, 1000)
+    response = await fetch(url + '/update/V1?value=1')
+    setTimeout(async () => { response = await fetch(url + '/update/V1?value=0') }, 1000)
   } else {
     response = await fetch(url + '/cc?dkey=' + dkey + '&close=1')
   }
@@ -194,60 +199,60 @@ export const issueCommand = async (command: 'clearlog' | 'reboot' | 'apmode', in
  * interprets the result value of the passed JSON 
  * @param json JSON returned by an OpenGarage API call
  */
-export const interpResult = (json: ResultJSON, navigation: NavigationProp<Record<string, object | undefined>, string, NavigationState, {}, {}>) => {
+export const interpResult = (json: ResultJSON) => {
   // const navigation = useNavigation();
   // only occurs on false OTC Token
   if (json.message !== undefined) {
-    createAlert('Connection failed', json.message,
-      [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
-    return false
+    // createAlert('Connection failed', json.message,
+    //   [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
+    return { success: false, error: 'Connection failed', message: json.message }
   }
   // success
   if (json.result === 1) {
-    return true
+    return { success: true, error: 'No Error', message: 'No error has occured!' }
   }
   // unauthorized
   if (json.result === 2) {
-    createAlert('Invalid or Empty Device Key', 'The entered device key was rejected or not present',
-      [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
-    return false
+    // createAlert('Invalid or Empty Device Key', 'The entered device key was rejected or not present',
+    //   [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
+    return { success: false, error: 'Invalid or Empty Device Key', message: 'The entered device key was rejected or not present' };
   }
   // mismatch
   if (json.result === 3) {
-    createAlert('Key Mismatch', 'Make sure the entered keys are identical')
-    return false
+    // createAlert('Key Mismatch', 'Make sure the entered keys are identical')
+    return { success: false, error: 'Key Mismatch', message: 'Make sure the entered keys are identical' };
   }
   // data missing
   if (json.result === 16) {
-    createAlert('Data Missing', 'Required Paramaters are missing for item: \'' + json.item + '\'')
-    return false
+    // createAlert('Data Missing', 'Required Paramaters are missing for item: \'' + json.item + '\'')
+    return { success: false, error: 'Data Missing', message: 'Required Paramaters are missing for item: \'' + json.item + '\'' };
   }
   // out of range
   if (json.result === 17) {
-    createAlert('Out of Range', 'Entered value was out of range for item: \'' + json.item + '\'')
-    return false
+    // createAlert('Out of Range', 'Entered value was out of range for item: \'' + json.item + '\'')
+    return { success: false, error: 'Out of Range', message: 'Entered value was out of range for item: \'' + json.item + '\'' };
   }
   // data format error
   if (json.result === 18) {
-    createAlert('Data Format Error', 'Provided data does not match the required format for item: \'' + json.item + '\'')
-    return false
+    // createAlert('Data Format Error', 'Provided data does not match the required format for item: \'' + json.item + '\'')
+    return { success: false, error: 'Data Format Error', message: 'Provided data does not match the required format for item: \'' + json.item + '\'' };
   }
   // page not found
   if (json.result === 32) {
-    createAlert('Page Not Found', 'Page not found or requested file missing')
-    return false
+    // createAlert('Page Not Found', 'Page not found or requested file missing')
+    return { success: false, error: 'Page Not Found', message: 'Page not found or requested file missing' };
   }
   // not permitted
   if (json.result === 48) {
-    createAlert('Action Not Permitted', 'Cannot operate on the requested station')
-    return false
+    // createAlert('Action Not Permitted', 'Cannot operate on the requested station')
+    return { success: false, error: 'Action Not Permitted', message: 'Cannot operate on the requested station' };
   }
   // upload failed
   if (json.result === 64) {
-    createAlert('Upload Failed', 'Over the air update failed')
-    return false
+    // createAlert('Upload Failed', 'Over the air update failed')
+    return { success: false, error: 'Upload Failed', message: 'Over the air update failed' };
   }
   // unknown error code
-  createAlert('Unknown Error', 'An unknown error has occured!')
-  return false
+  // createAlert('Unknown Error', 'An unknown error has occured!')
+  return { success: false, error: 'Unknown Error', message: 'An unknown error has occured!' };
 }

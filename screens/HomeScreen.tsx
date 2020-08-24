@@ -4,12 +4,13 @@ import 'react-native-gesture-handler';
 import { Notifications } from 'expo';
 import * as Permissions from 'expo-permissions';
 import Constants from 'expo-constants';
-import { BaseText as Text, createAlert, useInterval, getDevices, getConMethod } from '../utils/utils';
+import { BaseText as Text, createAlert, useInterval } from '../utils/utils';
 import { AppNavigationProp } from '../App';
 import { ScreenHeader, BottomDraggable } from '../components';
 import { closeDoor, openDoor, interpResult, getControllerVars } from '../utils/APIUtils';
 import { ControllerVars } from '../utils/types';
 import { useFocusEffect } from '@react-navigation/native';
+import { usePopup } from '../components/Popup';
 
 export default HomeScreen;
 
@@ -112,7 +113,7 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
         finalStatus = status;
       }
       if (finalStatus !== 'granted') {
-        createAlert('Failed to get push token for push notifications');
+        createAlert(popup, 'Failed to get push token for push notifications');
         return;
       }
       let token = await Notifications.getExpoPushTokenAsync();
@@ -153,13 +154,9 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
     rssi: 0,
   })
 
-  const [conMethod, setConMethod] = useState<string>();
-
   const grabInfo = async () => {
     try {
       const json = await getControllerVars();
-      const method = await getConMethod();
-      setConMethod(method);
       setControlVars(json);
     } catch (err) {
       setControlVars({
@@ -197,10 +194,10 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
       // if door is open
       if (controlVars.door === 1) {
         const json = await closeDoor();
-        return interpResult(json, navigation);
+        return interpResult(json);
       } else {
         const json = await openDoor();
-        return interpResult(json, navigation);
+        return interpResult(json);
       }
     } catch (err) {
       console.log(err)
@@ -217,6 +214,7 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
     }
   }
 
+  const popup = usePopup();
   return (
     <View style={styles.container}>
       <ScreenHeader
@@ -230,7 +228,12 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
             styles.grey : controlVars.door === 1 ?
               styles.green : styles.red
           ]}
-          onPress={toggleDoor}
+          onPress={async () => {
+            const result = await toggleDoor();
+            if(result && !result.success) {
+              createAlert(popup, result.error, result.message);
+            }
+          }}
           activeOpacity={0.5}
           disabled={buttonDisabled}
         >
@@ -272,7 +275,7 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
           </View>
         </View>
       </View>
-      {(Platform.OS !== 'web' && conMethod !== 'BLYNK') && <BottomDraggable
+      {(Platform.OS !== 'web' && controlVars.fwv !== 0) && <BottomDraggable
         threshold={17 * Dimensions.get('window').height / 60}
         thresholdGive={.25}
         maxHeight={2 * Dimensions.get('window').height / 5}
@@ -282,7 +285,7 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
           <Text style={{ fontSize: 26 }} {...props}>More Information</Text>
         )}
       />}
-      {(Platform.OS === 'web' && conMethod !== 'BLYNK') && <View style={{
+      {(Platform.OS === 'web' && controlVars.fwv !== 0) && <View style={{
         alignSelf: "center",
         width: '100%',
         maxWidth: 600
