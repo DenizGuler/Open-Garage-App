@@ -14,7 +14,8 @@ interface Props {
   backgroundColor?: string,
   style?: {
     height?: number | string,
-    fontSize: number,
+    fontSize?: number,
+    borderWidth?: number,
   },
   theme: Theme
 }
@@ -29,7 +30,7 @@ const FullLengthButton: FC<Props> = (props) => {
       backgroundColor: props.backgroundColor ? props.backgroundColor : 'transparent',
       minHeight: props.style?.height ? props.style?.height : 65,
       paddingHorizontal: 15,
-      borderBottomWidth: 1,
+      borderBottomWidth: props.style?.borderWidth !== undefined ? props.style?.borderWidth : 1,
       borderBottomColor: '#e5e5e5',
       flex: 1,
       flexDirection: 'row',
@@ -61,7 +62,7 @@ const FullLengthButton: FC<Props> = (props) => {
           {props.icon && <Icon style={{ paddingRight: 15 }} name={props.icon.name} type={'material-community'} color={colors.text} />}
           <View style={{ flex: 1 }}>
             <Text style={styles.text}>{props.text}</Text>
-            {props.subText !== undefined && <Text style={styles.subText}>{props.subText}</Text>}
+            {props.subText !== undefined && <Text style={styles.subText} numberOfLines={1}>{props.subText}</Text>}
           </View>
         </View>
       </TouchableNativeFeedback>
@@ -72,12 +73,13 @@ const FullLengthButton: FC<Props> = (props) => {
       onPress={props.onPress}
       underlayColor={'#adacac55'}
       activeOpacity={.75}
+      containerStyle={{flexGrow: 1}}
     >
       <View style={styles.button}>
         {props.icon && <Icon style={{ paddingRight: 10 }} name={props.icon.name} type={'material-community'} color={"#444"} />}
         <View style={{ flex: 1 }} >
           <Text style={styles.text}>{props.text}</Text>
-          <Text style={styles.subText}>{props.subText ? props.subText : ''}</Text>
+          <Text style={styles.subText} numberOfLines={1}>{props.subText ? props.subText : ''}</Text>
         </View>
       </View>
     </TouchableHighlight>

@@ -16,13 +16,15 @@ import { FONT } from '../utils/utils';
 */
 
 interface Props {
-  left?: 'hamburger' | 'back' | 'home' | 'check' | 'add' | 'cancel' | 'info',
+  left?: string,
   text?: string,
-  right?: 'hamburger' | 'back' | 'home' | 'check' | 'add' | 'cancel' | 'info',
+  right?: string,
   onCancel?: () => void,
   onInfo?: () => void,
   onCheck?: () => void,
   onAdd?: () => void,
+  onPressRight?: () => void,
+  onPressLeft?: () => void,
 }
 
 /**
@@ -46,7 +48,7 @@ const ScreenHeader: FC<Props> = (props) => {
   })
 
   const navigation = useNavigation<AppNavigationProp<'Home'>>();
-  const HeaderComponent = (type: 'hamburger' | 'back' | 'home' | 'check' | 'add' | 'cancel' | 'info' | undefined) => {
+  const HeaderComponent = (type: string | undefined, position: 'right' | 'left') => {
     let comp = undefined;
     switch (type) {
       case 'hamburger':
@@ -72,7 +74,10 @@ const ScreenHeader: FC<Props> = (props) => {
       case 'info':
         comp = <Icon name='info-outline' onPress={props.onInfo} />
         break;
+      case undefined:
+        break;
       default:
+        comp = <Icon name={type} onPress={position === 'right' ? props.onPressRight : props.onPressLeft} />
         break;
     }
     return comp
@@ -83,9 +88,9 @@ const ScreenHeader: FC<Props> = (props) => {
       containerStyle={style.header}
       statusBarProps={{ translucent: true }}
       backgroundColor="#fff"
-      leftComponent={HeaderComponent(props.left)}
+      leftComponent={HeaderComponent(props.left, 'left')}
       centerComponent={{ text: props.text, style: { fontSize: 24, fontFamily: FONT } }}
-      rightComponent={HeaderComponent(props.right)}
+      rightComponent={HeaderComponent(props.right, 'right')}
     />
   );
 }
