@@ -5,7 +5,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-community/async-storage'
 import { usePopup, PopupOptions } from '../components/Popup';
 
-export const FONT = Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif'
+// export const FONT = Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif'
 const TOKEN_PREFIX = 'OTC-'
 // SETTERS
 

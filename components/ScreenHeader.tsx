@@ -3,7 +3,7 @@ import { StyleSheet, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { AppNavigationProp } from '../App';
 import { Icon, Header } from 'react-native-elements';
-import { FONT } from '../utils/utils';
+// import { FONT } from '../utils/utils';
 
 /*
   'hamburger': menu hamburger; opens the navigation drawer 
@@ -89,7 +89,7 @@ const ScreenHeader: FC<Props> = (props) => {
       statusBarProps={{ translucent: true }}
       backgroundColor="#fff"
       leftComponent={HeaderComponent(props.left, 'left')}
-      centerComponent={{ text: props.text, style: { fontSize: 24, fontFamily: FONT } }}
+      centerComponent={{ text: props.text, style: { fontSize: 24, /* fontFamily: FONT */} }}
       rightComponent={HeaderComponent(props.right, 'right')}
     />
   );

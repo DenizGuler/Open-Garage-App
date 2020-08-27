@@ -36,7 +36,9 @@ export type MainDrawerParams = {
 // The 'root' stack used to have all 'pop-up/modal' screens show up on top of any main screens
 const RootStack = createStackNavigator();
 export type RootStackParams = {
-  Main: undefined,
+  Main: {
+    screen: 'Home' | 'Logs' | 'Settings' | 'Sites',
+  },
   IPSettings: undefined,
   BasicSettings: undefined,
   IntegrationSettings: undefined,

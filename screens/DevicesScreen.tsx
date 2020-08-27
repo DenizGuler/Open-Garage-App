@@ -1,11 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import { FlatList } from 'react-native-gesture-handler';
 import { getDevices, setCurrIndex, removeDev, BaseText as Text, createAlert, setDevices, addDev } from '../utils/utils';
-import { StyleSheet, View, Alert, Vibration, BackHandler } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { AppNavigationProp } from '../App';
 import { FullLengthButton, ScreenHeader } from '../components';
-import { Icon, Divider } from 'react-native-elements';
+import { Icon } from 'react-native-elements';
 import { getControllerVars } from '../utils/APIUtils';
 import { Device } from '../utils/types';
 import { usePopup } from '../components/Popup';
@@ -19,21 +19,17 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
   // function that grabs all the devices and their names and stores them in devState
   // startUp(): void
   const startUp = async () => {
-    setRefreshing(true);
     const [currIdx, devs] = await getDevices();
-    // console.log(devs);
     setCurrState(currIdx);
     setDevState(devs);
     setDevsToDel([]);
-    await getNames(devs);
-    setRefreshing(false);
   }
 
   // function that grabs all the names of a given array of devices
-  // async getNames(devs: device[]): void
-  const getNames = async (devs: Device[]) => {
-    let newDevState = devs.slice();
-    for (let i = 0; i < devs.length; ++i) {
+  // async getNames(): void
+  const getNames = async () => {
+    let newDevState = devState.slice();
+    for (let i = 0; i < devState.length; ++i) {
       try {
         let json = await getControllerVars(i);
         newDevState[i].name = json.name;
@@ -81,8 +77,19 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
   const isMarked = (index: number) => {
     return devsToDel.indexOf(index) >= 0;
   }
+  
+  const [refreshing, setRefreshing] = useState<boolean>(false)
+  const onRefresh = async () => {
+    setRefreshing(true);
+    setSnackbarText("Refreshing site list");
+    setSnackbarVisible(true);
+    await startUp();
+    await getNames();
+    setSnackbarVisible(true);
+    setSnackbarText("Done");
+    setRefreshing(false);
+  }
 
-  const [refreshing, setRefreshing] = useState(false)
   /**
    * Function that handles deleting the marked devices and refreshes the device list
    */
@@ -99,13 +106,14 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
     // await startUp();
     devsToDel.length = 0;
     setDevsToDel([]);
+    setRefreshing(false);
     return removedDevs
   }
 
   const undoDeletion = async (deletedDevs: Device[]) => {
     await addDev(...deletedDevs);
     await startUp();
-    showSnackbar(`Undid deletion of ${deletedDevs.length} ${deletedDevs.length === 1? 'device' : 'devices'}`)
+    showSnackbar(`Undid deletion of ${deletedDevs.length} ${deletedDevs.length === 1 ? 'device' : 'devices'}`)
   }
 
   /** 
@@ -145,9 +153,9 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
       <FlatList
         style={styles.list}
         data={devState}
-        refreshing={refreshing}
-        onRefresh={startUp}
         keyExtractor={(item, index) => index.toString()}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         ListFooterComponent={
           <Text style={{ alignSelf: 'center', fontSize: 14, color: '#aaa', width: '75%', textAlign: 'center' }}>Press the circle to the right of a device to mark it for deletion.</Text>
         }
@@ -187,7 +195,15 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
         }}
       />
       <View style={{ position: 'absolute', bottom: 60, right: '7%' }}>
-        <Icon
+        {(devsToDel.length === 0 && !refreshing) && <Icon
+          name={'refresh'}
+          reverse
+          color="#444"
+          raised
+          size={30}
+          onPress={onRefresh}
+        />}
+        {(devsToDel.length > 0 && !refreshing) && <Icon
           name={'delete'}
           reverse
           color="#444"
@@ -202,7 +218,7 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
               }, {
                 text: 'Confirm', onPress: async () => {
                   const removedDevs = await deleteDevs();
-                  showSnackbar(`${removedDevs.length} ${removedDevs.length === 1 ? 'device' : 'devices'} removed`, {label: 'undo', onPress: async () => await undoDeletion(removedDevs)});
+                  showSnackbar(`${removedDevs.length} ${removedDevs.length === 1 ? 'device' : 'devices'} removed`, { label: 'undo', onPress: async () => await undoDeletion(removedDevs) });
                   await startUp();
                 }
               }])
@@ -210,7 +226,7 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
               showSnackbar('No devices selected for deletion')
             }
           }}
-        />
+        />}
       </View>
       <Snackbar
         visible={snackbarVisible}
@@ -232,7 +248,6 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
 const styles = StyleSheet.create({
   container: {
     height: '100%',
-    // marginBottom: 10,
     width: '100%',
     backgroundColor: '#fff',
 
@@ -242,7 +257,6 @@ const styles = StyleSheet.create({
     display: 'flex',
     maxWidth: 600,
     width: '100%',
-    // padding: 5,
     flex: 1,
     flexDirection: 'column',
     alignSelf: 'center',

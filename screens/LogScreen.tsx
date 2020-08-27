@@ -1,12 +1,12 @@
 import React, { useState, useCallback, FC } from 'react';
 import { StyleSheet, View, FlatList } from 'react-native';
 import 'react-native-gesture-handler';
-import { Icon } from 'react-native-elements';
 import { BaseText as Text } from '../utils/utils';
 import { useFocusEffect } from '@react-navigation/native';
 import { AppNavigationProp } from '../App';
 import { ScreenHeader } from '../components';
 import { getLogData } from '../utils/APIUtils';
+import { ActivityIndicator } from 'react-native-paper';
 
 export default LogScreen;
 
@@ -21,7 +21,7 @@ type LogTableProps = {
 
 const LogTable: FC<LogTableProps> = (props) => {
   if (props.loading) {
-    return <Text style={{ marginTop: 20 }}>Log Loading...</Text>;
+    return <ActivityIndicator animating={props.loading} style={{ marginTop: 20 }} accessibilityStates />
   }
 
   if (props.logs.length === 0) {
@@ -29,11 +29,9 @@ const LogTable: FC<LogTableProps> = (props) => {
       <View style={{
         flex: 1,
         width: '100%',
-        // borderWidth: 2,
         alignItems: 'center',
       }}>
         <Text style={{ marginTop: 20 }}>{props.message}</Text>
-        {/* <Icon name='refresh' reverse onPress={props.onRefresh} /> */}
       </View>
     );
   }
@@ -79,6 +77,7 @@ function LogScreen({ navigation }: { navigation: AppNavigationProp<'Logs'> }) {
     setLoading(true);
     try {
       const json = await getLogData();
+      console.log('json:' + json);
       if (json === undefined) {
         setLogs([]);
         setMessage('Logs are not supported via BLYNK token');
@@ -94,6 +93,7 @@ function LogScreen({ navigation }: { navigation: AppNavigationProp<'Logs'> }) {
       setRefreshing(false);
     } catch (err) {
       setLogs([])
+      setMessage('Logs not found');
       setLoading(false);
       setRefreshing(false);
       console.log(err)

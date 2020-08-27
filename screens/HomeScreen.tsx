@@ -1,9 +1,9 @@
-import React, { useState, useEffect, FC, useCallback } from 'react';
+import React, { useState, FC, useCallback } from 'react';
 import { StyleSheet, View, TouchableOpacity, Platform, Dimensions, ViewStyle, Image, StyleProp, ImageStyle } from 'react-native';
 import 'react-native-gesture-handler';
-import { Notifications } from 'expo';
-import * as Permissions from 'expo-permissions';
-import Constants from 'expo-constants';
+// import { Notifications } from 'expo';
+// import * as Permissions from 'expo-permissions';
+// import Constants from 'expo-constants';
 import { BaseText as Text, createAlert, useInterval } from '../utils/utils';
 import { AppNavigationProp } from '../App';
 import { ScreenHeader, BottomDraggable } from '../components';
@@ -97,39 +97,39 @@ const InfoWindow: FC<InfoWindowProps> = (props) => {
 };
 
 function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
-  const [expoPushToken, setExpoPushToken] = useState('');
-  const [notification, setNotification] = useState({});
+  // const [expoPushToken, setExpoPushToken] = useState('');
+  // const [notification, setNotification] = useState({});
 
-  // registers device for Expo push notifications ands sets the expoPushToken state to this device's
-  // expo push token, we can use this with FCM, APNS, OTC, or HTTP requests.
-  const registerForPushNotifAsync = async () => {
-    if (Constants.isDevice) {
-      // check if notifications permissions already granted
-      const { status: existingStatus } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
-      let finalStatus = existingStatus;
-      if (existingStatus !== 'granted') {
-        // if not then ask for permissions
-        const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
-        finalStatus = status;
-      }
-      if (finalStatus !== 'granted') {
-        createAlert(popup, 'Failed to get push token for push notifications');
-        return;
-      }
-      let token = await Notifications.getExpoPushTokenAsync();
-      console.log(token);
-      setExpoPushToken(token);
-    } else {
-      // Alert.alert('must be a physical device to receive push notificaitons')
-    }
-  }
+  // // registers device for Expo push notifications ands sets the expoPushToken state to this device's
+  // // expo push token, we can use this with FCM, APNS, OTC, or HTTP requests.
+  // const registerForPushNotifAsync = async () => {
+  //   if (Constants.isDevice) {
+  //     // check if notifications permissions already granted
+  //     const { status: existingStatus } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
+  //     let finalStatus = existingStatus;
+  //     if (existingStatus !== 'granted') {
+  //       // if not then ask for permissions
+  //       const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
+  //       finalStatus = status;
+  //     }
+  //     if (finalStatus !== 'granted') {
+  //       createAlert(popup, 'Failed to get push token for push notifications');
+  //       return;
+  //     }
+  //     let token = await Notifications.getExpoPushTokenAsync();
+  //     console.log(token);
+  //     setExpoPushToken(token);
+  //   } else {
+  //     // Alert.alert('must be a physical device to receive push notificaitons')
+  //   }
+  // }
 
-  // call registerForPushNotifAsync as soon as loaded (unless on web)
-  useEffect(() => {
-    if (Platform.OS !== 'web') {
-      registerForPushNotifAsync();
-    }
-  }, [])
+  // // call registerForPushNotifAsync as soon as loaded (unless on web)
+  // useEffect(() => {
+  //   if (Platform.OS !== 'web') {
+  //     registerForPushNotifAsync();
+  //   }
+  // }, [])
 
   useFocusEffect(useCallback(() => {
     grabInfo();
@@ -170,11 +170,6 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
         cid: 0,
         rssi: 0,
       })
-      // const [currIdx, devices] = await getDevices();
-      // if (devices.length !== 0) {
-      //   createAlert('No Device Found', 'No device was found at the entered address',
-      //     [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
-      // }
       console.log(err);
     }
   }
@@ -230,7 +225,7 @@ function HomeScreen({ navigation }: { navigation: AppNavigationProp<'Home'> }) {
           ]}
           onPress={async () => {
             const result = await toggleDoor();
-            if(result && !result.success) {
+            if (result && !result.success) {
               createAlert(popup, result.error, result.message);
             }
           }}

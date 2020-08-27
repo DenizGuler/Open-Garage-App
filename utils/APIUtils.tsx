@@ -1,4 +1,4 @@
-import { getURL, getDevKey, createAlert, getConMethod, getConInput } from "./utils"
+import { getURL, getDevKey, createAlert, getConMethod, getConInput, getDevices, setDeviceParam } from "./utils"
 import { ControllerVars, ControllerOptions, ResultJSON, LogJSON } from "./types";
 import { NavigationProp, NavigationState } from "@react-navigation/native";
 
@@ -36,6 +36,8 @@ export const getControllerVars = async (index?: number): Promise<ControllerVars>
   if (json.message !== undefined) {
     throw Error(json.message)
   }
+  await setDeviceParam({name: json.name});
+  console.log('name: ' + json.name);
   return json;
 }
 
@@ -68,6 +70,7 @@ export const getControllerOptions = async (index?: number): Promise<ControllerOp
   const response = await fetch(url + '/jo');
   const json = await response.json();
   if (json.message !== undefined) throw Error(json.message)
+  await setDeviceParam({name: json.name});
   return json
 }
 
@@ -203,8 +206,6 @@ export const interpResult = (json: ResultJSON) => {
   // const navigation = useNavigation();
   // only occurs on false OTC Token
   if (json.message !== undefined) {
-    // createAlert('Connection failed', json.message,
-    //   [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
     return { success: false, error: 'Connection failed', message: json.message }
   }
   // success
@@ -213,18 +214,14 @@ export const interpResult = (json: ResultJSON) => {
   }
   // unauthorized
   if (json.result === 2) {
-    // createAlert('Invalid or Empty Device Key', 'The entered device key was rejected or not present',
-    //   [{ text: 'Cancel' }, { text: 'Go to Settings', onPress: () => navigation.navigate('IPSettings') }])
     return { success: false, error: 'Invalid or Empty Device Key', message: 'The entered device key was rejected or not present' };
   }
   // mismatch
   if (json.result === 3) {
-    // createAlert('Key Mismatch', 'Make sure the entered keys are identical')
     return { success: false, error: 'Key Mismatch', message: 'Make sure the entered keys are identical' };
   }
   // data missing
   if (json.result === 16) {
-    // createAlert('Data Missing', 'Required Paramaters are missing for item: \'' + json.item + '\'')
     return { success: false, error: 'Data Missing', message: 'Required Paramaters are missing for item: \'' + json.item + '\'' };
   }
   // out of range
@@ -234,7 +231,6 @@ export const interpResult = (json: ResultJSON) => {
   }
   // data format error
   if (json.result === 18) {
-    // createAlert('Data Format Error', 'Provided data does not match the required format for item: \'' + json.item + '\'')
     return { success: false, error: 'Data Format Error', message: 'Provided data does not match the required format for item: \'' + json.item + '\'' };
   }
   // page not found
@@ -244,15 +240,12 @@ export const interpResult = (json: ResultJSON) => {
   }
   // not permitted
   if (json.result === 48) {
-    // createAlert('Action Not Permitted', 'Cannot operate on the requested station')
     return { success: false, error: 'Action Not Permitted', message: 'Cannot operate on the requested station' };
   }
   // upload failed
   if (json.result === 64) {
-    // createAlert('Upload Failed', 'Over the air update failed')
     return { success: false, error: 'Upload Failed', message: 'Over the air update failed' };
   }
   // unknown error code
-  // createAlert('Unknown Error', 'An unknown error has occured!')
   return { success: false, error: 'Unknown Error', message: 'An unknown error has occured!' };
 }

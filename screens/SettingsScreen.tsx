@@ -85,7 +85,7 @@ export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IP
               setShowOTCModal(true);
             } else {
               if (await updateParams()) {
-                navigation.goBack();
+                navigation.navigate('Main', { screen: 'Home' });
               }
             }
           }
@@ -142,7 +142,7 @@ export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IP
           {
             text: 'OK', onPress: async () => {
               if (await updateParams()) {
-                navigation.goBack();
+                navigation.navigate('Main', { screen: 'Home' });
               }
             }
           }
@@ -168,7 +168,7 @@ export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IP
           keyboardType={"number-pad"}
         />
         <Text style={styles.optionHelperText}>optional</Text>
-        <Text style={{ paddingVertical: 10, paddingHorizontal: 5, fontSize: 16, }}>These settings are optional</Text>
+        <Text style={{ paddingVertical: 10, paddingHorizontal: 10, fontSize: 16, }}>These settings are optional</Text>
       </Popup>
     </ScrollView>
   );

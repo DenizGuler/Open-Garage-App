@@ -80,7 +80,7 @@ const Popup: FC<Props> = (props) => {
           width: '75%',
           alignSelf: 'center',
           backgroundColor: '#fff',
-          paddingHorizontal: 20,
+          paddingHorizontal: 12,
           paddingVertical: 5,
           borderRadius: 4,
         }}
@@ -89,14 +89,15 @@ const Popup: FC<Props> = (props) => {
           fontSize: 16,
           fontWeight: 'bold',
           color: '#000000c0',
-          padding: 16,
+          paddingVertical: 16,
+          paddingHorizontal: 10,
         }}>
           {props.title}
         </Text>
-        <Divider />
-        {props.text && <Text style={{paddingVertical: 10, paddingHorizontal: 5, fontSize: 16,}}>{props.text}</Text>}
+        <Divider style={{marginHorizontal: 5}}/>
+        {props.text && <Text style={{paddingVertical: 10, paddingHorizontal: 10, fontSize: 16,}}>{props.text}</Text>}
         {props.children}
-        <Divider />
+        <Divider style={{marginHorizontal: 5}}/>
         <FlatList
           contentContainerStyle={{
             width: '100%',
