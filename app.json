@@ -23,7 +23,8 @@
       "**/*"
     ],
     "ios": {
-      "bundleIdentifier": "com.albahra.opengarage"
+      "bundleIdentifier": "com.albahra.opengarage",
+      "buildNumber": "1.0.0"
     },
     "android": {
       "package": "com.albahra.opengarage",
