@@ -78,7 +78,7 @@ export function IPSettings({ navigation }: StackScreenProps<RootStackParams, 'IP
         text={'Set Up Device'}
         left={'back'}
         right={'check'}
-        onCheck={async () => {
+        onPressRight={async () => {
           if (deviceState.conInput !== undefined) {
             let conMethod = interpConMethod(deviceState.conInput)
             if (conMethod === 'OTC') {
@@ -224,7 +224,7 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
         text={'Basic Settings'}
         left={'back'}
         right={'check'}
-        onCheck={async () => {
+        onPressRight={async () => {
           if (await updateSettings()) {
             navigation.goBack();
           }
@@ -405,7 +405,7 @@ export function IntegrationSettings({ navigation }: StackScreenProps<RootStackPa
         text={'Integration Settings'}
         left={'back'}
         right={'check'}
-        onCheck={async () => {
+        onPressRight={async () => {
           if (await updateSettings()) {
             navigation.goBack();
           }
@@ -625,7 +625,7 @@ export function AdvancedSettings({ navigation }: StackScreenProps<RootStackParam
         text={'Advanced Settings'}
         left={'back'}
         right={'check'}
-        onCheck={async () => {
+        onPressRight={async () => {
           if (await updateSettings()) {
             navigation.goBack();
           }

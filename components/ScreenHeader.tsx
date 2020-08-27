@@ -19,10 +19,6 @@ interface Props {
   left?: string,
   text?: string,
   right?: string,
-  onCancel?: () => void,
-  onInfo?: () => void,
-  onCheck?: () => void,
-  onAdd?: () => void,
   onPressRight?: () => void,
   onPressLeft?: () => void,
 }
@@ -63,16 +59,16 @@ const ScreenHeader: FC<Props> = (props) => {
         comp = <Icon name='home' onPress={() => navigation.navigate('Home')} />;
         break;
       case 'check':
-        comp = <Icon name='check' onPress={props.onCheck} />
+        comp = <Icon name='check' onPress={position === 'right' ? props.onPressRight : props.onPressLeft} />
         break;
       case 'add':
-        comp = <Icon name='add' onPress={props.onAdd} />
+        comp = <Icon name='add' onPress={position === 'right' ? props.onPressRight : props.onPressLeft} />
         break;
       case 'cancel':
-        comp = <Icon name='close' onPress={props.onCancel} />
+        comp = <Icon name='close' onPress={position === 'right' ? props.onPressRight : props.onPressLeft} />
         break;
       case 'info':
-        comp = <Icon name='info-outline' onPress={props.onInfo} />
+        comp = <Icon name='info-outline' onPress={position === 'right' ? props.onPressRight : props.onPressLeft} />
         break;
       case undefined:
         break;
@@ -89,7 +85,7 @@ const ScreenHeader: FC<Props> = (props) => {
       statusBarProps={{ translucent: true }}
       backgroundColor="#fff"
       leftComponent={HeaderComponent(props.left, 'left')}
-      centerComponent={{ text: props.text, style: { fontSize: 24, /* fontFamily: FONT */} }}
+      centerComponent={{ text: props.text, style: { fontSize: 24, /* fontFamily: FONT */ } }}
       rightComponent={HeaderComponent(props.right, 'right')}
     />
   );

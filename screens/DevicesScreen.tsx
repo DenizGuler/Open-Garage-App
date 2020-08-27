@@ -148,7 +148,7 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
         left={"hamburger"}
         text="Devices"
         right={"add"}
-        onAdd={onAdd}
+        onPressRight={onAdd}
       />
       <FlatList
         style={styles.list}
