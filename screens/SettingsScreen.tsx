@@ -883,7 +883,7 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
               }])
           }}
         />}
-        <Text style={{ alignSelf: 'center' }}>App Version 8-15.0</Text>
+        <Text style={{ alignSelf: 'center' }}>App Version Beta 1.0</Text>
       </ScrollView>
     </View>
   );
