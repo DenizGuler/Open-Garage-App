@@ -9,10 +9,10 @@ import { Icon, Header } from 'react-native-elements';
   'hamburger': menu hamburger; opens the navigation drawer 
   'back': back button; invokes navigate.goBack() 
   'home' : home button; navigates to the 'Home' screen 
-  'check' : check button; invokes onCheck() 
-  'add' : plus/add button; invokes onAdd()
-  'cancel' : 'X' button; invokes onCancel()
-  'info' : info button; invokes onInfo()
+  'check' : check button;
+  'add' : plus/add button;
+  'cancel' : 'X' button;
+  'info' : info button;
 */
 
 interface Props {
