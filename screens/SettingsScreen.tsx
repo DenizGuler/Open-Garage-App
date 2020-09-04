@@ -338,7 +338,7 @@ export function BasicSettings({ navigation }: StackScreenProps<RootStackParams, 
           <Text style={styles.radioTitle}>T/H Sensor: </Text>
           {/* <Divider /> */}
           <Picker
-            style={styles.optionPicker}
+            style={Platform.OS === 'web' ? styles.optionPicker : {flexGrow: 2}}
             selectedValue={String(currParams.tsn)}
             onValueChange={(type) => setParam('tsn', type)}
           >
@@ -982,6 +982,17 @@ const styles = StyleSheet.create({
   },
 
   optionPicker: {
+    marginHorizontal: 10,
+    padding: 10,
+    // paddingLeft: 16,
+    fontSize: 16,
+    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont,"Segoe UI", Roboto, Ubuntu, "Helvetica Neue", sans-serif',
+    color: '#000000',
+    backgroundColor: '#fff',
+    borderColor: '#00000020',
+    borderRadius: 6,
+    borderWidth: 2,
+    marginTop: 10,
     // marginHorizontal: 8,
     // width: '100%',
     flexGrow: 2,

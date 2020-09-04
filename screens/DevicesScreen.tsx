@@ -77,7 +77,7 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
   const isMarked = (index: number) => {
     return devsToDel.indexOf(index) >= 0;
   }
-  
+
   const [refreshing, setRefreshing] = useState<boolean>(false)
   const onRefresh = async () => {
     setRefreshing(true);
@@ -146,7 +146,7 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
     <View style={styles.container}>
       <ScreenHeader
         left={"hamburger"}
-        text="Devices"
+        text="Sites"
         right={"add"}
         onPressRight={onAdd}
       />
@@ -157,7 +157,8 @@ export default function DevicesScreen({ navigation }: { navigation: AppNavigatio
         refreshing={refreshing}
         onRefresh={onRefresh}
         ListFooterComponent={
-          <Text style={{ alignSelf: 'center', fontSize: 14, color: '#aaa', width: '75%', textAlign: 'center' }}>Press the circle to the right of a device to mark it for deletion.</Text>
+          devState.length > 0 ? <Text style={{ alignSelf: 'center', fontSize: 14, color: '#aaa', width: '75%', textAlign: 'center' }}>Press the circle to the right of a site to mark it for deletion.</Text> :
+          <Text style={{ alignSelf: 'center', fontSize: 14, color: '#aaa', width: '75%', textAlign: 'center', paddingTop: 10 }}>Press the "+" in the top right to add a new site.</Text>
         }
         renderItem={({ item, index }) => {
           return (
