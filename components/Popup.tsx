@@ -3,6 +3,7 @@ import { Portal, Modal, Button } from 'react-native-paper';
 import { BaseText as Text } from '../utils/utils'
 import { Divider } from 'react-native-elements';
 import { FlatList } from 'react-native-gesture-handler';
+import { View, Dimensions, Platform } from 'react-native';
 
 export interface PopupOptions {
   catchOnCancel?: boolean,
@@ -73,7 +74,16 @@ interface Props {
 const Popup: FC<Props> = (props) => {
 
   return (
-    <Portal>
+    <View
+      // ts error from using position: fixed when it doesn't work on non web
+      // @ts-ignore
+      style={{
+        display: props.visible ? 'flex' : 'none',
+        position: Platform.OS === 'web' ? 'fixed' : 'absolute',
+        height: '100%',
+        width: '100%',
+      }}
+    >
       <Modal visible={props.visible} onDismiss={props.onDismiss}
         contentContainerStyle={{
           maxWidth: 550,
@@ -83,6 +93,7 @@ const Popup: FC<Props> = (props) => {
           paddingHorizontal: 12,
           paddingVertical: 5,
           borderRadius: 4,
+          zIndex: 10,
         }}
       >
         <Text style={{
@@ -94,10 +105,10 @@ const Popup: FC<Props> = (props) => {
         }}>
           {props.title}
         </Text>
-        <Divider style={{marginHorizontal: 5}}/>
-        {props.text && <Text style={{paddingVertical: 10, paddingHorizontal: 10, fontSize: 16,}}>{props.text}</Text>}
+        <Divider style={{ marginHorizontal: 5 }} />
+        {props.text && <Text style={{ paddingVertical: 10, paddingHorizontal: 10, fontSize: 16, }}>{props.text}</Text>}
         {props.children}
-        <Divider style={{marginHorizontal: 5}}/>
+        <Divider style={{ marginHorizontal: 5 }} />
         <FlatList
           contentContainerStyle={{
             width: '100%',
@@ -118,7 +129,7 @@ const Popup: FC<Props> = (props) => {
           )}
         />
       </Modal>
-    </Portal>
+    </View>
   )
 };
 
